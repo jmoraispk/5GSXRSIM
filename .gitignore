@@ -1,0 +1,26 @@
+/Other(ignore)/
+/Tools/
+/Plots/
+/Stats/
+/Results/
+/Results Phase 2/
+/Instance_logs/
+/Instance_logs1/
+/Instance_logs2/
+/Instance_logs3/
+/Testing/
+/__pycache__/
+/.pylint.d/
+/Matlab/*
+*.asm
+*.asv
+*.pylint.d
+!/Matlab/Aux Functions
+!/Matlab/Aux Scripts
+!/Matlab/Instances-Home
+!/Matlab/Quadriga
+!/Matlab/Precoders
+!/Matlab/Tracks
+!/Matlab/Meeting12.m
+*.txt
+test.py
