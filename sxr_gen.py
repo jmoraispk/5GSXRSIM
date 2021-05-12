@@ -29,6 +29,9 @@ try:
     first_seed = int(ut.get_input_arg(-3))
     last_seed = int(ut.get_input_arg(-2))
     speed = int(ut.get_input_arg(-1))
+    # speed = 1
+    # last_seed = 1
+    # first_seed = 1
     if not (first_seed <= last_seed and first_seed > 0 and last_seed > 0 \
             and speed >= 0):
         print(f'first_seed = {first_seed}, of type {type(first_seed)}')
@@ -204,15 +207,21 @@ for seed in seeds:
                     print(f'Backup of instance {inst_running[inst_done_idx]} '
                           f'logfile complete.')
             
-            
+            print('GOT HERE?!')
             if (len(inst_running) < sp.n_inst_running_parallel and
                 last_instance_started < sp.last_instance):
                 # Start a new one:
-                    
                 if inst_running == []:
-                    instance_to_start = sp.first_instance
+                    if sp.n_inst_running_parallel == 1:
+                        if last_instance_started == -1:    
+                            instance_to_start = sp.first_instance
+                        else:
+                            instance_to_start = last_instance_started + 1
+                    else:
+                        instance_to_start = sp.first_instance
                 else:
-                    instance_to_start = inst_running[-1] + 1
+                    instance_to_start = last_instance_started + 1
+                
                 
                 if instance_to_start > sp.last_instance:
                     # You've gone too far, don't start this one!
