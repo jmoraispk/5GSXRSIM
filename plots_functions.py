@@ -744,6 +744,7 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
     #       all lists synched across functions, and in one place.
     plots_to_skip = [10.8, 10.9]
     
+    # Skip the indices that are for computations only.
     if plot_idx in plots_to_skip:
         return
     
@@ -770,10 +771,11 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
                      x_axis_label=x_vals_label, y_axis_label='Power [dBW]',
                      filename=fname('channel'), savefig=save_fig)
     
-    # TODO with variable channel_per_prb
-    #  requires initialising the variable properly and chaning update_channel
-    #  function to compute it (can have bugs.)
+    
     if plot_idx == 0.2 or plot_idx == 'all':
+        # TODO with variable channel_per_prb
+        #  requires initialising the variable properly and changing update_channel
+        #  function to compute it (can have bugs.)
         pass
     
     
@@ -902,22 +904,19 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
             freqs_vec = (sp.freq - sp.bandwidth/2 + 
                          np.arange(0,sp.n_prb * sp.freq_compression_ratio) * 
                          prb_bandwidth)
-            
-            # plot_for_ues([0], np.arange(0,50), [signal_power_prb[3,:,:].T], 
-            #               'PRBs', 'W', 'Signal power variation across PRBs')
-            
-            plot_for_ues(ues, freqs_vec, [signal_power_prb[3,:,:].T], 
+        else:
+            freqs_vec = [sp.freq]
+        
+        # antenna index: 
+        a_idx = 3
+        
+        if len(freqs_vec) > 1:
+            plot_for_ues(ues, freqs_vec, [signal_power_prb[a_idx,:,:].T], 
                          'Frequency', 'Watt', 
                          'Signal power variation across frequency',
                          savefig=save_fig)
-        
         else:
-            freqs_vec = [sp.freq]
-            # for ue in ues:
-            #     plt.scatter(freqs_vec, signal_power_prb[3,ue,:].T)
-            
-            # plt.show()
-            plot_for_ues(ues, freqs_vec, [signal_power_prb[3,:,:].T], 
+            plot_for_ues(ues, freqs_vec, [signal_power_prb[a_idx,:,:].T], 
                          'Frequency', 'Watt', 
                          'Signal power variation across frequency',
                          savefig=save_fig, plot_type='scatter')
@@ -933,8 +932,8 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
                      np.arange(0,sp.n_prb * sp.freq_compression_ratio) * 
                      prb_bandwidth)
         
-        middle_freq = round(len(freqs_vec)/2) 
         
+        middle_freq = round(len(signal_power_prb.shape[-1])/2) 
         signal_power_prb_db = \
             10 * np.log10(signal_power_prb[3,:,:].T / 
                           signal_power_prb[3,:,middle_freq].T)
@@ -956,7 +955,7 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
         plot_for_ues(ues, x_vals, [signal_power, dl_interference], 
                       x_vals_label, '[W]', 'Signal Power vs Interference')
         
-    # Signal power vs interference (dBw)
+    # Signal power vs interference (dBw) [double axis]
     if plot_idx in [3.4, 'all']:      
         # compute in dBw
         dl_interference_dbw = 10 * np.log10(dl_interference[:,ues])
@@ -965,7 +964,7 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
                             [dl_interference_dbw], x_vals_label, 
                             ['Sig. Power [dBw]', 'Int. Power [dBw]'])
     
-    # Signal power vs interference (dBw)
+    # Signal power vs interference (dBw) [single axis]
     if plot_idx in [3.45, 'all']:      
         # compute in dBw
         dl_interference_dbw = 10 * np.log10(dl_interference[:,ues])
@@ -983,8 +982,9 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
                             x_vals_label, 
                             ['Signal Power [W]', 'Interference Power [W]'])
 
-    #
     if plot_idx in [3.6, 'all']:
+        dl_interference_dbw = 10 * np.log10(dl_interference[:,ues])
+        signal_power_dbw = 10 * np.log10(signal_power)
         plot_for_ues(ues, x_vals, [signal_power_dbw, dl_interference_dbw], 
                      x_vals_label, 'Power [dBW]',
                      y_labels=['Signal', 'Interference'], use_legend=True,
@@ -996,6 +996,13 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
         plot_for_ues(ues, x_vals, [dl_interference_est, dl_interference], 
                       x_vals_label, '[W]', 'Estimated vs real interference')
                             
+    
+    # Estimated vs Realised interference [dB]
+    if plot_idx in [3.8, 'all']:
+        plot_for_ues(ues, x_vals, [dl_interference_est, dl_interference], 
+                      x_vals_label, '[W]', 'Estimated vs real interference')
+                          
+        
     # MCS same axs
     if plot_idx in [4.1, 'all']:
         plot_for_ues(ues, x_vals, [mcs], x_vals_label, 'MCS index',  
@@ -1014,42 +1021,35 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
                      savefig=save_fig, uniform_scale = [6.5, 15.5], 
                      same_axs=False)
 
-    # TODO: MCS and instantaneous bitrate per UE (from idx=1 (add in compute function too))
+    # MCS and instantaneous bitrate per UE
     if plot_idx in [4.3, 'all']:
-        pass
+        plot_for_ues_double(ues, x_vals, [mcs], [bitrate_realised], 
+                            x_vals_label, 
+                            y_label=['MCS index', 'Bit rate [Mbps]'],
+                            savefig=save_fig)
     
-    # Beams: best beam per user 
-    if plot_idx in [5.1, 'all']:
-        plt.plot(x_vals, beam_formula[:,ues])
-    
-    
-    # Beams: best beam per user (filtered: prevents going back to zero when
-    #        the UE is no scheduled. One plot for all selected UEs
-    if plot_idx in [5.2, 'all']:
-        plt.plot(x_vals, beam_formula[:,ues])
-        
     # Beams: best beam per user (filtered: prevents going back to zero when
     #        the UE is no scheduled. One plot per UE    
-    if plot_idx in [5.3, 'all']:
+    if plot_idx in [5.1, 'all']:
         plot_for_ues(ues, x_vals, [beam_formula], 
                      title='Formula: azi + ele x 10')
     
     # Beams filtered: doublePlot per UE for azi and elevation values.
-    if plot_idx in [5.4, 'all']:
+    if plot_idx in [5.2, 'all']:
         plot_for_ues_double(ues, x_vals, [beams[:,:,0]], [beams[:,:,1]],
                             x_vals_label, 
                             y_label=['Azimuth [º]', 'Elevation[º]'], 
                             savefig=save_fig)
 
     # Beam sum: used to notice beam switching easily
-    if plot_idx in [5.5, 'all']:
+    if plot_idx in [5.3, 'all']:
         beam_sum = beams[:,:,0] + beams[:,:,1]
         plot_for_ues(ues, x_vals, [beam_sum],
                      x_vals_label, 'Azimuth + Elevation [º]', 
                      savefig=save_fig)
     
     # Beam sum: used to notice beam switching easily vs SINR
-    if plot_idx in [5.6, 'all']:
+    if plot_idx in [5.4, 'all']:
         beam_sum = beams[:,:,0] + beams[:,:,1]
         plot_for_ues_double(ues, x_vals, [beam_sum], [sinr_realised], 
                             x_vals_label,
@@ -1057,7 +1057,7 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
                             savefig=save_fig)
     
     # Beam sum vs BLER
-    if plot_idx in [5.7, 'all']:
+    if plot_idx in [5.5, 'all']:
         beam_sum = beams[:,:,0] + beams[:,:,1]
         plot_for_ues_double(ues, x_vals, [beam_sum], 
                             [instantaneous_bler], x_vals_label,

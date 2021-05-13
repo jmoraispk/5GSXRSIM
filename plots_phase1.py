@@ -245,8 +245,8 @@ for comb in combinations:
             # my_dir = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\NewTracks' + '\\'
             # stats_name = r'SEED6_SPEED-3_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-40'
             
-            my_dir = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats' + '\\'
-            stats_name = r'SEED3_SPEED3_even_more_current'
+            my_dir = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Stats' + '\\'
+            stats_name = r'SEED3_SPEED-3_FREQ-1_CSIPER-20_APPBIT-100_USERS-None_BW-50_LATBUDGET-10'
             stats_dir = my_dir + stats_name + '\\'
     
     
@@ -488,7 +488,7 @@ for comb in combinations:
     # idxs_to_plot = [7.35]
     # idxs_to_plot = [5.4]
     idxs_to_plot = [2, 5.4, 5.6, 5.7, 7.5, 10.9]
-    idxs_to_plot = [2, 5.4]
+    idxs_to_plot = [0.1]
     
     # idxs_to_plot = [10.8]
     for i in idxs_to_plot:
