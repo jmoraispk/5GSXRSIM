@@ -17,15 +17,17 @@ import utils as ut
 import application_traffic as at
 import simulation_parameters as sim_par
 
-parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Matlab\TraceGeneration\CyclicTracks" + '\\'
-
+# parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks" + '\\'
+parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration" + '\\'
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
-seed = 3
+seed = 1
 speed = 3
 
 
-folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
+# folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
+folders_to_simulate = ["SEED1_SPEED1_point_centre"]
+
 
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
@@ -196,8 +198,8 @@ for param in sim_params:
     curr_beam_pairs = {}
     for bs in range(sp.n_bs):
         for ue in range(sp.n_ue):
-            for p in range(sp.n_layers):
-                curr_beam_pairs[(bs, ue, p)] = sls.Beam_pairs_list()
+            for l in range(sp.n_layers):
+                curr_beam_pairs[(bs, ue, l)] = sls.Beam_pairs_list()
     
     # initialisations
     curr_time_div = -1
@@ -278,6 +280,14 @@ for param in sim_params:
     else:
         sig_pow_in_prb = None
         channel_per_prb = None # ut.make_py_list(3, [sp.n_ue, sp.sim_TTIs])
+    
+    
+    sp.load_gob_params(precoders_dict)
+    if sp.save_power_per_CSI_beam:
+        power_per_beam = ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers, 
+                                             sp.gob_n_beams])
+    else:
+        power_per_beam = None 
     
     channel = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     experienced_signal_power = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
@@ -373,7 +383,8 @@ for param in sim_params:
             sls.tti_info_copy_and_update(tti, sp.TTI_duration, first_coeff_tti, 
                                          sp.n_phy, sp.n_layers, 
                                          est_dl_interference, avg_bitrate, 
-                                         olla, sp.use_olla)
+                                         olla, sp.use_olla, power_per_beam,
+                                         sp.save_power_per_CSI_beam)
         
     # Phase 0: slot/TTI identification and Queue update
         # 0- a) Identify the slot type
@@ -437,7 +448,8 @@ for param in sim_params:
         sls.update_all_precoders(tti, tti_with_csi, active_UEs, sp.n_bs, 
                                  curr_beam_pairs, last_csi_tti, 
                                  precoders_dict, coeffs, last_coeffs, 
-                                 sp.n_layers, sp.n_csi_beams)
+                                 sp.n_layers, sp.n_csi_beams, power_per_beam,
+                                 sp.save_power_per_CSI_beam)
         
         # From here onwards, we know what precoders are best for each UE, 
         # per layer. This has been verified with LoS simulations, print below
@@ -627,70 +639,67 @@ for param in sim_params:
         # Make folder for the stats of this simulation
         
         if include_timestamp:
-            stats_dir = sp.stats_dir + output_str + f"_{time_sim_end}" + "\\"
+            sp.stats_path = sp.stats_dir + output_str + f"_{time_sim_end}" + "\\"
         else:
-            stats_dir = sp.stats_dir + output_str + "\\"
+            sp.stats_path = sp.stats_dir + output_str + "\\"
+        
+        
         
         # Write which stats file was produced last, for practical reasons, 
         # e.g.in case we want to analyse plots of it right away.
         with open('last_stats_folder.txt', 'w') as fh:
-            fh.write(stats_dir)
+            fh.write(sp.stats_path)
         
-        if not ut.isdir(stats_dir):
-            ut.makedirs(stats_dir)
+        if not ut.isdir(sp.stats_path):
+            ut.makedirs(sp.stats_path)
         else:
             # Overriding! Use a the timestamp to prevent this.
-            ut.del_dir(stats_dir)
-            ut.makedirs(stats_dir)
+            ut.del_dir(sp.stats_path)
+            ut.makedirs(sp.stats_path)
         
         # Write the exact path of the folder where the traces came from
-        with open(stats_dir + 'parent_generation_folder.txt', 'w') as fh:
+        with open(sp.stats_path + 'parent_generation_folder.txt', 'w') as fh:
             fh.write(sim_folder)
             
         
         # To save some time naming all variables...
         globals_dict = globals()
         
-        # Some variables interfere with the ones we actually want...
+        # Some variables interfere with the ones we actually want to save
+        # when they have exactly the same values.
         try:
             del user_buffers
         except:
             print('weird... no user buffers... something is wrong...')
+            # A bug we are still trying to catch... almost never happens...
         
         # Pickle all results 
-        ut.save_var_pickle(sp, stats_dir, globals_dict)
-        ut.save_var_pickle(buffers, stats_dir, globals_dict)        
-        ut.save_var_pickle(estimated_SINR, stats_dir, globals_dict)
-        ut.save_var_pickle(realised_SINR, stats_dir, globals_dict)
-        ut.save_var_pickle(realised_bitrate_total, stats_dir, globals_dict)
-        ut.save_var_pickle(n_transport_blocks, stats_dir, globals_dict)    
-        ut.save_var_pickle(blocks_with_errors, stats_dir, globals_dict)        
-        ut.save_var_pickle(beams_used, stats_dir, globals_dict)
-        ut.save_var_pickle(olla, stats_dir, globals_dict)
-        ut.save_var_pickle(mcs_used, stats_dir, globals_dict)
-        ut.save_var_pickle(real_dl_interference, stats_dir, globals_dict)
-        ut.save_var_pickle(est_dl_interference, stats_dir, globals_dict)
-        ut.save_var_pickle(scheduled_UEs, stats_dir, globals_dict)
-        ut.save_var_pickle(su_mimo_setting, stats_dir, globals_dict)
+        ut.save_var_pickle(sp, sp.stats_path, globals_dict)
+        ut.save_var_pickle(buffers, sp.stats_path, globals_dict)        
+        ut.save_var_pickle(estimated_SINR, sp.stats_path, globals_dict)
+        ut.save_var_pickle(realised_SINR, sp.stats_path, globals_dict)
+        ut.save_var_pickle(realised_bitrate_total, sp.stats_path, globals_dict)
+        ut.save_var_pickle(n_transport_blocks, sp.stats_path, globals_dict)    
+        ut.save_var_pickle(blocks_with_errors, sp.stats_path, globals_dict)        
+        ut.save_var_pickle(beams_used, sp.stats_path, globals_dict)
+        ut.save_var_pickle(olla, sp.stats_path, globals_dict)
+        ut.save_var_pickle(mcs_used, sp.stats_path, globals_dict)
+        ut.save_var_pickle(real_dl_interference, sp.stats_path, globals_dict)
+        ut.save_var_pickle(est_dl_interference, sp.stats_path, globals_dict)
+        ut.save_var_pickle(scheduled_UEs, sp.stats_path, globals_dict)
+        ut.save_var_pickle(su_mimo_setting, sp.stats_path, globals_dict)
+        ut.save_var_pickle(channel, sp.stats_path, globals_dict)
+        ut.save_var_pickle(experienced_signal_power, sp.stats_path, globals_dict)
         
+        # Variables that take the most memory: they are always saved,
+        # but when sp.save_per_prb_variables is False, they are None
+        ut.save_var_pickle(sig_pow_in_prb, stats_dir, globals_dict)        
+        ut.save_var_pickle(channel_per_prb, stats_dir, globals_dict)
         
-        ut.save_var_pickle(channel, stats_dir, globals_dict)
-        ut.save_var_pickle(experienced_signal_power, stats_dir, globals_dict)
-        if sp.save_per_prb_variables:
-            # variables that take the most memory
-            ut.save_var_pickle(sig_pow_in_prb, stats_dir, globals_dict)        
-            ut.save_var_pickle(channel_per_prb, stats_dir, globals_dict)
+        # If we are debugging GoBs and we need the power of each CSI beam
+        # (is none when sp.save_power_per_CSI_beam is False)
+        ut.save_var_pickle(power_per_beam, sp.stats_path, globals_dict)
         
 print('End of sxr_sim.')
-    # The rest is done in a script specific for data analysis
-# auto_plot = 1
-# if auto_plot:
-#     import sys
-#     if 'sls_plot' not in sys.modules:
-#         import sls_plot
-#     else:
-#         import imp
-#         imp.reload(sls_plot)
-    
 
 

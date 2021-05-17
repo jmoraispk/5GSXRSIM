@@ -932,11 +932,13 @@ def plot_set_1(plot_idx, save_fig, ues, ttis, x_vals, x_vals_label, sp,
                      np.arange(0,sp.n_prb * sp.freq_compression_ratio) * 
                      prb_bandwidth)
         
+        # antenna index: 
+        a_idx = 3
         
         middle_freq = round(len(signal_power_prb.shape[-1])/2) 
         signal_power_prb_db = \
-            10 * np.log10(signal_power_prb[3,:,:].T / 
-                          signal_power_prb[3,:,middle_freq].T)
+            10 * np.log10(signal_power_prb[a_idx,:,:].T / 
+                          signal_power_prb[a_idx,:,middle_freq].T)
         
         
         plot_for_ues(ues, freqs_vec, [signal_power_prb_db], 

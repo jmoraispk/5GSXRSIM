@@ -901,7 +901,7 @@ def load_precoders(precoders_paths):
     return precoder_dict
     
 
-def print_precoder_dict(precoder_dict, n_bs):
+def print_precoder_dict(precoder_dict, n_bs, print_precoder=False):
     for bs in range(n_bs):
         try:
             [azi_len, el_len] = precoder_dict[bs]
@@ -911,7 +911,8 @@ def print_precoder_dict(precoder_dict, n_bs):
                 for el_idx in range(el_len):                    
                     p = precoder_dict[(bs, azi_idx, el_idx)]
                     print(f'Ang: [{azi_vals[azi_idx]:2},{el_vals[el_idx]:2}];')
-                    print(p)
+                    if print_precoder:
+                        print(p)
             
         except KeyError:
             continue
@@ -1022,7 +1023,8 @@ def interleave(arrays, axis=0, out=None):
     return np.stack(arrays, axis=axis+1, out=out).reshape(shape)
 
 
-def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers):
+def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
+                         save_power_per_CSI_beam):
     """
     Given a precoder dictionary, and a channel response, and a bs index, 
     returns index pair for the best precoder for that channel (highest absolute
@@ -1048,6 +1050,8 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers):
     
     ########33
     curr_max_ch_gain = 0
+    
+    power_per_beam_list = []
     
     # Loop over all angles to find the best precoder
     for azi_idx in range(azi_len):
@@ -1093,6 +1097,9 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers):
                 curr_max_ch_gain = abs(ch_gain)
                 best_ue_weights = mr_precoder
                 best_bs_weights = w
+            
+            if save_power_per_CSI_beam:
+                power_per_beam_list.append(abs(ch_gain))
     
     
     # Create and load the best Beam Pair found
@@ -1109,11 +1116,12 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers):
     beam_pair.ch_power_gain = curr_max_ch_gain ** 2
     
     # Return best n_best beams 
-    return [beam_pair]
+    return ([beam_pair], power_per_beam_list)
 
 
 def update_precoders(bs, ue, curr_beam_pairs, precoder_dict, curr_coeffs, 
-                     last_coeffs, tti_csi, n_layers, n_csi_beams):
+                     last_coeffs, tti_csi, n_layers, n_csi_beams, 
+                     power_per_beam, save_power_per_CSI_beam):
     
     """
     For a BS-UE pair, compute the best beam per polarisation.
@@ -1133,17 +1141,20 @@ def update_precoders(bs, ue, curr_beam_pairs, precoder_dict, curr_coeffs,
     # mean across frequency
     mean_coeffs = []
     beam_list = []
-    for p in range(n_layers):
+    for l in range(n_layers):
     
         # Compute the means for all polarisation combinations
         mean_coeffs.append(np.mean(
-            coeffs[(bs, ue)][:,p::n_layers,:,tti_csi], 2))
+            coeffs[(bs, ue)][:,l::n_layers,:,tti_csi], 2))
         
         # Save list of best beam pairs on that polarisation combination
-        beam_list.append(find_best_beam_pairs(precoder_dict, mean_coeffs[p], 
-                                              bs, n_csi_beams, n_layers))
-        
-        curr_beam_pairs[(bs,ue,p)].beam_list = beam_list[p]
+        (best_beam_pairs, power_per_beam[l]) = \
+            find_best_beam_pairs(precoder_dict, mean_coeffs[l], 
+                                 bs, n_csi_beams, n_layers, 
+                                 save_power_per_CSI_beam)
+            
+        beam_list.append(best_beam_pairs)
+        curr_beam_pairs[(bs,ue,l)].beam_list = beam_list[l]
                 
     
     
@@ -1518,9 +1529,17 @@ def copy_avg_bitrate(n_ue, avg_bitrate, tti):
         avg_bitrate[tti][ue] = avg_bitrate[tti-1][ue]
 
 
+def copy_power_per_beam(power_per_beam, n_phy, n_layers, tti):
+    for ue in range(n_phy):
+        for l in range(n_layers):
+            power_per_beam[tti][ue][l][:] = \
+                power_per_beam[tti - 1][ue][l][:]
+
+
 def tti_info_copy_and_update(tti, TTI_duration, first_coeff_tti, n_phy, 
                              n_layers, est_dl_interference, avg_bitrate, 
-                             olla, use_olla):
+                             olla, use_olla, power_per_beam,
+                             save_power_per_CSI_beam):
 
     
     # Timestamp used for packets (note that tti is zero-indexed)
@@ -1539,7 +1558,10 @@ def tti_info_copy_and_update(tti, TTI_duration, first_coeff_tti, n_phy,
     # Copy bit rate averages from the previous tti
     copy_avg_bitrate(n_phy, avg_bitrate, tti)
 
-    
+    if save_power_per_CSI_beam:
+        if tti > 0:
+            copy_power_per_beam(power_per_beam, n_phy, n_layers, tti)
+
     if use_olla:
         # copy ollas from last TTI if the ollas in this TTI are null
         for ue in range(n_phy):
@@ -1586,7 +1608,8 @@ def interference_measurements_update(ues, n_layers, tti, last_csi_tti,
 def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs, 
                          curr_beam_pairs, last_csi_tti, 
                          precoders_dict, coeffs, last_coeffs, 
-                         n_layers, n_csi_beams):
+                         n_layers, n_csi_beams, power_per_beam,
+                         save_power_per_CSI_beam):
     
     for ue in active_UEs[tti]:
         for bs in range(n_bs):
@@ -1603,10 +1626,12 @@ def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs,
                                  last_coeffs,
                                  tti_with_csi,
                                  n_layers,
-                                 n_csi_beams)
+                                 n_csi_beams,
+                                 power_per_beam[tti][ue],
+                                 save_power_per_CSI_beam)
                 
-                for p in range(n_layers):
-                    curr_beam_pairs[(bs, ue, p)].last_updated = tti
+                for l in range(n_layers):
+                    curr_beam_pairs[(bs, ue, l)].last_updated = tti
 
 
 ############### SCHEDULING UPDATE WRAPPERS ##############

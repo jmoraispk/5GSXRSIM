@@ -54,7 +54,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = 4000 * 1
+        self.sim_TTIs = 4000 * 16
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -216,6 +216,11 @@ class Simulation_parameters:
         # In case we need per PRB information on the channel and signal 
         # strength. TODO: check if the channel is also working.
         self.save_per_prb_variables = False
+        
+        # In case we need to know how much power is received given a certain
+        # choice of GoB
+        self.save_power_per_CSI_beam = True
+        
             
     def set_io_param(self, folder_to_load):
         # #################### IO Files & Names ##############################
@@ -695,7 +700,13 @@ class Simulation_parameters:
         self.I_size_DL = int(self.I_size_DL * 1e6)
         
     
-    
+    def load_gob_params(self, precoders_dict):
+        
+        self.gob_n_beams = np.product(precoders_dict[(0)])
+        self.gob_azi_vals = precoders_dict[(0, 'azi_vals')]
+        self.gob_el_vals = precoders_dict[(0, 'el_vals')]
+        
+        
         
         
 

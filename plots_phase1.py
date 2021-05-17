@@ -37,88 +37,6 @@ use_in_loop = False
 
 
 #-------------------------
-# 1- Test for Speeds
-# stats_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\SPEED_sims_20seeds" + '\\'
-# seeds = np.arange(1,21)
-# speeds = [1,2,3,4,5]
-# csi_periodicities = [1]
-# app_bitrates = [75]
-# freq_idxs = [1]
-# trim_secs = 32
-# results_folder = r'Results\Batch 1 - speeds' + '\\'
-
-# 2- Test CSI periodicities
-# stats_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\CSI_per_sims_40seeds" + '\\'
-# seeds = np.arange(1,41)
-# speeds = [3]
-# csi_periodicities = [1, 2, 5, 10, 20, 40, 80, 200]
-# app_bitrates = [75]
-# freq_idxs = [1]
-# trim_secs = 32
-# results_folder = r'Results\Batch 2 - csi periodicities' + '\\'
-
-
-# 3- Test Application Bitrates
-# stats_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\AppBitrate_sims_20seeds" + '\\'
-# seeds = np.arange(1,21)
-# speeds = [3]
-# csi_periodicities = [1]
-# app_bitrates= [25, 50, 75, 100, 125, 150, 175, 200]
-# freq_idxs = [0]
-# trim_secs = 32
-# results_folder = r'Results\Batch 3 - application bit rates' + '\\'
-
-
-# 4- Test Number of Users and Bandwidths
-# stats_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\MU_10seeds_6bws_4nues" + '\\'
-# seeds = np.arange(1,11)
-# speeds = [3]
-# csi_periodicities = [1]
-# app_bitrates= [75]
-# users = [2,4,6,8]
-# bandwidths = [10, 20, 40, 60, 80, 100] # MHz
-# freq_idxs = [1]
-# trim_secs = 32
-# results_folder = r'Results\Batch 4 - number of users and bandwidths' + '\\'
-
-
-# 5- Test Number of Users and Bandwidths
-# stats_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\NewTracks" + '\\'
-# seeds = np.arange(5,8)
-# speeds = [1, 3, 5]
-# csi_periodicities = [20]
-# app_bitrates= [100]
-# users = [None]
-# bandwidths = [40] # MHz
-# freq_idxs = [1]
-# trim_secs = 16
-# results_folder = r'Results\Batch 5 - testing new tracks' + '\\'
-
-# 6- Test Kappas
-# stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\kappa MLWDF' + '\\'
-# seeds = np.arange(1,11)
-# speeds = [3]
-# csi_periodicities = [20]
-# app_bitrates= [100]
-# users = [None]
-# bandwidths = [40] # MHz
-# kappas = [1, 6, 20]
-# freq_idxs = [0]
-# trim_secs = 16
-# results_folder = r'Results\Batch 6 - kappas and schedulers' + '\\'
-
-# 7- Speed test (yes, again!)
-# stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\LastBatchSpeeds' + '\\'
-# seeds = np.arange(1,21)
-# speeds = [1, 3, 5]
-# csi_periodicities = [20]
-# app_bitrates= [100]
-# users = [None]
-# bandwidths = [40] # MHz
-# freq_idxs = [0] ###################################3 try 1
-# trim_secs = 16
-# results_folder = r'Results\Batch 7 - new tracks speeds' + '\\'
-
 # 8- Latencies (yes, again!)
 stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\LastBatchLatencies' + '\\'
 seeds = [1,2,3,4,5,6,7,9,10,11,12,13,14,16,17,18,19,20]
@@ -132,31 +50,6 @@ freq_idxs = [0, 1]
 trim_secs = 16
 results_folder = r'Results\Batch 12 - filtered latencies' + '\\'
 
-# 9- CSIs (last batch)
-# stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\LastBatchCSIs' + '\\'
-# seeds = np.arange(1,21)
-# speeds = [3]
-# csi_periodicities = [40, 80, 200, 400]
-# app_bitrates= [100]
-# users = [None]
-# bandwidths = [50] # MHz
-# latencies = [10]
-# freq_idxs = [1]
-# trim_secs = 16
-# results_folder = r'Results\Batch 9 - CSIs' + '\\'
-
-# 10- Speeds tests with CSI 50 ms
-# stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\vsSPEED7' + '\\'
-# seeds = [1,2,3]
-# speeds = [3, 7]
-# csi_periodicities = [80]
-# app_bitrates= [100]
-# users = [None]
-# bandwidths = [50] # MHz
-# latencies = [10]
-# freq_idxs = [0,1]
-# trim_secs = 16
-# results_folder = r'Results\Batch 11 - vsSPEED7_csi80' + '\\'
 #----------------------
 
 
@@ -246,12 +139,14 @@ for comb in combinations:
             # stats_name = r'SEED6_SPEED-3_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-40'
             
             my_dir = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Stats' + '\\'
-            stats_name = r'SEED3_SPEED-3_FREQ-1_CSIPER-20_APPBIT-100_USERS-None_BW-50_LATBUDGET-10'
+            stats_name = r'SEED1_SPEED-1_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-50_LATBUDGET-10'
             stats_dir = my_dir + stats_name + '\\'
     
     
     sp = ut.load_var_pickle('sp', stats_dir)
     buffers = ut.load_var_pickle('buffers', stats_dir)
+    power_per_beam = ut.load_var_pickle('power_per_beam', stats_dir)
+    beams_used = ut.load_var_pickle('beams_used', stats_dir)
     
     # Set to True if we just want to compute the PDR!
     getting_results = use_in_loop # Most cases we want them to have the same value 
@@ -269,6 +164,7 @@ for comb in combinations:
         est_dl_interference = ut.load_var_pickle('est_dl_interference', stats_dir)
         scheduled_UEs = ut.load_var_pickle('scheduled_UEs', stats_dir)
         su_mimo_setting = ut.load_var_pickle('su_mimo_setting', stats_dir)
+        power_per_beam = ut.load_var_pickle('power_per_beam', stats_dir)
         
         experienced_signal_power = ut.load_var_pickle('experienced_signal_power', stats_dir)
         channel = ut.load_var_pickle('channel', stats_dir)
@@ -296,7 +192,7 @@ for comb in combinations:
         if use_in_loop:
             last_tti = int(4000 * trim_secs)
         else:
-            last_tti = int(4000 * 1)
+            last_tti = int(4000 * 16)
             
         # automatic:
         first_sec = first_tti * sp.TTI_dur_in_secs
@@ -392,7 +288,10 @@ for comb in combinations:
             dl_interference_est, UEs_scheduled, su_mimo_layers, avg_channel, \
             signal_power, signal_power_prb, channel_per_prb = tuple([None] * 16) 
         
-    
+    beam_powers = np.array(power_per_beam)[first_tti:last_tti]
+    beam_powers = beam_powers[:,:,0,:]
+    beams = np.array(beams_used)[first_tti:last_tti]
+    beams = beams[:,:,0,:]
     # sinr_realised = np.array(realised_SINR)[first_tti:last_tti]
     # sinr_estimated = np.array(estimated_SINR)[first_tti:last_tti]
     # sinr_realised = sinr_realised[:,:,2]
@@ -488,7 +387,7 @@ for comb in combinations:
     # idxs_to_plot = [7.35]
     # idxs_to_plot = [5.4]
     idxs_to_plot = [2, 5.4, 5.6, 5.7, 7.5, 10.9]
-    idxs_to_plot = [0.1]
+    idxs_to_plot = []
     
     # idxs_to_plot = [10.8]
     for i in idxs_to_plot:
