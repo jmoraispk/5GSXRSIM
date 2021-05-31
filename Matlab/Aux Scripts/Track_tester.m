@@ -29,6 +29,7 @@ make_gif(4) = 1;
 for mvnt_val = 3:3  % check the speed here!
     filename = ['Tracks\Track', '_SEED', num2str(SEED), ...
                 '_SPEED', num2str(mvnt_val), '_UE', num2str(n_rx), '.mat'];
+    filename = 'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat';
     l_aux = load(filename).l_aux;
     
     for i = 1:1 % do for up only..

@@ -221,10 +221,14 @@ class Simulation_parameters:
         # choice of GoB
         self.save_power_per_CSI_beam = True
         
+        # Instead of checking which is the best beam through a loop, 
+        # create matrices and multiply them. For some sizes of the grid and
+        # number of antennas, it may yield better computational performance.
+        self.vectorize_GoB = False
+        
             
     def set_io_param(self, folder_to_load):
         # #################### IO Files & Names ##############################
-        
         
         self.curr_path = str(pathlib.Path().absolute())
         self.matlab_folder = self.curr_path + '\\Matlab\\'
