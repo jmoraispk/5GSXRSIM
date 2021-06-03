@@ -12,7 +12,7 @@ import numpy as np
 # %matplotlib inline
 
 import utils as ut
-import plots_functions_copy as plt_func_copy
+import plots_functions as plt_func
 
 
 """
@@ -209,7 +209,7 @@ for file_set in file_sets:
     # None when they need to be computed again. And we decide when that's 
     # suppose to happen based on the three variables above and two temp. below
     (sim_data_loaded, sim_data_trimmed, sim_data_computed) = \
-        plt_func_copy.init_sim_data(sim_data_loaded, sim_data_trimmed, 
+        plt_func.init_sim_data(sim_data_loaded, sim_data_trimmed, 
                                     sim_data_computed, VARS_NAME_LOAD, 
                                     VARS_NAME_COMPUTE, ttis, file_set, 
                                     file_set_temp, ttis_temp,
@@ -334,17 +334,17 @@ X   11.3  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
     for i in idxs_to_plot:
         print(f'Plotting {i}')
         
-        which_vars_to_load = plt_func_copy.get_vars_to_load(i, VARS_NAME_LOAD)
+        which_vars_to_load = plt_func.get_vars_to_load(i, VARS_NAME_LOAD)
         
         which_vars_to_compute = \
-            plt_func_copy.get_vars_to_compute(i, VARS_NAME_COMPUTE)
+            plt_func.get_vars_to_compute(i, VARS_NAME_COMPUTE)
         
         # Load data
-        plt_func_copy.load_sim_data(file_set, VARS_NAME_LOAD, 
+        plt_func.load_sim_data(file_set, VARS_NAME_LOAD, 
                                     which_vars_to_load, sim_data_loaded)
         
         # Trim data 
-        plt_func_copy.trim_sim_data(sim_data_loaded, sim_data_trimmed, 
+        plt_func.trim_sim_data(sim_data_loaded, sim_data_trimmed, 
                                     VARS_NAME_LOAD, which_vars_to_load, 
                                     file_set, trim_ttis)
         
@@ -357,7 +357,7 @@ X   11.3  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
         if multi_trace:
             raise Exception('not ready yet...')
         
-        plt_func_copy.compute_sim_data(i, ues, ttis, VARS_NAME_LOAD, 
+        plt_func.compute_sim_data(i, ues, ttis, VARS_NAME_LOAD, 
                                        VARS_NAME_COMPUTE, which_vars_to_compute, 
                                        which_vars_to_load, 
                                        sim_data_trimmed, sim_data_computed,
@@ -366,7 +366,7 @@ X   11.3  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
         # SEE HOW LONG 2.1 (I THINK) takes to load, trim, compute and plot.
         
         # Plots:
-        plt_func_copy.plot_sim_data(i, file_set, ues, ttis, x_vals, 
+        plt_func.plot_sim_data(i, file_set, ues, ttis, x_vals, 
                                     sim_data_trimmed, sim_data_computed,
                                     results_filename,
                                     base_plots_folder, save_plots)
