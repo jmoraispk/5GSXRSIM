@@ -207,7 +207,6 @@ for seed in seeds:
                     print(f'Backup of instance {inst_running[inst_done_idx]} '
                           f'logfile complete.')
             
-            print('GOT HERE?!')
             if (len(inst_running) < sp.n_inst_running_parallel and
                 last_instance_started < sp.last_instance):
                 # Start a new one:

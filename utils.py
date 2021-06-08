@@ -372,6 +372,11 @@ def make_py_list(dim, siz):
             
         return l
 
+def elementwise_comparison_loop(l1, l2):
+    for i in range(min(len(l1), len(l2))):
+        if l1[i] != l2[i]:
+            return False
+    return len(l1) == len(l2)
 
 """
 For Fun:
@@ -405,21 +410,17 @@ def flex(percentages=False):
     
     matlab_aux_func_dir = working_dir + '\\Matlab\\Aux Functions'
     
-    
-    # TODO: include Aux Scripts folder
-    
-    # Let us not count auxiliar scripts...
-    # matlab_aux_script_dir = working_dir + '\\Matlab\\Aux Scripts'
+    matlab_aux_script_dir = working_dir + '\\Matlab\\Aux Scripts'
     
     aux_funcs_files = list(os.walk(matlab_aux_func_dir))[0][2]
-    # aux_scripts_files = list(os.walk(matlab_aux_script_dir))[0][2]
+    aux_scripts_files = list(os.walk(matlab_aux_script_dir))[0][2]
     
     matlab_main_count = rawcount(matlab_main_func_path)
     matlab_aux_func_total = sum(rawcount(f"{matlab_aux_func_dir}\\{f}") 
                                 for f in aux_funcs_files)
-    matlab_aux_script_total = 0
-    # sum(rawcount(f"{matlab_aux_script_dir}\\{f}") 
-    #                               for f in aux_scripts_files)
+    matlab_aux_script_total = \
+        sum(rawcount(f"{matlab_aux_script_dir}\\{f}") 
+            for f in aux_scripts_files)
     
     matlab_aux_total_sum = matlab_aux_func_total + matlab_aux_script_total
     

@@ -69,7 +69,6 @@ if flow_control <= 2
     
     %%%%%%%%%%%%%%%%%%%%%%%% General Parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%
     progress_bars = 1;
-    estimate_simulation_load = 0;
     turn_off_positions = 0;
     turn_off_orientations = 0;
     get_full_freq_response = 1;
@@ -79,8 +78,7 @@ if flow_control <= 2
     aggregate_full_channel_time_domain = [1,1];
     aggregate_coeffs_in_freq = [0,0];
     
-    
-    estimate_simulation_load = 0;
+    backup_pos_and_ori = 1;
     variability_check = 0;
     visualize_clusters = 0;
     
@@ -127,8 +125,6 @@ if flow_control <= 2
     %which does not happen. Thus, the warning is passible of being ignored.
     
     base_update_rate = 1e-3; % update rate of the base numerology - num0.
-    
-    
     
     % If the final update rate is to be derived from the numerology:
     time_compression_ratio = 1;
@@ -908,19 +904,7 @@ if flow_control <= 2
     
     % calculate amount of snapshots in the simulation (final calculation)
     sim_duration_snapshot = round(simulation_duration/update_rate);
-    
-    %%%%%%%%%%%%% Other %%%%%%%%%%%%
-    if estimate_simulation_load
-        memory_req = prod([n_tx n_rx ...
-                           sum(user_ante_config) sum(bs_ant_config) ...
-                           n_prb simulation_duration/update_rate]);
-        memory_req = memory_req * 2 * 8 / 2^30; % ~GB
-        disp(['It should occupy ', num2str(round(memory_req,2)), ... 
-             'GB of memory and take a lifetime to compute.']);
-        time_req = memory_req / 0.005; %~5MB/s 
-        disp(['Or around ', num2str(time_req), ' seconds.']);
-    end
-    
+        
     %%Creating simulation parameters
     sim_param = qd_simulation_parameters;
     sim_param.show_progress_bars = progress_bars;
@@ -976,6 +960,11 @@ if flow_control <= 2
                       staring_param, speaking_avg_time, debug_mode, ...
                       simulation_duration, extra_sample, segment_info, ...
                       turn_off_orientations, turn_off_positions)
+    end
+    
+    % Copy Positions and Orientations (for analysis in Python)
+    if backup_pos_and_ori
+        backup_positions_and_orientations(l, mother_folder);
     end
 
     if debug_mode(2)

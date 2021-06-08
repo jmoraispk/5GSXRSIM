@@ -127,7 +127,7 @@ for param in sim_params:
       
     # Setup Application Traffic Model
     user_buffers = []
-    cam_buffers = []
+    # cam_buffers = [] # we assume cameras are wired.
     packet_sequences_DL = [0] * sp.n_phy
     # Compute offsets to space out user I frames.
     if sp.uniformly_space_UE_I_frames:
@@ -167,11 +167,14 @@ for param in sim_params:
     # Merge user and camera buffers in general variable buffers.
     buffers = user_buffers # + cam_buffers
 
-    # TODO: make distinction between UL and DL buffers instead of user and camera
-    #       a user can be UL as well... This distinction allows that
-    # UL_buffers = cam_buffers
-    # DL_buffers = user_buffers
-    # And implement the differences across the simulator
+    # Note: UEs can be both UL and DL. A better way to call buffers would be
+    #       UL and DL. However, for our application, we consider UEs that only
+    #       UL and UEs that only DL. Furthermore, the UL is wired. Nonetheless,
+    #       if UL is used in the future, do:
+    #       UL_buffers = cam_buffers
+    #       DL_buffers = user_buffers
+    #       And don't forget to complement across the simulator.
+    
     
     if sp.n_prb > 1: 
         # Load into Memory the full information bits table necessary for MIESM
@@ -180,17 +183,16 @@ for param in sim_params:
         info_bits_table = None
     
     # Load into Memory the BS precoders
-    # Note: there are only precoders in the DL. UL is computed implicitly
+    # Note: there are only precoders in the DL. 
+    #        UL is computed implicitly with MR, see find_best_beam in sls.py
 
     # Dictionary indexed by a tupple of bs and a given angle
-    precoders_dict = sls.load_precoders(sp.precoders_paths)
+    precoders_dict = sls.load_precoders(sp.precoders_paths, sp.vectorize_GoB)
     
     # In the precoders_folder there should be files with the
     # sp.precoder_file_prefix for the correct antennas 
     
-
-
-
+    
     # System Level Simulator (SLS) part
     
     # Each UE has a precoder list, each having n_layers of beam_pairs, which
@@ -210,8 +212,8 @@ for param in sim_params:
     
     # Per TTI:
     #   Per user:
-    #     - estimated SINR
-    #     - realised SINR
+    #     - estimated SINR [dB]
+    #     - realised SINR [dB]
     #     - estimated bits to send (possible to derive MCS from here)
     #     - bits sent
     #     - transport blocks that had transmission errors
@@ -237,35 +239,20 @@ for param in sim_params:
     real_dl_interference = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, 
                                                sp.n_layers])
     
-    # Estimated and Realised Interferences and Signal Powers [Uplink]
-    # est_ul_interference = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, 
-    #                                              sp.n_layers])
-    # rel_ul_interference = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, 
-    #                                              sp.n_layers])
-        
-    
     olla = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     mcs_used = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
-    
-    
     su_mimo_bitrates = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue])
     est_su_mimo_bitrate = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    
     ue_priority = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     all_delays = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     scheduled_UEs = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     scheduled_layers = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    # And the variables that are not to save:
     su_mimo_setting = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     realised_bits = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
-    
     realised_bitrate_total = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    
     avg_bitrate = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    
     blocks_with_errors = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, 
                                              sp.n_layers])
-    
     estimated_SINR = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
     realised_SINR = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
     
@@ -274,12 +261,12 @@ for param in sim_params:
     
     
     if sp.save_per_prb_variables:
-        sig_pow_in_prb = ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers,
+        sig_pow_per_prb = ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers,
                                              sp.n_prb])
-        channel_per_prb = None
+        channel_per_prb = [] # ut.make_py_list(3, [sp.n_ue, sp.sim_TTIs])
     else:
-        sig_pow_in_prb = None
-        channel_per_prb = None # ut.make_py_list(3, [sp.n_ue, sp.sim_TTIs])
+        sig_pow_per_prb = []
+        channel_per_prb = []
     
     
     sp.load_gob_params(precoders_dict)
@@ -287,15 +274,11 @@ for param in sim_params:
         power_per_beam = ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers, 
                                              sp.gob_n_beams])
     else:
-        power_per_beam = None 
+        power_per_beam = []
     
     channel = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     experienced_signal_power = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    
-    # NOTE: only SINRs are in dB.
-    
     n_transport_blocks = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
-    
     
     
     # The schedule is a list of Schedule_entries.
@@ -449,7 +432,7 @@ for param in sim_params:
                                  curr_beam_pairs, last_csi_tti, 
                                  precoders_dict, coeffs, last_coeffs, 
                                  sp.n_layers, sp.n_csi_beams, power_per_beam,
-                                 sp.save_power_per_CSI_beam)
+                                 sp.save_power_per_CSI_beam, sp.vectorize_GoB)
         
         # From here onwards, we know what precoders are best for each UE, 
         # per layer. This has been verified with LoS simulations, print below
@@ -492,9 +475,6 @@ for param in sim_params:
             # Given that some UEs are only for UL and others are only for DL
             schedulable_UEs_dl = [ue for ue in schedulable_UEs 
                                   if ue < sp.n_phy]
-            
-            # schedulable_UEs_ul = [ue for ue in schedulable_UEs 
-            #                       if ue >= sp.n_phy]
         
         # Continuation of scheduling step
         if tti % sp.scheduling_period == 0 and len(schedulable_UEs_dl) == 0:
@@ -511,12 +491,11 @@ for param in sim_params:
             # with a single bs it is the same for all UEs
             serving_BS_dl = [0 if ue in schedulable_UEs_dl else -1
                              for ue in range(sp.n_phy)]
-            # serving_BS_ul = [0 for ue in schedulable_UEs_ul]
             
             #-------------------------------
             
             # 3- Select the best SU-MIMO setting: 1 layer or 2 layers
-            # DOWNLINK:
+            # For DL:
             sls.su_mimo_choice(tti, tti_for_scheduling, sp.bs_max_pow, 
                                schedulable_UEs_dl, serving_BS_dl, 
                                sp.n_layers, sp.n_prb, 
@@ -586,7 +565,7 @@ for param in sim_params:
                            sp.use_olla, sp.bler_target, sp.olla_stepsize, 
                            blocks_with_errors, realised_SINR, 
                            sp.TTI_dur_in_secs, realised_bitrate_total, 
-                           beams_used, sig_pow_in_prb, mcs_used, 
+                           beams_used, sig_pow_per_prb, mcs_used, 
                            sp.save_per_prb_variables, experienced_signal_power)
         
         # TODO: solve this. Determine whether the current 'reaction' to picking
@@ -693,8 +672,8 @@ for param in sim_params:
         
         # Variables that take the most memory: they are always saved,
         # but when sp.save_per_prb_variables is False, they are None
-        ut.save_var_pickle(sig_pow_in_prb, stats_dir, globals_dict)        
-        ut.save_var_pickle(channel_per_prb, stats_dir, globals_dict)
+        ut.save_var_pickle(sig_pow_per_prb, sp.stats_path, globals_dict)        
+        ut.save_var_pickle(channel_per_prb, sp.stats_path, globals_dict)
         
         # If we are debugging GoBs and we need the power of each CSI beam
         # (is none when sp.save_power_per_CSI_beam is False)

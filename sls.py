@@ -820,7 +820,10 @@ def update_channel_vars(tti, TTIs_per_batch, n_ue, coeffs, channel,
             channel[ttis[t_idx]][ue] = \
                 10 * np.log10(np.sum(np.mean(np.abs(c[:,:,:,t_idx]) ** 2, 2)))
         
-            if save_prb_vars and channel_per_prb != None:
+            # The second check is to prevent this to run before it is properly
+            # implemented and tested. The save_prb_vars should be enough.
+            # PS: actually, separate in channel and sig_pow vars to be specific
+            if save_prb_vars and channel_per_prb != []:
                 channel_per_prb[ttis[t_idx]][ue] = 10 * \
                     np.log10(np.sum(np.sum(np.abs(c[:,:,:,t_idx]) ** 2, 0), 0))
 
@@ -867,7 +870,7 @@ Precoder related functions.
 """
 
 
-def load_precoders(precoders_paths):
+def load_precoders(precoders_paths, vectorize_GoB):
     """
     Creates a dictionary of base stations and angles, based on the precoder
     files. 
@@ -887,7 +890,7 @@ def load_precoders(precoders_paths):
         n_azi_vals = len(azi_vals)
         n_el_vals = len(el_vals)
         
-        # Store, along wiht the precoders, angle information
+        # Store angle information along with the precoders
         precoder_dict[(bs)] = [n_azi_vals, n_el_vals]
         precoder_dict[(bs, 'azi_vals')] = azi_vals
         precoder_dict[(bs, 'el_vals')] = el_vals
@@ -897,7 +900,18 @@ def load_precoders(precoders_paths):
             for el_idx in range(n_el_vals):
                 precoder_dict[(bs, azi_idx, el_idx)] = \
                     precoders[azi_idx, el_idx, :]
-                    
+        
+        if vectorize_GoB:
+            # If the GoB is vectorized, create the full precoder matrix 
+            # AE_BS x N_GoB, where N_GoB is the number of beams in the grid
+            n_beams = np.prod(precoder_dict[(bs)])
+            precoder_dict[(bs, 'full-matrix')] = np.zeros()
+            for azi_idx in range(n_azi_vals):
+                for el_idx in range(n_el_vals):
+                    beam_idx = el_idx + azi_idx * n_el_vals
+                    precoder_dict[(bs, 'full-matrix')][:, beam_idx] = \
+                        precoder_dict[(bs, azi_idx, el_idx)]
+        
     return precoder_dict
     
 
@@ -1024,7 +1038,7 @@ def interleave(arrays, axis=0, out=None):
 
 
 def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
-                         save_power_per_CSI_beam):
+                         save_power_per_CSI_beam, vectorize):
     """
     Given a precoder dictionary, and a channel response, and a bs index, 
     returns index pair for the best precoder for that channel (highest absolute
@@ -1040,66 +1054,93 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
             # last element of the list in case it already has n_best beams in
             # it. 
     
+    
+    # Rule of Thumb: always normalise precoders before using them.
+    # Sometimes the precoder is a beam steering vector and is makes
+    # no difference since the weights all have the same absolute 
+    # value leading to |w|=1, but some other times it is not the 
+    # case. Moreover, since normalization is a projection, the already 
+    # normalized vectors won't suffer any change.
+    
+    
     # The channel response is a square matrix of AE_UE x AE_BS
     
     [azi_len, el_len] = precoder_dict[bs]
-    
-    ########3
     # azi_vals = precoder_dict[(bs, 'azi_vals')]
     # el_vals = precoder_dict[(bs, 'el_vals')]
     
-    ########33
-    curr_max_ch_gain = 0
+    matrix_instead_of_loop = False
     
-    power_per_beam_list = []
-    
-    # Loop over all angles to find the best precoder
-    for azi_idx in range(azi_len):
-        for el_idx in range(el_len):
-            w = precoder_dict[(bs, azi_idx, el_idx)]
-            if n_layers == 1:
-                w = interleave([w,w])
+    if matrix_instead_of_loop:
+        # create macro channel matrix (AE_UE x N_GOB) x AE_BS
+        H = np.vstack(ch_resp)
+        
+        # get full codebook
+        W = precoder_dict[(bs, 'all')]
+        
+        # assume * means the dot product (Although in Python it doesn't!!!)
+        # W_UE = (H*W)^H/|H*W|
+        # W_UE * H * W = |H*W| = channel gain
+        
+        ch_gains_matrix = abs(np.dot(H, W))
+        # IF DOESN'T WORK: try to compute the hermitian and multiply both.
+        
+        list_of_ch_gains = np.diag(ch_gains_matrix)
+        
+        # Compute best beam pair detailed information
+        best_beam_idx = np.argmax(list_of_ch_gains)
+        best_azi_idx = np.floor(best_beam_idx / 11).astype(int)
+        best_el_idx = best_beam_idx % 11
+        curr_max_ch_gain = abs(list_of_ch_gains[best_beam_idx])
+        
+        w_bs = W[:, best_beam_idx]
+        w_ue = np.dot(ch_resp, w_bs).conj().T
+        w_ue = w_ue / np.linalg.norm(w_ue)
             
-            # print(f'Azi idx: {azi_idx}; El_idx = {el_idx}; '
-            #       f'Norm = f{np.linalg.norm(w)}')
-            w = w / np.linalg.norm(w)
-
-            # print(w)
-            # if azi_idx > 1:
-            #     ut.stop_execution()
+        best_ue_weights = w_ue
+        best_bs_weights = w_bs
                 
-            # Rule of Thumb: always normalise precoders before using them.
-            # Sometimes the precoder is a beam steering vector and is makes
-            # no difference since the weights all have the same absolute value
-            # leading to |w|=1, but some other times it is not the case and
-            # we will never know where to look
-            
-            # Compute internal product between ch coeffs and precoder, 
-            # that is what the UE will see from a transmission with w
-            at_ue_ant = np.dot(ch_resp, w)
-            
-            # The UE will use the Maximum Ratio Combining/Transmission Precoder
-            mr_precoder = at_ue_ant.conj().T
-            mr_precoder = mr_precoder / np.linalg.norm(mr_precoder)
-            
-            # Resulting in a amplitude channel gain of:
-            ch_gain = np.dot(at_ue_ant, mr_precoder)
-            
-            # ang = [azi_vals[azi_idx], el_vals[el_idx]]
-            # print(f'Ang = [{azi_vals[azi_idx]}, {el_vals[el_idx]}]')
-            
-            # The channel gain should be a scalar by now...
-            # Save the precoder that performs the best
-            
-            if abs(ch_gain) > curr_max_ch_gain:
-                best_azi_idx = azi_idx
-                best_el_idx = el_idx
-                curr_max_ch_gain = abs(ch_gain)
-                best_ue_weights = mr_precoder
-                best_bs_weights = w
-            
-            if save_power_per_CSI_beam:
-                power_per_beam_list.append(abs(ch_gain))
+        if save_power_per_CSI_beam:
+            power_per_beam_list = list_of_ch_gains
+    else:
+        
+        curr_max_ch_gain = 0
+        
+        power_per_beam_list = []
+        
+        # Loop over all angles to find the best precoder
+        for azi_idx in range(azi_len):
+            for el_idx in range(el_len):
+                w = precoder_dict[(bs, azi_idx, el_idx)]
+                if n_layers == 1:
+                    w = interleave([w,w])
+                
+                w = w / np.linalg.norm(w)
+                
+                # Compute internal product between ch coeffs and precoder, 
+                # that is what the UE will see from a transmission with w
+                at_ue_ant = np.dot(ch_resp, w)
+                
+                # The UE will use the Maximum Ratio Beamformer, 
+                # both for receiving and for transmitting
+                mr_precoder = at_ue_ant.conj().T
+                mr_precoder = mr_precoder / np.linalg.norm(mr_precoder)
+                
+                # Resulting in a amplitude channel gain of:
+                ch_gain = np.dot(at_ue_ant, mr_precoder)
+                
+                # The channel gain should be a scalar by now...
+                # Save the precoder that performs the best
+                
+                if abs(ch_gain) > curr_max_ch_gain:
+                    best_azi_idx = azi_idx
+                    best_el_idx = el_idx
+                    curr_max_ch_gain = abs(ch_gain)
+                    best_ue_weights = mr_precoder
+                    best_bs_weights = w
+                
+                if save_power_per_CSI_beam:
+                    power_per_beam_list.append(abs(ch_gain))
     
     
     # Create and load the best Beam Pair found
@@ -1121,13 +1162,12 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
 
 def update_precoders(bs, ue, curr_beam_pairs, precoder_dict, curr_coeffs, 
                      last_coeffs, tti_csi, n_layers, n_csi_beams, 
-                     power_per_beam, save_power_per_CSI_beam):
+                     power_per_beam, save_power_per_CSI_beam, vectorize):
     
     """
     For a BS-UE pair, compute the best beam per polarisation.
     This can be done independently of the beam at the ue side. 
     After finding the best pair, update
-    
     """
     
     # tti_csi is the tti relative to the coefficients from where the csi
@@ -1151,7 +1191,7 @@ def update_precoders(bs, ue, curr_beam_pairs, precoder_dict, curr_coeffs,
         (best_beam_pairs, power_per_beam[l]) = \
             find_best_beam_pairs(precoder_dict, mean_coeffs[l], 
                                  bs, n_csi_beams, n_layers, 
-                                 save_power_per_CSI_beam)
+                                 save_power_per_CSI_beam, vectorize)
             
         beam_list.append(best_beam_pairs)
         curr_beam_pairs[(bs,ue,l)].beam_list = beam_list[l]
@@ -1609,7 +1649,7 @@ def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs,
                          curr_beam_pairs, last_csi_tti, 
                          precoders_dict, coeffs, last_coeffs, 
                          n_layers, n_csi_beams, power_per_beam,
-                         save_power_per_CSI_beam):
+                         save_power_per_CSI_beam, vectorize):
     
     for ue in active_UEs[tti]:
         for bs in range(n_bs):
@@ -1628,7 +1668,8 @@ def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs,
                                  n_layers,
                                  n_csi_beams,
                                  power_per_beam[tti][ue],
-                                 save_power_per_CSI_beam)
+                                 save_power_per_CSI_beam,
+                                 vectorize)
                 
                 for l in range(n_layers):
                     curr_beam_pairs[(bs, ue, l)].last_updated = tti
@@ -1884,7 +1925,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                    info_bits_table, buffers, n_transport_blocks, realised_bits, 
                    olla, use_olla, bler_target, olla_stepsize, 
                    blocks_with_errors, realised_SINR, TTI_dur_in_secs, 
-                   realised_bitrate_total, beams_used, sig_pow_in_prb, 
+                   realised_bitrate_total, beams_used, sig_pow_per_prb, 
                    mcs_used, save_per_prb_variables, experienced_signal_power):
     
     for entry in curr_schedule[slot_type]:
@@ -1943,7 +1984,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                                   ch_matrix)
             
             if save_per_prb_variables:
-                sig_pow_in_prb[tti][entry.ue][entry.layer_idx][prb] = \
+                sig_pow_per_prb[tti][entry.ue][entry.layer_idx][prb] = \
                     sig_pow_of_prb[prb]
                 
             
@@ -1956,10 +1997,8 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
         # We can store all power for a UE like this because there's only
         # one layer:
         experienced_signal_power[tti][entry.ue] = np.mean(sig_pow_of_prb[prb])
-        # Update realised interference
         
-        # TODO: the interference needs to be updated for everyone! 
-        # not just the scheduled ones
+        # Update realised interference
         real_dl_interference[tti][entry.ue][entry.layer_idx] = \
             sum(interference_pow_per_prb)
         

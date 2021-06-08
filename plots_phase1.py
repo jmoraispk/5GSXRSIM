@@ -4,428 +4,377 @@ Created on Wed Nov 25 13:39:35 2020
 
 @author: Morais
 """
+import itertools
 
 import numpy as np
 
 # %matplotlib auto
 # %matplotlib inline
 
-import itertools
 import utils as ut
 import plots_functions as plt_func
 
-# TODO: merge this file with multitrace plot
-#       there's a feature there that would be very useful here for obtaining
-#       results faster, the selective loading feature. Here, all variables are
-#       loaded even if we only want to compute things related with one of them
-#       there, for most variables, depending on the plots we want to make, only
-#       the necessary variables are loaded from the statistics folder.
 
 """
-Strategy: 
-    1- Make sure the loop is printing the directories in the correct order;
-    2- Several things must match between plot_looper and sls_plot:
-        2.1 - "last_stats_folder" - the folder where the directory to load is 
-               written. If we are doing this for multiple stats file 
-               simultaneously, the folder needs to be different when we run
-               this script or else when the reading time comes, 
-    
-    
+There are just 3 ways of expanding this script:
+    1- To add a new variable to be loaded (needs trimming as well)
+    2- To add a new variable to be computed.
+    3- To add a new plot based on the existing variables.
+
+See the example below of a complete case that illustrates the 3 expansions:
+
+    Objective: 1- extract a new variable from the simulation, say measure_x
+               2- compute the average of measure_x of the last second
+               3- plot the avg_meas_x across time, for every UE.
+             
+------------------------------------------------------------------------------- 
+             
+To add a new statistic to be collected:
+1- .... add to the end of VARS_TO_LOAD the name of that variable.
+
+
+( see whether the description of each index is better here or somewhere else, 
+ and fetched with a function.)
+
+
+To add a new plot index:
+1- add what variables need to be loaded in get_vars_to_load(). See the 
+   meaning of each code in the VARS_TO_LOAD variable in this file.
+2- add what variables need to be computed in get_vars_to_compute()
+   Note: if there is a variable that can be used for many different plots,
+   it needs to be added here. Give it a new name, like "avg_across_traces",
+   and add it to the end of VARS_TO_COMPUTE. From now on, sim_data_computed
+   will have the results of that variable at the index it has on 
+   VARS_TO_COMPUTE.
+3- ... add the computation method...... somewhere..
 """
-# This variable tells us whether we are running in a loop or independently.
-use_in_loop = False
+
+# When doing data analysis, we can avoid repeating many steps. However, 
+# when implementing something new in LOADING, TRIMMING OR COMPUTING, the 
+# data should be reloaded, retrimmed or recomputed. And note that when
+# data is reloaded, it should be retrimmed and recomputed as well, but
+# when is only recomputed, the loading and trim processes can be reused.
+
+# When True, all the required variables are always loaded, trimmed or 
+# computed, respectively, unconditional of being there already. Put to False 
+# the step where implementation is occurring. It's almost always in computation
+always_load = True
+always_trim = True 
+always_compute = True
+
 
 
 #-------------------------
-# 8- Latencies (yes, again!)
-stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\LastBatchLatencies' + '\\'
-seeds = [1,2,3,4,5,6,7,9,10,11,12,13,14,16,17,18,19,20]
-speeds = [3]
+stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Stats' + '\\'
+seeds = [1]
+speeds = [1]
 csi_periodicities = [20]
 app_bitrates= [100]
 users = [None]
 bandwidths = [50] # MHz
-latencies = [5, 10, 20, 30, 40, 50]
-freq_idxs = [0, 1]
-trim_secs = 16
-results_folder = r'Results\Batch 12 - filtered latencies' + '\\'
+latencies = [10]
+freq_idxs = [0]
+results_folder = r'Results\Batch X - testing' + '\\'
+
+trim_ttis = [20, 4000 * 1]
+TTI_dur_in_secs = 0.25e-3
+
+ttis = np.arange(trim_ttis[0], trim_ttis[1])
+x_vals = ttis * TTI_dur_in_secs
+
+
+# From the simulated UEs, which UEs do we want to plot?
+ues = [i for i in range(4)]
+
 
 #----------------------
 
+multi_trace = 0
 
-if not use_in_loop:
-    results_filename = ''
-    ut.stop_execution() # No need to continue this cell.
-
-
-# combinations = list(itertools.product(speeds, freq_idxs, 
-#                                       csi_periodicities, app_bitrates, seeds))
-    
 combinations = list(itertools.product(speeds, freq_idxs, 
                                       csi_periodicities, app_bitrates,
                                       users, bandwidths, latencies, seeds))
 
-# combinations = list(itertools.product(speeds, freq_idxs, 
-#                                       csi_periodicities, app_bitrates,
-#                                       users, bandwidths, kappas, seeds))
+
+# the variables to be loaded at each position of sim_data_(loaded/trimmed)
+# NOTE: ALWAYS ADD VARIABLES AT THE END!!
+VARS_NAME_LOAD = ['sp',                       #  0 
+                  'buffers',                  #  1 
+                  'realised_SINR',            #  2 
+                  'estimated_SINR',           #  3 
+                  'realised_bitrate_total',   #  4 
+                  'blocks_with_errors',       #  5 
+                  'n_transport_blocks',       #  6 
+                  'beams_used',               #  7
+                  'olla',                     #  8
+                  'mcs_used',                 #  9
+                  'experienced_signal_power', # 10
+                  'sig_pow_per_prb',          # 11
+                  'real_dl_interference',     # 12
+                  'est_dl_interference',      # 13
+                  'su_mimo_setting',          # 14
+                  'scheduled_UEs',            # 15
+                  'channel',                  # 16
+                  'channel_per_prb',          # 17
+                  '']
+
+# Variable names that can be computed from the loaded and trimmed variables
+VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
+                     'running_avg_bitrate',               # 1
+                     'rolling_avg_bitrate',               # 2
+                     'instantaneous_bler',                # 3
+                     'running_avg_bler',                  # 4
+                     'signal_power_db',                   # 5
+                     'signal_power_prb_db',               # 6
+                     'real_interference_db',              # 7
+                     'est_interference_db',               # 8
+                     'beam_formula_simple',               # 9
+                     'beam_sum',                          # 10
+                     'freq_vec',                          # 11
+                     'frames',                            # 12
+                     'I_frames',                          # 13
+                     'avg_packet_lat',                    # 14
+                     'avg_packet_drop_rate',              # 15
+                     'avg_pck_lat_per_frame',             # 16
+                     'avg_pck_drop_rate_per_frame',       # 17
+                     'avg_pck_lat_per_I_frame',           # 18
+                     'avg_pck_lat_per_P_frame',           # 19
+                     'avg_pck_drop_rate_per_I_frame',     # 20
+                     'avg_pck_drop_rate_per_P_frame',     # 21
+                     'avg_pck_lat_per_frame_in_gop',      # 22
+                     'avg_pck_drop_rate_per_frame_in_gop',# 23
+                     'count_ues_scheduled',               # 24
+                     'count_ues_bitrate',                 # 25
+                     'beam_formula_processed',            # 26
+                     'gop_idxs',                          # 27
+                     'avg_sinr',                          # 28
+                     'avg_sinr_multitrace',               # 29
+                     '']
+
+# file_sets has the sets of files to load at any given time.
+# e.g. if we want to make a plot for each seed, we just want to load one seed
+#      at a time. But if we want to make a plot that is the average of 3 seeds
+#      we need to load those 3 seeds to compute the average.
+file_sets = []
+
+
+# Create the file set combinations from the variables given previously
 
 for comb in combinations:
 
-    # stats_dir_end = f'SEED{comb[4]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
-    #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}' + '\\'
-                    
     stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
                     f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
                     f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
-                    
-                    
-    # stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
-    #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
-    #                 f'USERS-{comb[4]}_BW-{comb[5]}_KAPPA-{comb[6]}' + '\\'
                     
     print(f'\nDoing for: {stats_dir_end}')
     
     stats_dir = stats_folder + stats_dir_end
     
-    
-    if use_in_loop:
-        extra_str = f'_f{comb[1]}_{trim_secs}s'
-    else:
-        extra_str = ''
+    # Can't recal what this is for...
+    # if use_in_loop:
+    #     extra_str = f'_f{comb[1]}_{trim_ttis}s'
+    # else:
+    #     extra_str = ''
         
-    results_filename = results_folder + 'results' + extra_str
+    results_filename = results_folder + 'results' # + extra_str
     
     if not ut.isdir(results_folder):
         ut.makedirs(results_folder)    
     
-    #%%
-    """
-    The file, from here onwards, can is for single-trace plots. 
-    The plan is:
-        1- generate different frequencies at the same time: we have reached a
-           point where it takes longer to setup generations and to generate 
-           separate builders than to run a less optimal configuration. Therefore,
-           we generate all frequencies in the same trace;
-        2- simulate different frequencies and different SEEDS separately, thus
-           creating different stats files;
-        3- It is based on those stats files that we make our analysis, so they 
-           need to be named properly in order to differentiate SEEDS, frequencies,
-           time divisions, simulation durations, etc... otherwise the traces
-           probably should not be compared.
-        4- Use this file to analyse one trace extensively;
-        5- Use sls_plot_multitrace.py to agglomerate and compute statistics across
-           different traces.
-    """
+    file_sets.append(stats_dir)
+
+# File Sets is supposed to be a list of sets of files, 
+# or a list of lists of files. How the sets are created depends on our
+# multi-trace configurations. For single trace, there is only one set of files.
+file_sets = [file_sets]
+
+##############################################################################    
     
+for file_set in file_sets:
     
-    # Work around to avoid computing the variables multiple times... ignore. 
-    stats_dir_temp = ''
-    first_tti_temp = 0
-    last_tti_temp = 0
-    instantaneous_bler, running_avg_bler, beam_formula, avg_lat, drop_rate, \
-        frames, n_frames, I_frames, running_avg_bitrate, rolling_avg_bitrate = \
-            tuple([None] * 10) 
+    # For the very first run and they don't exist, initialise
+    try:
+        sim_data_loaded
+    except NameError:
+        sim_data_loaded = []
+        sim_data_trimmed = []
+        sim_data_computed = []
+        
+        # To know when things need to be reloaded or retrimmed
+        file_set_temp = ['']
+        ttis_temp = np.array([0,0])
     
-    # Loading variables step
+    # INIT SIM DATA: all sim_data are [trace_idx][variable_idx]
+    # This function is where most of the efficiency lies: we set variables to 
+    # None when they need to be computed again. And we decide when that's 
+    # suppose to happen based on the three variables above and two temp. below
+    (sim_data_loaded, sim_data_trimmed, sim_data_computed) = \
+        plt_func.init_sim_data(sim_data_loaded, sim_data_trimmed, 
+                                    sim_data_computed, VARS_NAME_LOAD, 
+                                    VARS_NAME_COMPUTE, ttis, file_set, 
+                                    file_set_temp, ttis_temp,
+                                    always_load, always_trim, always_compute)
     
-    # To get the last stats directory (required if use_in_loop is True)
-    open_last = False
-    if not use_in_loop:
-        if open_last:
-            with open("last_stats_folder.txt", 'r') as fh:
-                stats_dir = fh.readline()
-        else:
-            # my_dir = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv2\Stats\NewTracks' + '\\'
-            # stats_name = r'SEED6_SPEED-3_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-40'
+    file_set_temp = file_set
+    ttis_temp = ttis
+    
+    # Only sim_data_trimmed is plotted. Some variables of sim_data_loaded 
+    # don't need to be trimmed but are copied for convenience (sp and buffers)
+    
+    # See if the file to use is the last one simulated
+    if file_set == ['']: 
+        with open("last_stats_folder.txt", 'r') as fh:
+            file_set = [fh.readline()]
             
-            my_dir = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Stats' + '\\'
-            stats_name = r'SEED1_SPEED-1_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-50_LATBUDGET-10'
-            stats_dir = my_dir + stats_name + '\\'
-    
-    
-    sp = ut.load_var_pickle('sp', stats_dir)
-    buffers = ut.load_var_pickle('buffers', stats_dir)
-    power_per_beam = ut.load_var_pickle('power_per_beam', stats_dir)
-    beams_used = ut.load_var_pickle('beams_used', stats_dir)
-    
-    # Set to True if we just want to compute the PDR!
-    getting_results = use_in_loop # Most cases we want them to have the same value 
-    
-    if not getting_results:
-        realised_SINR = ut.load_var_pickle('realised_SINR', stats_dir)
-        estimated_SINR = ut.load_var_pickle('estimated_SINR', stats_dir)
-        realised_bitrate_total = ut.load_var_pickle('realised_bitrate_total', stats_dir)
-        blocks_with_errors = ut.load_var_pickle('blocks_with_errors', stats_dir)
-        n_transport_blocks = ut.load_var_pickle('n_transport_blocks', stats_dir)
-        beams_used = ut.load_var_pickle('beams_used', stats_dir)
-        olla = ut.load_var_pickle('olla', stats_dir)
-        mcs_used = ut.load_var_pickle('mcs_used', stats_dir)
-        real_dl_interference = ut.load_var_pickle('real_dl_interference', stats_dir)
-        est_dl_interference = ut.load_var_pickle('est_dl_interference', stats_dir)
-        scheduled_UEs = ut.load_var_pickle('scheduled_UEs', stats_dir)
-        su_mimo_setting = ut.load_var_pickle('su_mimo_setting', stats_dir)
-        power_per_beam = ut.load_var_pickle('power_per_beam', stats_dir)
-        
-        experienced_signal_power = ut.load_var_pickle('experienced_signal_power', stats_dir)
-        channel = ut.load_var_pickle('channel', stats_dir)
-        if sp.save_per_prb_variables:
-            sig_pow_in_prb = ut.load_var_pickle('sig_pow_in_prb', stats_dir)
-            channel_per_prb = ut.load_var_pickle('channel_per_prb', stats_dir)
-        else:
-            signal_power_prb = None
-            channel_per_prb = None
-    else:
-        realised_SINR, estimated_SINR, realised_bitrate_total, \
-            blocks_with_errors, n_transport_blocks, beams_used, olla, \
-            mcs_used, real_dl_interference, est_dl_interference, \
-            scheduled_UEs, su_mimo_setting, experienced_signal_power, \
-            channel, signal_power_prb, channel_per_prb = tuple([None] * 16) 
-    
-    # realised_SINR = ut.load_var_pickle('realised_SINR', stats_dir)
-    # estimated_SINR = ut.load_var_pickle('estimated_SINR', stats_dir)
-    # Trimming the full trace in time
-    trim_sec_or_tti = 'tti'
-    
-    if trim_sec_or_tti == 'tti':
-        # Fill this:
-        first_tti = int(4000 * 0.005)
-        if use_in_loop:
-            last_tti = int(4000 * trim_secs)
-        else:
-            last_tti = int(4000 * 16)
-            
-        # automatic:
-        first_sec = first_tti * sp.TTI_dur_in_secs
-        last_sec = last_tti * sp.TTI_dur_in_secs
-    elif trim_sec_or_tti == 'sec':
-        # Fill this:
-        first_sec = 0.005
-        last_sec = 1
-        
-        # automatic:
-        first_tti = int(first_sec / sp.TTI_dur_in_secs)
-        last_tti = int(last_sec / sp.TTI_dur_in_secs)
-    else:
-        raise Exception("Trim on 'secs' (seconds) or 'ttis'")
-    
-    ttis = np.arange(first_tti, last_tti)
-    secs = np.arange(first_sec, last_sec, sp.TTI_dur_in_secs)
-    
-    
-    # Plotting options
-    
-    x_sec_or_tti = 'sec'
-    
-    if trim_sec_or_tti == 'tti':
-        x_vals = secs
-        x_vals_label = 'Time [s]'
-        x_vals_save_suffix = '_secs'
-    elif trim_sec_or_tti == 'sec':
-        x_vals = ttis
-        x_vals_label = 'Time [TTI]'
-        x_vals_save_suffix = '_ttis'
-    else:
-        raise Exception("Trim on 'secs' (seconds) or 'ttis'")
-    
-    
-    ues = [i for i in range(sp.n_phy)]
-    
-    if not getting_results:
-        # Convert to np arrays and trim for ploting
-        bitrate_realised = np.array(realised_bitrate_total)[first_tti:last_tti]
-        sinr_realised = np.array(realised_SINR)[first_tti:last_tti]
-        sinr_estimated = np.array(estimated_SINR)[first_tti:last_tti]
-        block_errors = np.array(blocks_with_errors)[first_tti:last_tti]
-        n_blocks = np.array(n_transport_blocks)[first_tti:last_tti]
-        beams = np.array(beams_used)[first_tti:last_tti]
-        olla_param = np.array(olla)[first_tti:last_tti]
-        mcs = np.array(mcs_used)[first_tti:last_tti]
-        dl_interference = np.array(real_dl_interference)[first_tti:last_tti]
-        dl_interference_est = np.array(est_dl_interference)[first_tti:last_tti]
-        UEs_scheduled = np.array(scheduled_UEs)[first_tti:last_tti]
-        su_mimo_layers = np.array(su_mimo_setting)[first_tti:last_tti]
-        
-        avg_channel = np.array(channel)[first_tti:last_tti]
-        signal_power = \
-            np.array(experienced_signal_power)[first_tti:last_tti]
-        
-        if sp.save_per_prb_variables:
-            signal_power_prb = np.array(sig_pow_in_prb)[first_tti:last_tti]
-            channel_per_prb = np.array(channel_per_prb)[first_tti:last_tti]
-        
-        # UL tti formula, if first and last tti are multiples of 5.
-        # ul_ttis = np.arange(0, last_tti - first_tti, 5) - 1
-        # ul_ttis = ul_ttis[1:]
-        
-        # # Select the downlink ttis only
-        # bitrate_realised = np.delete(bitrate_realised, ul_ttis, axis=0)
-        # sinr_realised = np.delete(sinr_realised, ul_ttis, axis=0)
-        # sinr_estimated = np.delete(sinr_estimated, ul_ttis, axis=0)
-        # block_errors = np.delete(block_errors, ul_ttis, axis=0)
-        # beams = np.delete(beams, ul_ttis, axis=0)
-        # signal_power_prb = np.delete(signal_power_prb, ul_ttis, axis=0)
-        # olla_param = np.delete(olla_param, ul_ttis, axis=0)
-        # mcs = np.delete(mcs, ul_ttis, axis=0)
-        
-        
-        # Select the layer we want (single-layer plot)
-        l_idx = 0
-        sinr_realised = sinr_realised[:,:,l_idx]
-        sinr_estimated = sinr_estimated[:,:,l_idx]
-        block_errors = block_errors[:,:,l_idx]
-        n_blocks = n_blocks[:,:,l_idx]
-        beams = beams[:,:,l_idx,:]
-        mcs = mcs[:,:,l_idx]
-        dl_interference = dl_interference[:,:,l_idx]
-        dl_interference_est = dl_interference_est[:,:,l_idx]
-    
-        if sp.save_per_prb_variables:
-            signal_power_prb = signal_power_prb[:,:,l_idx]
-            channel_per_prb = channel_per_prb[:,:,l_idx]
-    else:
-        bitrate_realised, sinr_realised, sinr_estimated, block_errors, \
-            n_blocks, beams, olla_param, mcs, dl_interference, \
-            dl_interference_est, UEs_scheduled, su_mimo_layers, avg_channel, \
-            signal_power, signal_power_prb, channel_per_prb = tuple([None] * 16) 
-        
-    beam_powers = np.array(power_per_beam)[first_tti:last_tti]
-    beam_powers = beam_powers[:,:,0,:]
-    beams = np.array(beams_used)[first_tti:last_tti]
-    beams = beams[:,:,0,:]
-    # sinr_realised = np.array(realised_SINR)[first_tti:last_tti]
-    # sinr_estimated = np.array(estimated_SINR)[first_tti:last_tti]
-    # sinr_realised = sinr_realised[:,:,2]
-    # sinr_estimated = sinr_estimated[:,:,2]
+
     """
-        plot_idx:
-        0.X  -> Channel Power - Note: computations are computationally demanding!
-                 Depending on the second decimal place, we compute ther powers in
-                 two different ways:
-        0.1   -> across time (mean power over prbs)                        
-    TODO    0.2   -> across time (for all prbs, 1 ue or 4 ues)
-    TODO    0.3   -> across prbs (for a given tti)
-         
-        1     -> Throughput
-        1.1   -> 
-        
-        2     -> SINR (multi-user) estimated vs realised
-        2.1   -> SINR (single-user) when there are active transmissions
-        2.2   -> SINR (multi-user) when there are active transmissions
-        
-        3     -> Signal power per PRB in Watt (for tti = 3)
-        3.1   -> Signal power per PRB in dB (for tti = 3, middle prb as reference)
-        3.2   -> Signal power vs Interference power
-        
-        4.1   -> MCS per user, same axis
-        4.2   -> MCS per user, diff axis
-        
-        5.1   -> Beams per user
-        5.2   -> Beams per user filtered: keeps beam value constant instead of
-                 allowing going to 0 when the UE is not scheduled - better for 
-                 cases where not all ues are scheduled simultaneously always.
-        5.3   -> Beams per user: Same as 5.2 but with one plot per UE.
-        
-    TODO    6     -> Beamformed Channel: apply the beams to the channel and see 
-                      what the UE is actually experiencing: this should justify 
-                      signal power oscillations
-        
-        7.1   -> BLER: instantaneous
-        7.2   -> BLER: running_average
-        7.3   -> BLER: instantaneous vs running average
-        7.4   -> BLER: instantaneous vs realised bit rate [doublePLOT]  -> NEEDS FIXIN!
-        
-        9.1   -> OLLA:  instantaneous BLER vs olla parameter (single-user)
-                        [when active transmissions] [doublePLOT]
-        9.2   -> OLLA:  instantaneous BLER vs olla parameter (multi-user)
-                        [when active transmissions] [doublePLOT]
-        9.3   -> OLLA: MCS vs olla param [doublePLOT]
-        9.4   -> OLLA: instantaneous BLER vs olla param [doublePLOT]
-        
-        10    -> Latency and Drop Rate: average latency and packet drop rate per frame 
-        10.1  -> Just average Latency
-        10.2  -> Just 
-            
-        11    -> Scheduled UEs: sum of co-scheduled UEs across time
-        11.1  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
-        11.2  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
-                                (all UEs in the same axis)
-        11.3  -> UEs with bitrate: each UE. There's a difference between having
-                 bitrate and being scheduled! The schedule is only updated when
-                 there's a scheduling update... However, the user can be added 
-                 to the schedule and get no (useful) bitrate. It will still get
-                 bits across, but those might have no utility because they have
-                 transferred before.
-                                
-        
-    TODO 12    -> deeper dive into the application: latencies and drop rates 
-                  based on averages across frames
+    "X marks the spot" (or spots) where implementation are still needed
+    plot_idx:
+    0.X  -> Channel Power - Note: computations are computationally demanding!
+             Depending on the second decimal place, we compute ther powers in
+             two different ways:
+    0.1   -> across time (mean power over prbs)                        
+X   0.2   -> across time (for all prbs, 1 ue or 4 ues)
+X   0.3   -> across prbs (for a given tti)
+     
+    1     -> Throughput
+    1.1   -> 
+    1.2   -> 
     
-        13    -> SU-MIMO setting - number of layers scheduled per UE
-        
-        14    -> plot packet sequences for each UE. (same axis)
-        14.1  -> plot packet sequences for each UE. (separate axis)
-        
-        Note: there are idxs that don't plot anything. They just compute and 
-        print data and are completely carried out in compute_set functions
-        
-        
-        IMPORTANT: THE MEANING OF THESE INDICES MUST BE CONSISTENT WITH 
-                   THE COMPUTATION FUNCTION AND PLOT FUNCTION!
-        
+    2     -> SINR (multi-user) estimated vs realised
+    2.1   -> SINR (single-user) when there are active transmissions
+    2.2   -> SINR (multi-user) when there are active transmissions
+    2.3   -> 
+    2.4   ->
+    
+    3     -> Signal power per PRB in Watt (for tti = 3)
+    3.1   -> Signal power per PRB in dB (for tti = 3, middle prb as reference)
+    3.2   -> Signal power vs Interference power
+    3.3   -> Signal power (only) in [dB], equivalent to the beamformed channel
+    3.45
+    3.5
+    3.6
+    3.7
+    3.8
+    
+    4.1   -> MCS per user, same axis
+    4.2   -> MCS per user, diff axis
+    4.3   -> 
+    
+    5.1   -> Beams per user
+    5.2   -> Beams per user filtered: keeps beam value constant instead of
+             allowing going to 0 when the UE is not scheduled - better for 
+             cases where not all ues are scheduled simultaneously always.
+    5.3   -> Beams per user: Same as 5.2 but with one plot per UE.
+    5.4
+    5.5
+    
+    7.1   -> BLER: instantaneous
+    7.2   -> BLER: running_average
+    7.3   -> BLER: instantaneous vs running average
+    7.35
+X   7.4   -> BLER: instantaneous vs realised bit rate [doublePLOT]
+    7.5
+    
+    9.1   -> OLLA:  instantaneous BLER vs olla parameter (single-user)
+                    [when active transmissions] [doublePLOT]
+    9.2   -> OLLA:  instantaneous BLER vs olla parameter (multi-user)
+                    [when active transmissions] [doublePLOT]
+    9.3   -> OLLA: MCS vs olla param [doublePLOT]
+    9.4   -> OLLA: instantaneous BLER vs olla param [doublePLOT]
+    
+    10.1  -> Just average Latency
+    10.15
+    10.2  -> Just 
+    10.25
+    10.3
+    10.31
+    10.4
+    10.45
+    10.5  -> writes to terminal avg_lat across all frames
+    10.55 -> writes to terminal avg_lat across all frames and saves in file
+    10.6  -> writes to terminal avg_pdr across all frames
+    10.65 -> writes to terminal avg_pdr across all frames and saves in file
+    
+    11    -> Scheduled UEs: sum of co-scheduled UEs across time
+    11.1  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
+    11.2  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
+                            (all UEs in the same axis)
+X   11.3  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
+                            (all UEs SUMMED in the same axis)
+    11.4  -> UEs with bitrate: each UE. There's a difference between having
+             bitrate and being scheduled! The schedule is only updated when
+             there's a scheduling update... However, the user can be added 
+             to the schedule and get no (useful) bitrate. It will still get
+             bits across, but those might have no utility because they have
+             transferred before.
+
+    13    -> SU-MIMO setting - number of layers scheduled per UE
+    
+    14    -> plot packet sequences for each UE. (same axis)
+    14.1  -> plot packet sequences for each UE. (separate axis)
     """
-    
-    """
-    Common errors without warnings:
-        - Index error - because of trimming indexes bigger than sim duration
-    """    
-    
-    #idxs_to_plot = [1,2,2.1,4.1,7.4,10]
-    
+    all_idxs_available = [0.1, 1, 1.1, 1.2, 2, 2.1, 2.15, 2.2, 2.3, 2.4, 3, 3.1, 
+                          3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 4.1, 4.2, 4.3, 5.1, 
+                          5.2, 5.3, 5.4, 5.5, 7.1, 7.2, 7.3, 7.4, 7.5, 9.1, 
+                          9.2, 9.3, 9.4, 10.1, 10.15, 10.2, 10.25, 10.3, 10.31,
+                          10.4, 10.45, 10.5, 10.55, 10.6, 10.65, 11, 11.1, 
+                          11.2, 11.3, 13, 14.1, 14.2, 15]
     
     idxs_to_plot = [0.1, 1, 2, 3.45, 3.7, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
-    idxs_to_plot = [0.1, 1, 2, 3.45, 4.2, 5.4, 7.35, 7.4, 10.45]
-    # idxs_to_plot = [7.35]
-    # idxs_to_plot = [5.4]
-    idxs_to_plot = [2, 5.4, 5.6, 5.7, 7.5, 10.9]
-    idxs_to_plot = []
+
+    idxs_to_plot = all_idxs_available
     
-    # idxs_to_plot = [10.8]
+    idxs_to_plot = [15]
+    
+    # Test save_plot
+    save_plots = False
+    base_plots_folder = 'Plots\\' 
+    
     for i in idxs_to_plot:
         print(f'Plotting {i}')
         
-        # Loads and computes
+        which_vars_to_load = plt_func.get_vars_to_load(i, VARS_NAME_LOAD)
         
-        # HOW WE CHECK IF COMPUTED DATA IS UP-TO-DATE:
-        # what makes data up to date is the file and the tti cuts. if the ttis cuts 
-        # did not change, neither did the file, then the data computed for that 
-        # ocasion is the up-to-date because no other configuration was loaded.
-        # And in that case, we don't compute them again.
+        which_vars_to_compute = \
+            plt_func.get_vars_to_compute(i, VARS_NAME_COMPUTE)
         
-        instantaneous_bler, running_avg_bler, beam_formula, \
-            avg_lat, drop_rate, frames, n_frames, I_frames, \
-            running_avg_bitrate, rolling_avg_bitrate = \
-                plt_func.compute_set_1(i, ues, x_vals, ttis, 
-                                       block_errors, n_blocks, beams,
-                                       buffers, sp, 
-                                       bitrate_realised, stats_dir_temp, 
-                                       first_tti_temp, last_tti_temp, stats_dir, 
-                                       first_tti, last_tti, instantaneous_bler, 
-                                       running_avg_bler, beam_formula, avg_lat, 
-                                       drop_rate, frames, n_frames, I_frames,
-                                       running_avg_bitrate, rolling_avg_bitrate,
-                                       results_filename, use_in_loop)
-                
-        stats_dir_temp = stats_dir
-        first_tti_temp = first_tti
-        last_tti_temp = last_tti
+        # Load data
+        plt_func.load_sim_data(file_set, VARS_NAME_LOAD, 
+                                    which_vars_to_load, sim_data_loaded)
+        
+        # Trim data 
+        plt_func.trim_sim_data(sim_data_loaded, sim_data_trimmed, 
+                                    VARS_NAME_LOAD, which_vars_to_load, 
+                                    file_set, trim_ttis)
+        
+        # Compute additional data: 
+            # - some variables might be computed already (check if empty)
+            # - first, compute the auxiliar variables that might be needed
+            # - second, compute what the actual index needs 
+            #   e.g. some average of one of the auxiliar variables across traces)
+        
+        if multi_trace:
+            raise Exception('not ready yet...')
+        
+        plt_func.compute_sim_data(i, ues, ttis, VARS_NAME_LOAD, 
+                                       VARS_NAME_COMPUTE, which_vars_to_compute, 
+                                       which_vars_to_load, 
+                                       sim_data_trimmed, sim_data_computed,
+                                       file_set)
+        
+        # SEE HOW LONG 2.1 (I THINK) takes to load, trim, compute and plot.
         
         # Plots:
-        plt_func.plot_set_1(i, False, ues, ttis, x_vals, x_vals_label, sp, buffers,
-                            stats_dir, x_vals_save_suffix, bitrate_realised, 
-                            signal_power, signal_power_prb, sinr_estimated, 
-                            sinr_realised, olla_param, dl_interference, mcs, beams,
-                            UEs_scheduled, avg_channel, su_mimo_layers, beam_formula, 
-                            instantaneous_bler, running_avg_bler, avg_lat, 
-                            drop_rate, frames, I_frames, running_avg_bitrate, 
-                            rolling_avg_bitrate, dl_interference_est)
+        plt_func.plot_sim_data(i, file_set, ues, ttis, x_vals, 
+                                    sim_data_trimmed, sim_data_computed,
+                                    results_filename,
+                                    base_plots_folder, save_plots)
     
+    
+    
+auto_report = False
+if auto_report:
+    pass
+    # TODO: save and merge pdfs (auto-reporting feature)
+
