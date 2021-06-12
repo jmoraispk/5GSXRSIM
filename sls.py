@@ -19,7 +19,7 @@ def id_tti(tti, n_slots_per_frame, UL_DL_split):
     'F' (Flexible) options are not enabled currently.
     """
     
-    # TODO: Rectify this! This is just here for debugging
+    # TODO: Rectify this! This is just here for debugging 
     return 'DL'
     
     
