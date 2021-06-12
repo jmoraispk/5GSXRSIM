@@ -1,9 +1,11 @@
 function [] = plot_track_users(layout, other_participants, ...
-            lim, n_usr, update_rate, snapshot_interval,...
+            lim, n_total_usrs, update_rate, snapshot_interval,...
             pause_interval, pause_duration, shade, view_mode, ...
             make_gif, display_orientation, zoom_factor, ...
-                                    plot_only_phy_users, plot_with_layout)
-
+            plot_only_phy_users, plot_with_layout)
+    
+    % number of total users
+    n_phy_users = n_total_usrs - size(other_participants,2);
 
     last_snapshot = calc_max_snap(layout.rx_track);
     pause_snap_interval = round(pause_interval/update_rate);  
@@ -13,15 +15,15 @@ function [] = plot_track_users(layout, other_participants, ...
     
     [az, el] = get_view(view_mode);
                       %users, coordinate, snapshot
-    all_pos = zeros([n_usr, 3, last_snapshot]);
-    all_ori = zeros([n_usr, 3, last_snapshot]);
-    for i = 1 : n_usr
+    all_pos = zeros([n_phy_users, 3, last_snapshot]);
+    all_ori = zeros([n_phy_users, 3, last_snapshot]);
+    for i = 1 : n_phy_users
         all_pos(i, 1, :) = tracks(i).initial_position(1) + ...
-                         tracks(i).positions(1, 1 : last_snapshot);
+                           tracks(i).positions(1, 1 : last_snapshot);
         all_pos(i, 2, :) = tracks(i).initial_position(2) + ...
-                         tracks(i).positions(2, 1 : last_snapshot);
+                           tracks(i).positions(2, 1 : last_snapshot);
         all_pos(i, 3, :) = tracks(i).initial_position(3) + ...
-                         tracks(i).positions(3, 1 : last_snapshot);
+                           tracks(i).positions(3, 1 : last_snapshot);
                      
         all_ori(i, 2, :) = tracks(i).orientation(2, 1 : last_snapshot);
         all_ori(i, 3, :) = tracks(i).orientation(3, 1 : last_snapshot);
@@ -33,8 +35,9 @@ function [] = plot_track_users(layout, other_participants, ...
     
     if size(tracks,2) > n_vir_usr
         plot_cameras = 1;
-        other_participants = [other_participants ...
-                          tracks(n_usr + 1 : end).initial_position];
+        other_participants = ...
+            [other_participants ...
+             tracks(n_phy_users + 1 : end).initial_position];
     else
         plot_cameras = 0;
     end
@@ -100,7 +103,7 @@ function [] = plot_track_users(layout, other_participants, ...
                           
         % Orientations
         if display_orientation
-            for u = 1 : n_usr
+            for u = 1 : n_phy_users
                 theta = all_ori(u, 2, s) * -1 + pi / 2; 
                 phi = all_ori(u, 3, s); 
                 target = [cur_pos(u, 1) + r * sin(theta) * cos(phi), ...
