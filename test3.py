@@ -19,7 +19,7 @@ import utils as ut
 # - fill var
 # - plot format
 # - scale axis
-# - extend n1 and n2 to do what docs describe
+# - extend n1 and n2 to do what docs describe 
 
 
 def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
