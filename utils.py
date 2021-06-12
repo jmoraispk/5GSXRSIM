@@ -18,6 +18,17 @@ import matplotlib.pyplot as plt
 import pickle
 
 
+# Some modules are quite optional, since they are only used for some features
+# In these cases, we import with a protective import: only imports if it exists
+try:
+    import PyPDF2 # Needs 'pdf' package installed.
+except ModuleNotFoundError:
+    # Error handling
+    print('Could not find PyPDF module. Did you pip it into the current env?')
+    print('Merge of PDF files will not work...')
+    
+
+
 """
 Parsing functions, to check if the input to a function/(...)/class is within
 what that function/(...)/class expects to get
@@ -172,6 +183,10 @@ def non_obvious_divisors(n):
     
     div_list = divisors(n)
     return div_list[1:-1]
+
+
+def moving_average(x, w):
+    return np.convolve(x, np.ones(w), 'valid') / w
 
 
 """
@@ -523,3 +538,52 @@ def figure_pos(x=0, y=0, dx=0, dy=0):
         mngr.window.setGeometry(x, y, dx, dy)
         
         
+        
+        
+        
+        
+"""
+PDF concat feature
+"""
+
+def pdf_cat(input_files, output_stream):
+    input_streams = []
+    try:
+        # First open all the files, then produce the output file, and
+        # finally close the input files. This is necessary because
+        # the data isn't read from the input files until the write
+        # operation. Thanks to
+        # https://stackoverflow.com/questions/6773631/
+        for input_file in input_files:
+            input_streams.append(open(input_file, 'rb'))
+        writer = PyPDF2.PdfFileWriter()
+        for reader in map(PyPDF2.PdfFileReader, input_streams):
+            for n in range(reader.getNumPages()):
+                writer.addPage(reader.getPage(n))
+        writer.write(output_stream)
+    finally:
+        for f in input_streams:
+            f.close()
+            
+
+"""
+Other tools
+"""
+            
+def get_all_files_of_format(folder, the_format=''):
+    
+    all_files = list(os.walk(folder))[0][2]
+    
+    if the_format == '':
+        # Then all files should be considered. 
+        # Apply an 'allow all' filter
+        filter_func = lambda x: (True)
+    else: # a filter for that format needs to be applied
+        if the_format[0] != '.':
+            the_format = '.' + the_format
+    
+        filter_func = lambda x: (x[-4:] == the_format)
+    
+    files_with_format = list(filter(filter_func, all_files))
+    
+    return files_with_format

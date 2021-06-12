@@ -464,7 +464,14 @@ class Simulation_parameters:
         diff_orthogonal_polarisation = \
             vars_dict['diff_orthogonal_polarisation'][0]
         
-        
+        try:
+            self.pos_backup = vars_dict['pos_backup']
+            self.ori_backup = vars_dict['ori_backup']
+            self.initial_pos_backup = vars_dict['initial_pos_backup']
+        except KeyError:
+            print('WARNING: POSITION AND ORIENTATION WERE NOT BACKED UP FROM '
+                  'THE LAST GENERATIONS! Simulation will continue without '
+                  'that information.')
         ######### COMPUTATIONS BASED ON THE VALUES LOADED ABOVE #############
         
         if diff_orthogonal_polarisation == 0:

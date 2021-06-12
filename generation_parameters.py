@@ -733,8 +733,10 @@ class Generation_parameters:
         progress_bars = 1
         
         # To backup the positions and orientations of the tracks
-        backup_pos_and_ori = 1
-        
+        backup_pos_and_ori = 1 
+        # backup to separate file if 1, otherwise, backup into vars.mat.
+        save_pos_and_ori_backup_separately = 0 
+
         # Turn off the change in position 
         turn_off_positions = 0
         

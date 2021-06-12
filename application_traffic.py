@@ -5,12 +5,11 @@ Created on Mon Jul  6 14:43:04 2020
 @author: janeiroja
 """
 
-import utils as ut
-
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
 
+import utils as ut
 # from mpldatacursor import datacursor
 
 

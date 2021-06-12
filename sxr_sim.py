@@ -27,7 +27,7 @@ speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-
+# folders_to_simulate = ["Sim_2021-05-24_19h18m59s_SEED1"]
 
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
@@ -109,7 +109,7 @@ for param in sim_params:
         #    result is exactly the same as dupplicating the samples. 
         
     print('Done setting Simulation Parameters!')
-
+    
     # Take care of the output
     include_timestamp = False 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
@@ -651,6 +651,9 @@ for param in sim_params:
         except:
             print('weird... no user buffers... something is wrong...')
             # A bug we are still trying to catch... almost never happens...
+        
+        # TODO: use np.save instead. Convert them right here and test.
+        # Then simply create them as numpy arrays from the get go.
         
         # Pickle all results 
         ut.save_var_pickle(sp, sp.stats_path, globals_dict)

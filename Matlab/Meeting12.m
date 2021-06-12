@@ -79,6 +79,7 @@ if flow_control <= 2
     aggregate_coeffs_in_freq = [0,0];
     
     backup_pos_and_ori = 1;
+    save_pos_and_ori_backup_separately = 0;
     variability_check = 0;
     visualize_clusters = 0;
     
@@ -964,9 +965,19 @@ if flow_control <= 2
     
     % Copy Positions and Orientations (for analysis in Python)
     if backup_pos_and_ori
-        backup_positions_and_orientations(l, mother_folder);
+        [pos_backup, ori_backup, initial_pos_backup] = ...
+            get_pos_and_ori_from_layout(l); %#ok<ASGLU>
+        
+        if save_pos_and_ori_backup_separately
+            % Save to folder
+            save([folder, '/pos_ori_backup.mat'], ...
+                 'pos_backup', 'ori_backup', 'initial_pos_backup');
+        end
+        % it is always saved in the vars.mat anyway.
+    else
+        [pos_backup, ori_backup, initial_pos_backup] = deal([0]);
     end
-
+    
     if debug_mode(2)
         disp("After final trim;");
         disp(['Usable interval is from 1 to ', ...
