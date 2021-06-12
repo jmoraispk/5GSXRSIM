@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Note: there's probably a better way that avoids using the import below,
-# see app_trafic_plots done in v2.
+# see app_trafic_plots done in v2. 
 import matplotlib.ticker as ticker 
 
 import utils as ut
