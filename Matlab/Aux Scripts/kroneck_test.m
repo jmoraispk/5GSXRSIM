@@ -24,7 +24,7 @@ for n2 = 0 : N2 - 1
     end
 end
 
-
+%normalized ULA precoding vector
 X1 = 1 /sqrt(N1) .* b1;
 X2 = 1 /sqrt(N2) .* b2;
 W2D_rank1_pol1 = kron(X1, X2);
