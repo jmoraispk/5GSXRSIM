@@ -58,9 +58,9 @@ To add a new plot index:
 # When True, all the required variables are always loaded, trimmed or 
 # computed, respectively, unconditional of being there already. Put to False 
 # the step where implementation is occurring. It's almost always in computation
-always_load = True
-always_trim = True 
-always_compute = True
+always_load = False
+always_trim = False
+always_compute = False
 
 
 
@@ -76,7 +76,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [20, 4000 * 1]
+trim_ttis = [20, 4000 * 16]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -116,6 +116,7 @@ VARS_NAME_LOAD = ['sp',                       #  0
                   'scheduled_UEs',            # 15
                   'channel',                  # 16
                   'channel_per_prb',          # 17
+                  'power_per_beam',           # 18
                   '']
 
 # Variable names that can be computed from the loaded and trimmed variables
@@ -147,8 +148,17 @@ VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
                      'count_ues_bitrate',                 # 25
                      'beam_formula_processed',            # 26
                      'gop_idxs',                          # 27
-                     'avg_sinr',                          # 28
-                     'avg_sinr_multitrace',               # 29
+                     'power_per_gob_beam',                # 28
+                     'x_projection_best_beam',            # 29
+                     'y_projection_best_beam',            # 30
+                     'beam_switch',                       # 31
+                     'xy_projection_all_gob',             # 32
+                     'user_pos_for_plot',                 # 33
+                     'user_ori_for_plot',                 # 34
+                     'individual_beam_gob_details',       # 35
+                     'beams_processed',                   # 36
+                     'avg_sinr',                          # 
+                     'avg_sinr_multitrace',               # 
                      '']
 
 # file_sets has the sets of files to load at any given time.
@@ -200,6 +210,7 @@ for file_set in file_sets:
         sim_data_trimmed = []
         sim_data_computed = []
         
+    if sim_data_computed == []:
         # To know when things need to be reloaded or retrimmed
         file_set_temp = ['']
         ttis_temp = np.array([0,0])
@@ -210,10 +221,10 @@ for file_set in file_sets:
     # suppose to happen based on the three variables above and two temp. below
     (sim_data_loaded, sim_data_trimmed, sim_data_computed) = \
         plt_func.init_sim_data(sim_data_loaded, sim_data_trimmed, 
-                                    sim_data_computed, VARS_NAME_LOAD, 
-                                    VARS_NAME_COMPUTE, ttis, file_set, 
-                                    file_set_temp, ttis_temp,
-                                    always_load, always_trim, always_compute)
+                               sim_data_computed, VARS_NAME_LOAD, 
+                               VARS_NAME_COMPUTE, ttis, file_set, 
+                               ttis_temp, file_set_temp, 
+                               always_load, always_trim, always_compute)
     
     file_set_temp = file_set
     ttis_temp = ttis
@@ -228,80 +239,115 @@ for file_set in file_sets:
             
 
     """
-    "X marks the spot" (or spots) where implementation are still needed
-    plot_idx:
-    0.X  -> Channel Power - Note: computations are computationally demanding!
-             Depending on the second decimal place, we compute ther powers in
-             two different ways:
-    0.1   -> across time (mean power over prbs)                        
-X   0.2   -> across time (for all prbs, 1 ue or 4 ues)
-X   0.3   -> across prbs (for a given tti)
+    plot_idx meanings:
+
+    "X marks the spot" where implementation is still needed
+    
+    same vs diff plot - all UEs in same plot, or one subplot for each UE
+    
+    single vs double axis - plot several variables in the same axis or use 
+                            left and right axis, to have use different ticks.
+                            Note: when the variables have different natures,
+                            like bitrate and BLER, it doesn't make sense to 
+                            do single axis
+
+    0.1   -> Channel Power across time (mean power over prbs)                        
+X   0.2   -> Channel Power across time (for all prbs, 1 ue or 4 ues)
+X   0.3   -> Channel Power across prbs (for a given tti)
      
     1     -> Throughput
-    1.1   -> 
-    1.2   -> 
+    1.1   -> Inst. vs Running avg bitrate 
+    1.2   -> Inst throughput vs Rolling/moving avg bitrate 
     
     2     -> SINR (multi-user) estimated vs realised
     2.1   -> SINR (single-user) when there are active transmissions
-    2.2   -> SINR (multi-user) when there are active transmissions
-    2.3   -> 
-    2.4   ->
+    2.15  -> SINR (multi-user) when there are active transmissions
+    2.2   -> SINR vs OLLA (multi-user) when there are active transmissions
+    2.3   -> SINR difference (realised - estimated -> negative can mean errors
+                                                      positive can mean waste)
+    2.4   -> SINR difference vs BLER
     
     3     -> Signal power per PRB in Watt (for tti = 3)
     3.1   -> Signal power per PRB in dB (for tti = 3, middle prb as reference)
-    3.2   -> Signal power vs Interference power
-    3.3   -> Signal power (only) in [dB], equivalent to the beamformed channel
-    3.45
-    3.5
-    3.6
-    3.7
-    3.8
+    3.2   -> Signal power (only) in [dB], == BEAMFORMED CHANNEL!)
+    3.3   -> Signal power vs Interference power (Watt)[single axis]
+    3.35  -> Signal power vs Interference power (Watt)[double axis]
+    3.4   -> Signal power vs Interference power (dBW) [single axis]
+    3.45  -> Signal power vs Interference power (dBW) [double axis]
+    3.5   -> Signal power vs Interference power (dBm) [single axis]
+    3.55  -> Signal power vs Interference power (dBm) [double axis]
+    3.6   -> Estimated vs Realised Interference
+    3.65  -> Estimated vs Realised Interference [dB]
     
-    4.1   -> MCS per user, same axis
-    4.2   -> MCS per user, diff axis
-    4.3   -> 
+    4.1   -> MCS per user, same plot
+    4.2   -> MCS per user, diff plots
+    4.3   -> MCS vs Instantaneous bit rate per user, diff plots
     
-    5.1   -> Beams per user
-    5.2   -> Beams per user filtered: keeps beam value constant instead of
-             allowing going to 0 when the UE is not scheduled - better for 
-             cases where not all ues are scheduled simultaneously always.
-    5.3   -> Beams per user: Same as 5.2 but with one plot per UE.
-    5.4
-    5.5
+    5.1   -> Best beam per user (filtered to prevent back to 0 when not UE is  
+                                 not scheduled)
+    5.15  -> Beam formula (filtered and smoother - keeps beam value constant 
+                           when not scheduled)
+    5.2   -> Azi and Elevation [double plot]
+    5.3   -> Beam sum (azi + el)
+    5.4   -> Beam sum vs SINR
+    5.5   -> Beam sum vs BLER
+    5.6   -> Beam switch: 1 when there's a change in beams, else 0 (same plot)
+    5.65  -> Beam switch: 1 when there's a change in beams, else 0 (diff plot)
     
-    7.1   -> BLER: instantaneous
-    7.2   -> BLER: running_average
-    7.3   -> BLER: instantaneous vs running average
-    7.35
-X   7.4   -> BLER: instantaneous vs realised bit rate [doublePLOT]
-    7.5
+    7.1   -> BLER instantaneous
+    7.2   -> BLER running_average ber
+    7.3   -> BLER: instantaneous vs running average [single axis]
+    7.35  -> BLER: instantaneous vs running average [double axis]
+    7.4   -> BLER instantaneous vs realised bit rate [double axis]
+    7.5   -> BLER instantaneous vs realised SINR [double axis]
     
     9.1   -> OLLA:  instantaneous BLER vs olla parameter (single-user)
-                    [when active transmissions] [doublePLOT]
+                    [when active transmissions] [double axis]
     9.2   -> OLLA:  instantaneous BLER vs olla parameter (multi-user)
-                    [when active transmissions] [doublePLOT]
-    9.3   -> OLLA: MCS vs olla param [doublePLOT]
-    9.4   -> OLLA: instantaneous BLER vs olla param [doublePLOT]
+                    [when active transmissions] [double axis]
+    9.3   -> OLLA: MCS vs olla param [double axis]
+    9.4   -> OLLA: instantaneous BLER vs olla param [double axis]
     
-    10.1  -> Just average Latency
-    10.15
-    10.2  -> Just 
-    10.25
-    10.3
-    10.31
-    10.4
-    10.45
-    10.5  -> writes to terminal avg_lat across all frames
-    10.55 -> writes to terminal avg_lat across all frames and saves in file
-    10.6  -> writes to terminal avg_pdr across all frames
-    10.65 -> writes to terminal avg_pdr across all frames and saves in file
-    
+    10.1  -> Average packet latency of each frame (line plot)
+    10.15 -> Average packet latency of each frame (bar plot)
+    10.2  -> Average packet drop rate of each frame (line plot)
+    10.25 -> Average packet drop rate of each frame (bar plot)
+    10.3  -> Average packet latency vs drop rate of each frame (line plot)
+             [double axis] 
+    10.31 -> Average packet latency vs drop rate of each frame (line plot)
+             [double axis] with tick limit control as a demo
+    10.4  -> Average packet latency vs drop rate of each frame (line plot) 
+             [double axis] with vertical line marking I frames 
+    10.45 -> Average packet latency vs drop rate of each frame (bar plot) 
+             [double axis] with vertical line marking I frames 
+    10.5  -> prints the average packet latency averaged across all frames
+    10.55 -> prints average packet latency averaged across all frames 
+             + saves to file
+    10.6  -> prints the average packet drop rate averaged across all frames
+    10.65 -> prints the average packet drop rate averaged across all frames
+             + saves to file
+    10.7  -> prints all detailed measurement information on:
+             -> Average packet latency:
+                -> for each frame in the GoB
+                -> for each I frame
+                -> for each P frame
+                -> averaged across all frames and std
+             -> Average packet drop rate:
+                -> for each frame in the GoB
+                -> for each I frame
+                -> for each P frame
+                -> averaged across all frames and std
+    10.8  -> Average packet latency for each frame in the GoB (bar plot) 
+    10.9  -> Average packet drop rate for each frame in the GoB (bar plot)
+    10.11 -> Average packet latency and drop rate per frame of the GoP 
+             [double plot]
+
     11    -> Scheduled UEs: sum of co-scheduled UEs across time
     11.1  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
-    11.2  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
-                            (all UEs in the same axis)
-X   11.3  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
-                            (all UEs SUMMED in the same axis)
+    11.2  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not,
+                            all UEs in the [same plot]
+    11.3  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not,
+                            all UEs SUMMED in the [same plot]
     11.4  -> UEs with bitrate: each UE. There's a difference between having
              bitrate and being scheduled! The schedule is only updated when
              there's a scheduling update... However, the user can be added 
@@ -311,70 +357,103 @@ X   11.3  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
 
     13    -> SU-MIMO setting - number of layers scheduled per UE
     
-    14    -> plot packet sequences for each UE. (same axis)
-    14.1  -> plot packet sequences for each UE. (separate axis)
-    """
-    all_idxs_available = [0.1, 1, 1.1, 1.2, 2, 2.1, 2.15, 2.2, 2.3, 2.4, 3, 3.1, 
-                          3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 4.1, 4.2, 4.3, 5.1, 
-                          5.2, 5.3, 5.4, 5.5, 7.1, 7.2, 7.3, 7.4, 7.5, 9.1, 
-                          9.2, 9.3, 9.4, 10.1, 10.15, 10.2, 10.25, 10.3, 10.31,
-                          10.4, 10.45, 10.5, 10.55, 10.6, 10.65, 11, 11.1, 
-                          11.2, 11.3, 13, 14.1, 14.2, 15]
+    14    -> Packet sequences for each UE. [same plot]
+    14.1  -> Packet sequences for each UE. [diff plot]
     
+    15    -> Power of each GoB beam
+    
+    16    -> Projection of the all chosen beam for each ue [same plot]
+    16.1  -> Projection of the all chosen beam for each ue [diff plot]
+    16.2  -> Projection of the all beams in GoBs
+
+    # NOTE: the view on the GIF can be changed (top, side and 3D)
+    17    -> GIF across time: TRACKS [same plot]
+    17.01 -> GIF across time: TRACKS [same plot] + BEAMS (no -3 dB marks)
+    17.02 -> GIF across time: TRACKS [same plot] + BEAMS (+constant HPBW)
+    17.03 -> GIF across time: TRACKS [same plot] + BEAMS (+correct HPBW)
+    17.1  -> GIF across time: Just beams used (just maximum direction)
+    17.11 -> GIF across time: Just beams used (with constant HPBW)
+    17.12 -> GIF across time: Just beams used (with correct HPBW)
+                               (needs to be computed in Matlab and loaded))
+    17.2  -> ...
+    """
+    # videos, gifs, results printing, etc..
+    all_non_plots_available = [10.5, 10.55, 10.6, 10.65, 17, 17.01, 17.02,
+                               17.03, 17.11, 17.12, 17.13]
+    
+    # All that can be saved as figures.
+    all_plots_available = [0.1, 1, 1.1, 1.2, 2, 2.1, 2.15, 2.2, 2.3, 2.4, 3, 
+                           3.1, 3.2, 3.3, 3.4, 3.45, 3.5, 3.55, 3.6, 3.65, 4.1, 
+                           4.2, 4.3, 5.1, 5.15, 5.2, 5.3, 5.4, 5.5, 5.6, 5.65, 
+                           7.1, 7.2, 7.3, 7.35, 7.4, 7.5, 9.1, 9.2, 9.3, 9.4,
+                           10.1, 10.15, 10.2, 10.25, 10.3, 10.31, 10.4, 10.45, 
+                           10.7, 10.8, 10.9, 10.11, 11, 11.1, 11.2, 11.3, 
+                           13, 14.1, 14.2, 15, 16, 16.1, 16.2]
+
+    all_idxs_available = all_plots_available + all_non_plots_available
+
     idxs_to_plot = [0.1, 1, 2, 3.45, 3.7, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
 
-    idxs_to_plot = all_idxs_available
-    
-    idxs_to_plot = [15]
+    idxs_to_plot = all_plots_available
+    idxs_to_plot = [4.2]
     
     # Test save_plot
-    save_plots = False
+    save_plots = True
+    saveformat = 'pdf'
     base_plots_folder = 'Plots\\' 
     
     for i in idxs_to_plot:
         print(f'Plotting {i}')
         
+        # Get which vars need to be loaded and which need to be computed
         which_vars_to_load = plt_func.get_vars_to_load(i, VARS_NAME_LOAD)
-        
         which_vars_to_compute = \
             plt_func.get_vars_to_compute(i, VARS_NAME_COMPUTE)
         
         # Load data
         plt_func.load_sim_data(file_set, VARS_NAME_LOAD, 
-                                    which_vars_to_load, sim_data_loaded)
+                               which_vars_to_load, sim_data_loaded)
         
         # Trim data 
         plt_func.trim_sim_data(sim_data_loaded, sim_data_trimmed, 
-                                    VARS_NAME_LOAD, which_vars_to_load, 
-                                    file_set, trim_ttis)
+                               VARS_NAME_LOAD, which_vars_to_load, 
+                               file_set, trim_ttis)
         
+        # TODO: multitrace:
         # Compute additional data: 
             # - some variables might be computed already (check if empty)
             # - first, compute the auxiliar variables that might be needed
             # - second, compute what the actual index needs 
-            #   e.g. some average of one of the auxiliar variables across traces)
+            #   e.g. some average of one of the variables across traces require
+            #        said variables to be computed already (unless they are 
+            #        trimmed vars.) 
+        
         
         if multi_trace:
             raise Exception('not ready yet...')
         
         plt_func.compute_sim_data(i, ues, ttis, VARS_NAME_LOAD, 
-                                       VARS_NAME_COMPUTE, which_vars_to_compute, 
-                                       which_vars_to_load, 
-                                       sim_data_trimmed, sim_data_computed,
-                                       file_set)
-        
-        # SEE HOW LONG 2.1 (I THINK) takes to load, trim, compute and plot.
+                                  VARS_NAME_COMPUTE, which_vars_to_compute, 
+                                  which_vars_to_load, 
+                                  sim_data_trimmed, sim_data_computed,
+                                  file_set)
         
         # Plots:
         plt_func.plot_sim_data(i, file_set, ues, ttis, x_vals, 
-                                    sim_data_trimmed, sim_data_computed,
-                                    results_filename,
-                                    base_plots_folder, save_plots)
+                               sim_data_trimmed, sim_data_computed,
+                               results_filename, base_plots_folder, 
+                               save_plots, save_format=saveformat)
     
     
-    
+#%% Note: get's unstable with >20 plots. < 10 is the safest.
 auto_report = False
 if auto_report:
-    pass
-    # TODO: save and merge pdfs (auto-reporting feature)
+    base = ut.get_cwd() + '\\'    
+    folder = r'Plots\SEED1_SPEED-1_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-50_LATBUDGET-10' + '\\'
+    files_with_format = ut.get_all_files_of_format(base + folder, '.pdf')
+    
+    files_with_format = [folder + f for f in files_with_format]
+    
+    with open('pdf_merge.pdf', 'wb') as fp:
+        ut.pdf_cat(files_with_format, fp)
 
