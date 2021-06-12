@@ -16,15 +16,25 @@ o1 = t1.orientation;
 o2 = t2.orientation;
 
 %% Visually compare orientations and positions for different speeds
-load('vars_4ues.mat'); 
+% load('vars_4ues.mat'); 
+
+% SEED = 1;
+% snapshot_interval = 8;
+% display_orientation = 1;
+% pause_interval = 17;
+% pause_duration = 5;
+% shade = 0;
+% make_gif(4) = 1;
 
 SEED = 1;
-snapshot_interval = 8;
+snapshot_interval = 100;
 display_orientation = 1;
-pause_interval = 17;
-pause_duration = 5;
+pause_interval = 3;
+pause_duration = 2;
 shade = 0;
 make_gif(4) = 1;
+plot_only_phy_users = 0;     % 0 means all phy + vir users are plotted.
+plot_with_layout = 0;        % 1 if layout is needed in the gif.
 
 for mvnt_val = 3:3  % check the speed here!
     filename = ['Tracks\Track', '_SEED', num2str(SEED), ...
@@ -43,7 +53,14 @@ for mvnt_val = 3:3  % check the speed here!
         plot_movement_all(l_aux, rx_pos_non_present, limits, n_users, ...
             update_rate, snapshot_interval, pause_interval, pause_duration, ...
             shade, view_mode, 2, save_plots(5), make_gif(4), ...
-            display_orientation, zoom_factor);
+            display_orientation, zoom_factor, plot_only_phy_users, pop);
+        
+        N_users = n_users - size(other_participants,2);
+        plot_track_users(l_aux, rx_pos_non_present, ...
+            limits, N_users, update_rate, snapshot_interval,...
+            pause_interval, pause_duration, shade, view_mode, ...
+            make_gif(4), display_orientation, zoom_factor, ...
+                                    plot_only_phy_users, plot_with_layout)
 
     end
 end
