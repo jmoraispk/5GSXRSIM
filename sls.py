@@ -1109,10 +1109,26 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
         power_per_beam_list = []
         
         # Loop over all angles to find the best precoder
+        # for beam_idx in range(n_beams, i.e. # of columns of W):
         for azi_idx in range(azi_len):
             for el_idx in range(el_len):
+                # if GoB method 1:
+                # azi_idx = np.floor(beam_idx / 11).astype(int)
+                # el_idx = best_beam_idx % 11
                 w = precoder_dict[(bs, azi_idx, el_idx)]
-                if n_layers == 1:
+                
+                # if GoB method 2:
+                    # precoder_dict[bs] is the W matrix, # n_bs_txs x n_beams
+                # w = precoder_dict[bs][:,beam_idx] 
+                
+                # The current precoder_array is for a single element only
+                # We interleave (this is what needs to be done to have
+                # the weights from a single element replicated for the
+                # other element as well)
+                # TODO: put this interleave in matlab in case we always save
+                #       just one element
+                save_only_one_element = True
+                if not save_only_one_element:
                     w = interleave([w,w])
                 
                 w = w / np.linalg.norm(w)

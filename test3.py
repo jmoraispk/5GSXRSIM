@@ -139,6 +139,9 @@ def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
             y_labels = [f'UE {ue}' for ue in ue_list]
         else:
             y_labels = ['' for y_val in y_vals]
+            if use_legend:
+                print('No labels values provided in y_data_labels. '
+                      'What should be in the legend?!')
         
     if savefig:
         # Check file name

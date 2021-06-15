@@ -944,7 +944,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         # Instantaneous Realised Bitrate
         if plot_idx == 1:
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][4]], 
-                         x_label_time, 'Mbps', 'Realised bitrate',
+                         x_axis_label=x_label_time, 
+                         y_axis_label='Realised bit rate [Mbps]', 
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
         
@@ -953,7 +954,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 1.1:
             plot_for_ues(ues, x_vals, 
                          [sim_data_trimmed[f][4], sim_data_computed[f][1]], 
-                         x_label_time, 'Mbps', 'Realised bitrate',
+                         x_axis_label=x_label_time, 
+                         y_axis_label='Realised bit rate [Mbps]', 
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
     
@@ -1023,8 +1025,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues_double([1], x_vals, 
                                 [sim_data_trimmed[f][2]],
                                 [sim_data_computed[f][3]], 
-                                x_label_time, 
-                                ['Experienced SINR [dB]', 'BLER [%]'],
+                                x_axis_label=x_label_time, 
+                                y_labels=['Experienced SINR [dB]', 'BLER [%]'],
                                 linewidths=[1,0.4,0.15], 
                                 limits_ax1=[15,22], no_ticks_ax1=[5],
                                 label_fonts=[17,17], fill=True, 
@@ -1042,8 +1044,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues_double(ues, x_vals, 
                                 [sim_data_trimmed[f][2]],
                                 [sim_data_computed[f][3]], 
-                                x_label_time, 
-                                ['Experienced SINR [dB]', 'BLER [%]'],
+                                x_axis_label=x_label_time, 
+                                y_labels=['Experienced SINR [dB]', 'BLER [%]'],
                                 linewidths=[1,0.4,0.15], 
                                 limits_ax1=[[15,22]] * n_ues, 
                                 no_ticks_ax1=[5]*n_ues,
@@ -1057,8 +1059,10 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 2.2:
             plot_for_ues_double(ues, x_vals, 
                                 [sim_data_trimmed[f][2]], 
-                                [sim_data_trimmed[f][3]], x_label_time, 
-                                ['Experienced SINR [dB]', '$\Delta_{OLLA}$'],
+                                [sim_data_trimmed[f][3]], 
+                                x_axis_label=x_label_time, 
+                                y_labels=['Experienced SINR [dB]', 
+                                          '$\Delta_{OLLA}$'],
                                 linewidths=[1,1,0.15], 
                                 label_fonts=[13,16], fill=True, 
                                 fill_var=sim_data_trimmed[f][4], 
@@ -1073,7 +1077,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         # SINR difference (realised - estimated)
         if plot_idx == 2.3:
             plot_for_ues(ues, x_vals, [sim_data_computed[f][0]], 
-                         x_label_time, 'SINR diff [dB]', 
+                         x_axis_label=x_label_time, 
+                         y_axis_label='SINR diff [dB]', 
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
             
@@ -1081,7 +1086,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 2.4:
             plot_for_ues_double(ues, x_vals, [sim_data_computed[f][0]], 
                                 [sim_data_computed[f][3]],
-                                x_label_time, ['SINR diff [dB]', 'BLER [%]'],
+                                x_axis_label=x_label_time, 
+                                y_labels=['SINR diff [dB]', 'BLER [%]'],
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
             
@@ -1102,8 +1108,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                 
             plot_for_ues(ues, sim_data_computed[f][11], 
                          [sim_data_trimmed[f][11][tti_idx,:,:].T], 
-                         'Frequency', 'Watt', 
-                         'Signal power variation across frequency',
+                         x_axis_label='Frequency [Hz]', 
+                         y_axis_lable='Power [W]', 
                          savefig=save_fig, plot_type_left=plt_type)
                 
         
@@ -1118,8 +1124,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             
             plot_for_ues(ues, sim_data_computed[f][11], 
                          [sim_data_computed[f][6]], 
-                         'Frequency', 'dB', 
-                         'Signal power variation across frequency',
+                         x_axis_label='Frequency [Hz]', 
+                         y_axis_lable='Power [dB]', 
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
             
@@ -1127,7 +1133,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 3.2:
             # Plot signal power variation across time
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][10]], 
-                          x_label_time, 'Watt', 'signal power across time',
+                         x_axis_label=x_label_time, 
+                         y_axis_lable='Power [W]', 
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
     
@@ -1135,15 +1142,19 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 3.3:        
             plot_for_ues(ues, x_vals, 
                          [sim_data_trimmed[f][10], sim_data_trimmed[f][12]], 
-                          x_label_time, '[W]', 'Signal Power vs Interference',
+                         x_label_time, y_axis_label='[W]', 
+                         y_labels=['Signal', 'Interference'],
+                         use_legend=True, legend_loc='lower center', ncols=2,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
 
         # Signal power vs interference (Watt) [double axis]
         if plot_idx == 3.35:
             plot_for_ues_double(ues, x_vals, [sim_data_trimmed[f][10]], 
-                                [sim_data_trimmed[f][12]], x_label_time, 
-                                ['Sig. Power [W]', 'Int. Power [w]'],
+                                [sim_data_trimmed[f][12]], 
+                                x_axis_label=x_label_time, 
+                                y_labels=['Signal Power [W]', 
+                                          'Interference Power [w]'],
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format) 
 
@@ -1151,8 +1162,9 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 3.4:
             plot_for_ues(ues, x_vals, 
                          [sim_data_computed[f][5], sim_data_computed[f][7]], 
-                         x_label_time, y_axis_label='[dBw]', 
+                         x_axis_label=x_label_time, y_axis_label='[dBw]', 
                          y_labels=['Signal', 'Interference'],
+                         use_legend=True, legend_loc='lower center', ncols=2,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
         
@@ -1168,10 +1180,12 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         # Signal power vs interference (dBm) [single]
         if plot_idx == 3.5:
             plot_for_ues(ues, x_vals,[sim_data_computed[f][5] + 30, 
-                                       sim_data_computed[f][7] + 30], 
-                         x_label_time, 'Power [dBW]',
-                         y_labels=['Signal', 'Interference'], use_legend=True,
-                         ncols=2, size=1.3, width=6.4, height=4,
+                                      sim_data_computed[f][7] + 30], 
+                         x_axis_label=x_label_time, 
+                         y_axis_label='Power [dBm]',
+                         y_labels=['Signal', 'Interference'],
+                         use_legend=True, legend_loc='lower center', ncols=2,
+                         size=1.3, width=6.4, height=4,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
             
@@ -1180,8 +1194,10 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues_double(ues, x_vals, 
                                 [sim_data_computed[f][5] + 30], 
                                 [sim_data_computed[f][7] + 30], 
-                                x_label_time, 
-                                ['Signal Power [W]', 'Interference Power [W]'],
+                                x_axis_label=x_label_time, 
+                                y_labels=['Signal Power [dBm]', 
+                                          'Interference Power [dBm]'],
+                                use_legend=True, legend_loc='lower center', ncols=2,
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
     
@@ -1190,8 +1206,10 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 3.6:
             plot_for_ues(ues, x_vals, 
                          [sim_data_trimmed[f][13], sim_data_trimmed[f][12]], 
-                         x_label_time, '[W]', 
-                         'Estimated vs real interference',
+                         x_axis_label=x_label_time, 
+                         y_axis_label='Interference Power [W]',  
+                         y_labels=['Estimated', 'Realised'],
+                         use_legend=True, legend_loc='lower center', ncols=2,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
          
@@ -1199,15 +1217,18 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 3.65:
             plot_for_ues(ues, x_vals, 
                          [sim_data_computed[f][8], sim_data_computed[f][7]], 
-                         x_label_time, '[dB]', 
-                         'Estimated vs real interference',
+                         x_axis_label=x_label_time, 
+                         y_axis_label='Interference Power [dB]',  
+                         y_labels=['Estimated', 'Realised'],
+                         use_legend=True, legend_loc='lower center', ncols=2,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
                             
         # MCS same axs
         if plot_idx == 4.1:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9]], x_label_time, 
-                         'MCS index', ylim=(0.5, 15.5), 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9]], 
+                         x_axis_label=x_label_time, 
+                         y_axis_label='MCS index', ylim=(0.5, 15.5), 
                          use_legend=True, legend_inside=True, 
                          legend_loc="lower right",
                          ncols=1, size=1.3, same_axs=True,
@@ -1216,8 +1237,9 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             
         # MCS diff axs
         if plot_idx == 4.2:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9]], x_label_time, 
-                         'MCS index', 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9]], 
+                         x_axis_label=x_label_time, 
+                         y_axis_label='MCS index',
                          linewidths=[.4,.4,.4,.4], 
                          y_labels=['UE 0','UE 1','UE 2','UE 3'], 
                          ylim=(6.5, 15.5),
@@ -1234,7 +1256,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                                 [sim_data_trimmed[f][4]], 
                                 x_label_time, 
                                 y_label=['MCS index', 
-                                         'Bit rate [Mbps]'],
+                                         'Bit rate [Mbps]'],        
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
         

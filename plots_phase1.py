@@ -395,10 +395,10 @@ X   0.3   -> Channel Power across prbs (for a given tti)
     idxs_to_plot = [0.1, 1, 2, 3.45, 3.7, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
 
     idxs_to_plot = all_plots_available
-    idxs_to_plot = [4.2]
+    idxs_to_plot = [4.3]
     
     # Test save_plot
-    save_plots = True
+    save_plots = False
     saveformat = 'pdf'
     base_plots_folder = 'Plots\\' 
     
