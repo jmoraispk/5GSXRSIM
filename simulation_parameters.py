@@ -54,7 +54,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = 4000 * 16
+        self.sim_TTIs = 4000 * 6
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -277,9 +277,10 @@ class Simulation_parameters:
         self.precoders_folder = self.matlab_folder + 'Precoders\\'
         
         # A precoder for each antenna, for each frequency [freq][bs_idx]
+        # TODO: delete the v2 part when the new version is working.
         self.precoders_files = \
-            [["precoders_4_4_-60_60_12_0_-60_60_12_0_pol_1"], 
-             ["precoders_8_8_-60_60_12_0_-60_60_12_0_pol_1"]]
+            [["precoders_4_4_-60_60_12_0_-60_60_12_0_pol_1_v2"], 
+             ["precoders_8_8_-60_60_12_0_-60_60_12_0_pol_1_v2"]]
         
         # the case above has a single precoder for each frequency
         # The selected precoder path, with the simulated frequency, is
@@ -713,9 +714,8 @@ class Simulation_parameters:
     
     def load_gob_params(self, precoders_dict):
         
-        self.gob_n_beams = np.product(precoders_dict[(0)])
-        self.gob_azi_vals = precoders_dict[(0, 'azi_vals')]
-        self.gob_el_vals = precoders_dict[(0, 'el_vals')]
+        self.gob_n_beams = precoders_dict[(0, 'n_directions')]
+        self.gob_directions = precoders_dict[(0, 'directions')]
         
         
         

@@ -5,7 +5,7 @@ function [precoders_array] = gen_grid_of_beams(arr_size, ...
                                 varargin)
 
     % Manual or auto = 
-    %    - 'auto1':
+    %    - 'auto1': derives the angles from the azi and el lims
     %    - 'auto2': 
     %    - 'manual': the azi_values and el_values are provided and every
     %                combination between them is computed.
@@ -251,7 +251,7 @@ function [precoders_array] = gen_grid_of_beams(arr_size, ...
         for el_idx = 1:n_ele
             for azi_idx = 1:n_azi    
                 angles{i} = [azi_values(azi_idx); el_values(el_idx)]; %#ok<AGROW>
-                idxs{i} = [azi_idx, el_idx];
+                idxs{i} = [azi_idx, el_idx]; %#ok<AGROW>
                 i = i + 1;
             end
         end
@@ -373,7 +373,28 @@ function [precoders_array] = gen_grid_of_beams(arr_size, ...
     if save_precoders
         disp('Saving in a file...');
         save_file_name = ['precoders_', gob_name];
-        save(save_file_name, 'precoders_array', 'azi_values', 'el_values');
+        
+        % We save the directions instead of the azi and el values
+        % 2 x N BEAMS matrix.
+        precoders_directions = zeros(2, n_total);
+        n_cross_pol_elements = prod(arr_size);
+        n_tot_elements = n_cross_pol_elements * 2;
+        precoders_matrix = zeros(n_tot_elements, n_total);
+        for i = 1:n_total
+            precoders_directions(:,i) = angles{i};
+            p_idx = idxs{1,i};
+            precoders_matrix(1:2:n_tot_elements,i) = ...
+                squeeze(precoders_array(p_idx(1),p_idx(2),:));
+            precoders_matrix(2:2:n_tot_elements,i) = ...
+                squeeze(precoders_array(p_idx(1),p_idx(2),:));
+            precoders_matrix(1:end,i) = ...
+                precoders_matrix(1:end,i) / norm(precoders_matrix(1:end,i));
+        end
+        n_azi_beams = round(sqrt(n_total));
+        n_ele_beams = round(sqrt(n_total));
+        
+        save(save_file_name, 'precoders_matrix', 'precoders_directions',...
+                             'n_azi_beams', 'n_ele_beams' );
     end
     
     if plot_precoders

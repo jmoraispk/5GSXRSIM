@@ -200,7 +200,7 @@ def get_vars_to_load(idx, vars_to_load_names):
                  3.6: [12,13], 3.65: [12,13],
                  4.1: [9], 4.2: [9], 4.3: [4,9],
                  5.1: [7], 5.15: [7], 5.2: [7], 5.3: [7], 
-                 5.4: [2,5,6], 5.5: [5,6,7], 5.6: [7], 5.65: [7],
+                 5.4: [2,7], 5.5: [5,6,7], 5.6: [7], 5.65: [7],
                  7.1: [5,6], 7.2: [5,6], 7.3: [5,6],
                  7.35: [5,6], 7.4: [4,5,6], 7.5: [2,5,6],
                  9.1: [5,6,8], 9.2: [5,6,8], 9.3: [8,9], 9.4: [5,6,8],
@@ -1109,7 +1109,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues(ues, sim_data_computed[f][11], 
                          [sim_data_trimmed[f][11][tti_idx,:,:].T], 
                          x_axis_label='Frequency [Hz]', 
-                         y_axis_lable='Power [W]', 
+                         y_axis_label='Power [W]', 
                          savefig=save_fig, plot_type_left=plt_type)
                 
         
@@ -1125,7 +1125,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues(ues, sim_data_computed[f][11], 
                          [sim_data_computed[f][6]], 
                          x_axis_label='Frequency [Hz]', 
-                         y_axis_lable='Power [dB]', 
+                         y_axis_label='Power [dB]', 
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
             
@@ -1134,7 +1134,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             # Plot signal power variation across time
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][10]], 
                          x_axis_label=x_label_time, 
-                         y_axis_lable='Power [W]', 
+                         y_axis_label='Power [W]', 
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
     
@@ -1197,7 +1197,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                                 x_axis_label=x_label_time, 
                                 y_labels=['Signal Power [dBm]', 
                                           'Interference Power [dBm]'],
-                                use_legend=True, legend_loc='lower center', ncols=2,
+                                use_legend=True, legend_loc='lower center', 
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
     

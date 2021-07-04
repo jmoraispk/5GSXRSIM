@@ -884,52 +884,78 @@ def load_precoders(precoders_paths, vectorize_GoB):
     for bs in range(len(precoders_paths)):
         
         precoder_file = scipy.io.loadmat(precoders_paths[bs])
-        precoders = precoder_file['precoders_array']
-        azi_vals = precoder_file['azi_values'][0]
-        el_vals = precoder_file['el_values'][0]
-        n_azi_vals = len(azi_vals)
-        n_el_vals = len(el_vals)
+        
+        # TODO: delete this comment if new loading way works
+        # precoders = precoder_file['precoders_array']
+        # azi_vals = precoder_file['azi_values'][0]
+        # el_vals = precoder_file['el_values'][0]
+        
+        # n_azi_vals = len(azi_vals)
+        # n_el_vals = len(el_vals)
+        
+        # # Store angle information along with the precoders
+        # precoder_dict[(bs)] = [n_azi_vals, n_el_vals]
+        # precoder_dict[(bs, 'azi_vals')] = azi_vals
+        # precoder_dict[(bs, 'el_vals')] = el_vals
+        
+        # # Fill in all the precoders
+        # for azi_idx in range(n_azi_vals):
+        #     for el_idx in range(n_el_vals):
+        #         precoder_dict[(bs, azi_idx, el_idx)] = \
+        #             precoders[azi_idx, el_idx, :]
+        
+        precoder_dict[(bs, 'matrix')] = precoder_file['precoders_matrix']
+        precoder_dict[(bs, 'directions')] = \
+            precoder_file['precoders_directions']
+        n_azi_beams = precoder_file['n_azi_beams'][0][0] # 11
+        n_ele_beams = precoder_file['n_ele_beams'][0][0] # 11
+        n_directions = precoder_dict[(bs, 'directions')].shape[1]
         
         # Store angle information along with the precoders
-        precoder_dict[(bs)] = [n_azi_vals, n_el_vals]
-        precoder_dict[(bs, 'azi_vals')] = azi_vals
-        precoder_dict[(bs, 'el_vals')] = el_vals
+        # Size = [# of precoders with very similar azimuths, 
+        #         # of precoders with very similar elevations] 
+        # for a square GoBs, it is the square root of the total # of precoders
+        precoder_dict[(bs, 'size')] = [n_azi_beams, n_ele_beams]
+        precoder_dict[(bs, 'n_directions')] = n_directions
         
         # Fill in all the precoders
-        for azi_idx in range(n_azi_vals):
-            for el_idx in range(n_el_vals):
-                precoder_dict[(bs, azi_idx, el_idx)] = \
-                    precoders[azi_idx, el_idx, :]
+        # for dir_idx in range(n_directions):
+        #         precoder_dict[(bs, dir_idx)] = \
+        #             precoder_dict[(bs)][:,dir_idx]
         
-        if vectorize_GoB:
-            # If the GoB is vectorized, create the full precoder matrix 
-            # AE_BS x N_GoB, where N_GoB is the number of beams in the grid
-            n_beams = np.prod(precoder_dict[(bs)])
-            precoder_dict[(bs, 'full-matrix')] = np.zeros()
-            for azi_idx in range(n_azi_vals):
-                for el_idx in range(n_el_vals):
-                    beam_idx = el_idx + azi_idx * n_el_vals
-                    precoder_dict[(bs, 'full-matrix')][:, beam_idx] = \
-                        precoder_dict[(bs, azi_idx, el_idx)]
+        
+        # TODO: try vectorizing the GoB
+        # if vectorize_GoB:
+        #     # If the GoB is vectorized, create the full precoder matrix 
+        #     # AE_BS x N_GoB, where N_GoB is the number of beams in the grid
+        #     n_beams = np.prod(precoder_dict[(bs)])
+        #     precoder_dict[(bs, 'full-matrix')] = np.zeros()
+        #     for azi_idx in range(n_azi_vals):
+        #         for el_idx in range(n_el_vals):
+        #             beam_idx = el_idx + azi_idx * n_el_vals
+        #             precoder_dict[(bs, 'full-matrix')][:, beam_idx] = \
+        #                 precoder_dict[(bs, azi_idx, el_idx)]
         
     return precoder_dict
     
 
-def print_precoder_dict(precoder_dict, n_bs, print_precoder=False):
-    for bs in range(n_bs):
-        try:
-            [azi_len, el_len] = precoder_dict[bs]
-            azi_vals = precoder_dict[(bs, 'azi_vals')]
-            el_vals = precoder_dict[(bs, 'el_vals')]
-            for azi_idx in range(azi_len):
-                for el_idx in range(el_len):                    
-                    p = precoder_dict[(bs, azi_idx, el_idx)]
-                    print(f'Ang: [{azi_vals[azi_idx]:2},{el_vals[el_idx]:2}];')
-                    if print_precoder:
-                        print(p)
-            
-        except KeyError:
-            continue
+def print_precoder_dict(precoder_dict, bs_idx, print_directions=False, 
+                        print_precoders=False):
+    try:
+        size = precoder_dict[(bs_idx, 'size')]
+        n_directions = precoder_dict[(bs_idx, 'n_directions')]
+        print(f'Codebook for BS {bs_idx} has size {size} '
+              f'-> {n_directions} directions')
+        if print_directions or print_precoders:
+            for dir_idx in range(n_directions):               
+                if print_directions:
+                    ang = precoder_dict[(bs_idx, 'directions')][:,dir_idx]
+                    print(f'Ang: [{ang[0]:2},{ang[1]:2}];')
+                if print_precoders:    
+                    p = precoder_dict[(bs_idx, 'matrix')][:,dir_idx]
+                    print(p)
+    except KeyError:
+        print('KEY ERROR!!')
 
 
 class Beam_pairs_list():
@@ -1065,9 +1091,7 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
     
     # The channel response is a square matrix of AE_UE x AE_BS
     
-    [azi_len, el_len] = precoder_dict[bs]
-    # azi_vals = precoder_dict[(bs, 'azi_vals')]
-    # el_vals = precoder_dict[(bs, 'el_vals')]
+    [azi_len, el_len] = precoder_dict[(bs, 'size')]
     
     matrix_instead_of_loop = False
     
@@ -1110,61 +1134,50 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
         
         # Loop over all angles to find the best precoder
         # for beam_idx in range(n_beams, i.e. # of columns of W):
-        for azi_idx in range(azi_len):
-            for el_idx in range(el_len):
-                # if GoB method 1:
-                # azi_idx = np.floor(beam_idx / 11).astype(int)
-                # el_idx = best_beam_idx % 11
-                w = precoder_dict[(bs, azi_idx, el_idx)]
-                
-                # if GoB method 2:
-                    # precoder_dict[bs] is the W matrix, # n_bs_txs x n_beams
-                # w = precoder_dict[bs][:,beam_idx] 
-                
-                # The current precoder_array is for a single element only
-                # We interleave (this is what needs to be done to have
-                # the weights from a single element replicated for the
-                # other element as well)
-                # TODO: put this interleave in matlab in case we always save
-                #       just one element
-                save_only_one_element = True
-                if not save_only_one_element:
-                    w = interleave([w,w])
-                
+        codebook_subset = precoder_dict[(bs, 'matrix')] 
+        # NOTE: you can provide subsets of the whole codebook
+          
+        for dir_idx in range(precoder_dict[(bs, 'n_directions')]):
+            
+            w = codebook_subset[:,dir_idx]
+            
+            # TODO: DELETE THIS WHEN THE NEW PRECODERS (ALREADY INTERLEAVED
+            # AND FOR BOTH POLARIZATIONS) ARE WORKING.
+            save_only_one_element = True
+            if not save_only_one_element:
+                w = interleave([w,w])
                 w = w / np.linalg.norm(w)
-                
-                # Compute internal product between ch coeffs and precoder, 
-                # that is what the UE will see from a transmission with w
-                at_ue_ant = np.dot(ch_resp, w)
-                
-                # The UE will use the Maximum Ratio Beamformer, 
-                # both for receiving and for transmitting
-                mr_precoder = at_ue_ant.conj().T
-                mr_precoder = mr_precoder / np.linalg.norm(mr_precoder)
-                
-                # Resulting in a amplitude channel gain of:
-                ch_gain = np.dot(at_ue_ant, mr_precoder)
-                
-                # The channel gain should be a scalar by now...
-                # Save the precoder that performs the best
-                
-                if abs(ch_gain) > curr_max_ch_gain:
-                    best_azi_idx = azi_idx
-                    best_el_idx = el_idx
-                    curr_max_ch_gain = abs(ch_gain)
-                    best_ue_weights = mr_precoder
-                    best_bs_weights = w
-                
-                if save_power_per_CSI_beam:
-                    power_per_beam_list.append(abs(ch_gain))
+            
+            # Compute internal product between ch coeffs and precoder, 
+            # that is what the UE will see from a transmission with w
+            at_ue_ant = np.dot(ch_resp, w)
+            
+            # The UE will use the Maximum Ratio Beamformer, 
+            # both for receiving and for transmitting
+            mr_precoder = at_ue_ant.conj().T
+            mr_precoder = mr_precoder / np.linalg.norm(mr_precoder)
+            
+            # Resulting in a amplitude channel gain of:
+            ch_gain = np.dot(at_ue_ant, mr_precoder)
+            
+            # The channel gain should be a scalar by now...
+            # Save the precoder that performs the best
+            
+            if abs(ch_gain) > curr_max_ch_gain:
+                best_idx = dir_idx
+                curr_max_ch_gain = abs(ch_gain)
+                best_ue_weights = mr_precoder
+                best_bs_weights = w
+            
+            if save_power_per_CSI_beam:
+                power_per_beam_list.append(abs(ch_gain))
     
     
     # Create and load the best Beam Pair found
     beam_pair = Beam_pair()
     
-    beam_pair.ang_idx = [best_azi_idx, best_el_idx]
-    beam_pair.ang = [precoder_dict[(bs, 'azi_vals')][best_azi_idx], 
-                     precoder_dict[(bs, 'el_vals')][best_el_idx]]
+    beam_pair.ang_idx = best_idx
+    beam_pair.ang = precoder_dict[(bs, 'directions')][:,best_idx]
     
     beam_pair.bs_weights = best_bs_weights
     beam_pair.ue_weights = best_ue_weights

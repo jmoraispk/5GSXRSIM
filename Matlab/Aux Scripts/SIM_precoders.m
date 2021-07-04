@@ -5,8 +5,10 @@ save_p = true;
 plot_p = false;
 do_vids = false;
 
-% Example:
+%%
+% Example (DO NOT USE, SIMPLY TO EXPLAIN THE ARGUMENTS):
 gen_grid_of_beams([4 4],    ... % arr_size
+                  'auto1',  ... % mode of deriving beamforming angles
                   [-60 60], ... % azi_lims
                   [-60 60], ... % el_lims
                   30,       ... % azi_res
@@ -32,7 +34,7 @@ gen_grid_of_beams([4 4],    ... % arr_size
 %%
 % 3.5 GHz with 16 dual-polarised antenna elements
 gen_grid_of_beams([4 4], 'auto1', [-60 60], [-60 60], 12, 12, 0, 0, save_p);
-              %%
+%%
 % 26 GHz with 64 dual-polarised antenna elements
 gen_grid_of_beams([8 8], 'auto1', [-60 60], [-60 60], 12, 12, 0, 0, save_p);
 

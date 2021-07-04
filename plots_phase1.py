@@ -76,7 +76,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [20, 4000 * 16]
+trim_ttis = [20, 4000 * 6]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -392,10 +392,10 @@ X   0.3   -> Channel Power across prbs (for a given tti)
 
     all_idxs_available = all_plots_available + all_non_plots_available
 
-    idxs_to_plot = [0.1, 1, 2, 3.45, 3.7, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
+    idxs_to_plot = [0.1, 1, 2, 3.45, 3.65, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
 
-    idxs_to_plot = all_plots_available
-    idxs_to_plot = [4.3]
+    # idxs_to_plot = all_plots_available
+    # idxs_to_plot = [4.3]
     
     # Test save_plot
     save_plots = False

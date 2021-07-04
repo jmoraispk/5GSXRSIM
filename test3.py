@@ -330,7 +330,7 @@ def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
 
 
 def plot_for_ues_double(ue_list, x_vals, y_vals_left, y_vals_right,
-                        x_label, y_label, title='', linewidths='',
+                        x_axis_label, y_labels, title='', linewidths='',
                         limits_ax1=[], limits_ax2=[],
                         no_ticks_ax1=[], no_ticks_ax2=[],
                         label_fonts=[13,13],
@@ -425,9 +425,9 @@ def plot_for_ues_double(ue_list, x_vals, y_vals_left, y_vals_right,
         
         ax1_handle.set_title(f'UE {ue}')
 
-        ax1_handle.set_xlabel(x_label)
-        ax1_handle.set_ylabel(y_label[0], color='g')
-        ax2_handle.set_ylabel(y_label[1], color='b')
+        ax1_handle.set_xlabel(x_axis_label)
+        ax1_handle.set_ylabel(y_labels[0], color='g')
+        ax2_handle.set_ylabel(y_labels[1], color='b')
         #ax1_handle.spines['right'].set_color('red')
         # Set tick colors as well
         # ax1_handle.tick_params(axis='y', colors='g')
@@ -498,7 +498,7 @@ def plot_for_ues_double(ue_list, x_vals, y_vals_left, y_vals_right,
                                     label=fill_label)
             
             if use_legend and legend_inside:
-                    ax1_handle.legend(loc=legend_loc)
+                ax1_handle.legend(loc=legend_loc)
     
         
         # Make Limits for left and right axis, in case information is given 
