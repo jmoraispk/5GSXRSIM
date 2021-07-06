@@ -76,7 +76,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [20, 4000 * 6]
+trim_ttis = [20, 4000 * 1]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -328,17 +328,17 @@ X   0.3   -> Channel Power across prbs (for a given tti)
              + saves to file
     10.7  -> prints all detailed measurement information on:
              -> Average packet latency:
-                -> for each frame in the GoB
+                -> for each frame in the GoP
                 -> for each I frame
                 -> for each P frame
                 -> averaged across all frames and std
              -> Average packet drop rate:
-                -> for each frame in the GoB
+                -> for each frame in the GoP
                 -> for each I frame
                 -> for each P frame
                 -> averaged across all frames and std
-    10.8  -> Average packet latency for each frame in the GoB (bar plot) 
-    10.9  -> Average packet drop rate for each frame in the GoB (bar plot)
+    10.8  -> Average packet latency for each frame in the GoP (bar plot) 
+    10.9  -> Average packet drop rate for each frame in the GoP (bar plot)
     10.11 -> Average packet latency and drop rate per frame of the GoP 
              [double plot]
 
@@ -395,7 +395,7 @@ X   0.3   -> Channel Power across prbs (for a given tti)
     idxs_to_plot = [0.1, 1, 2, 3.45, 3.65, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
 
     # idxs_to_plot = all_plots_available
-    # idxs_to_plot = [4.3]
+    idxs_to_plot = [3.4, 3.45]
     
     # Test save_plot
     save_plots = False
