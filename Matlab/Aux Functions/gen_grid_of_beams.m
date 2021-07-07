@@ -394,7 +394,7 @@ function [precoders_array] = gen_grid_of_beams(arr_size, ...
         n_ele_beams = round(sqrt(n_total));
         
         save(save_file_name, 'precoders_matrix', 'precoders_directions',...
-                             'n_azi_beams', 'n_ele_beams' );
+                             'n_azi_beams', 'n_ele_beams');
     end
     
     if plot_precoders

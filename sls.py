@@ -19,7 +19,6 @@ def id_tti(tti, n_slots_per_frame, UL_DL_split):
     'F' (Flexible) options are not enabled currently.
     """
     
-    # TODO: Rectify this! This is just here for debugging
     return 'DL'
     
     
@@ -885,25 +884,6 @@ def load_precoders(precoders_paths, vectorize_GoB):
         
         precoder_file = scipy.io.loadmat(precoders_paths[bs])
         
-        # TODO: delete this comment if new loading way works
-        # precoders = precoder_file['precoders_array']
-        # azi_vals = precoder_file['azi_values'][0]
-        # el_vals = precoder_file['el_values'][0]
-        
-        # n_azi_vals = len(azi_vals)
-        # n_el_vals = len(el_vals)
-        
-        # # Store angle information along with the precoders
-        # precoder_dict[(bs)] = [n_azi_vals, n_el_vals]
-        # precoder_dict[(bs, 'azi_vals')] = azi_vals
-        # precoder_dict[(bs, 'el_vals')] = el_vals
-        
-        # # Fill in all the precoders
-        # for azi_idx in range(n_azi_vals):
-        #     for el_idx in range(n_el_vals):
-        #         precoder_dict[(bs, azi_idx, el_idx)] = \
-        #             precoders[azi_idx, el_idx, :]
-        
         precoder_dict[(bs, 'matrix')] = precoder_file['precoders_matrix']
         precoder_dict[(bs, 'directions')] = \
             precoder_file['precoders_directions']
@@ -918,10 +898,6 @@ def load_precoders(precoders_paths, vectorize_GoB):
         precoder_dict[(bs, 'size')] = [n_azi_beams, n_ele_beams]
         precoder_dict[(bs, 'n_directions')] = n_directions
         
-        # Fill in all the precoders
-        # for dir_idx in range(n_directions):
-        #         precoder_dict[(bs, dir_idx)] = \
-        #             precoder_dict[(bs)][:,dir_idx]
         
         
         # TODO: try vectorizing the GoB
@@ -1113,8 +1089,8 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
         
         # Compute best beam pair detailed information
         best_beam_idx = np.argmax(list_of_ch_gains)
-        best_azi_idx = np.floor(best_beam_idx / 11).astype(int)
-        best_el_idx = best_beam_idx % 11
+        # best_azi_idx = np.floor(best_beam_idx / 11).astype(int)
+        # best_el_idx = best_beam_idx % 11
         curr_max_ch_gain = abs(list_of_ch_gains[best_beam_idx])
         
         w_bs = W[:, best_beam_idx]
@@ -1140,13 +1116,6 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
         for dir_idx in range(precoder_dict[(bs, 'n_directions')]):
             
             w = codebook_subset[:,dir_idx]
-            
-            # TODO: DELETE THIS WHEN THE NEW PRECODERS (ALREADY INTERLEAVED
-            # AND FOR BOTH POLARIZATIONS) ARE WORKING.
-            save_only_one_element = True
-            if not save_only_one_element:
-                w = interleave([w,w])
-                w = w / np.linalg.norm(w)
             
             # Compute internal product between ch coeffs and precoder, 
             # that is what the UE will see from a transmission with w
