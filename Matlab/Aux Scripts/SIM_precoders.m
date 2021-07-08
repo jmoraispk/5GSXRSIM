@@ -45,6 +45,19 @@ gen_grid_of_beams([8 8], 'auto1', [-60 60], [-60 60], 12, 12, 0, 0, save_p);
 % gen_grid_of_beams([8 8], [-60 60], [-60 60], 15, 15, diff_pol, 0.5, plot_p, save_p, do_vids, 1, -20, 8);
 % gen_grid_of_beams([8 8], [-60 60], [-60 60], 15, 15, diff_pol, 0.5, plot_p, save_p, do_vids, 1, -30, 4);
 
+%% For Cross-layer optimization (1 omnidirectional element only)
+
+% We save the directions instead of the azi and el values
+% 2 x N BEAMS matrix.
+precoders_directions = [0;0];
+precoders_matrix = [1];
+n_azi_beams = 1;
+n_ele_beams = 1;
+
+save('1-omni-element', 'precoders_matrix', 'precoders_directions',...
+                       'n_azi_beams', 'n_ele_beams');
+
+
 %% With Tapers
 sll_vals = [-20, -30, -40];
 nbar_vals = 1:10; % Note that there are only 4 or so side lobes...

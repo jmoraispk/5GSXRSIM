@@ -58,17 +58,16 @@ To add a new plot index:
 # When True, all the required variables are always loaded, trimmed or 
 # computed, respectively, unconditional of being there already. Put to False 
 # the step where implementation is occurring. It's almost always in computation
-always_load = False
-always_trim = False
-always_compute = False
-
+always_load = True
+always_trim = True
+always_compute = True
 
 
 #-------------------------
 stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Stats' + '\\'
 seeds = [1]
 speeds = [1]
-csi_periodicities = [20]
+csi_periodicities = [5]
 app_bitrates= [100]
 users = [None]
 bandwidths = [50] # MHz
@@ -76,7 +75,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [20, 4000 * 1]
+trim_ttis = [20, int(4000 * 1)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -157,8 +156,8 @@ VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
                      'user_ori_for_plot',                 # 34
                      'individual_beam_gob_details',       # 35
                      'beams_processed',                   # 36
-                     'avg_sinr',                          # 
-                     'avg_sinr_multitrace',               # 
+                     'avg_sinr',                          # 37
+                     'avg_sinr_multitrace',               # 38
                      '']
 
 # file_sets has the sets of files to load at any given time.
@@ -175,7 +174,11 @@ for comb in combinations:
     stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
                     f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
                     f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
-                    
+    
+    stats_dir_end = r'Sim_SPEED-3_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_2' + '\\'
+    
+    # stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_v1' + '\\'
+    
     print(f'\nDoing for: {stats_dir_end}')
     
     stats_dir = stats_folder + stats_dir_end
@@ -276,8 +279,8 @@ X   0.3   -> Channel Power across prbs (for a given tti)
     3.45  -> Signal power vs Interference power (dBW) [double axis]
     3.5   -> Signal power vs Interference power (dBm) [single axis]
     3.55  -> Signal power vs Interference power (dBm) [double axis]
-    3.6   -> Estimated vs Realised Interference
-    3.65  -> Estimated vs Realised Interference [dB]
+    3.6   -> Estimated vs Realised Interference       [single axis]
+    3.65  -> Estimated vs Realised Interference [dB]  [single axis]
     
     4.1   -> MCS per user, same plot
     4.2   -> MCS per user, diff plots
@@ -345,20 +348,21 @@ X   0.3   -> Channel Power across prbs (for a given tti)
     11    -> Scheduled UEs: sum of co-scheduled UEs across time
     11.1  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
     11.2  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not,
-                            all UEs in the [same plot]
-    11.3  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not,
-                            all UEs SUMMED in the [same plot]
-    11.4  -> UEs with bitrate: each UE. There's a difference between having
+                            all UEs in the [same plot]                  
+    11.3  -> UEs with bitrate: each UE. There's a difference between having
              bitrate and being scheduled! The schedule is only updated when
              there's a scheduling update... However, the user can be added 
              to the schedule and get no (useful) bitrate. It will still get
              bits across, but those might have no utility because they have
              transferred before.
+    11.4  -> Scheduled UEs vs signal power (linear)
+X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
 
+         
     13    -> SU-MIMO setting - number of layers scheduled per UE
     
-    14    -> Packet sequences for each UE. [same plot]
-    14.1  -> Packet sequences for each UE. [diff plot]
+    14.1  -> Packet sequences for each UE. [same plot]
+    14.2  -> Packet sequences for each UE. [diff plot]
     
     15    -> Power of each GoB beam
     
@@ -377,6 +381,19 @@ X   0.3   -> Channel Power across prbs (for a given tti)
                                (needs to be computed in Matlab and loaded))
     17.2  -> ...
     """
+    
+    """ 
+    Warnings:
+        
+        - Empty plots: 
+            Possibility 1: 10 * log10(0) = -inf -> this does not show in 
+                           logarithmic plots. Therefore, try the plot in linear
+                           units first to check whether that quantity is 0.
+            Possibility 2: You selected tight axis and the data is precisely 
+                           at that limit, thus being hidden by the frame
+    """
+    
+    
     # videos, gifs, results printing, etc..
     all_non_plots_available = [10.5, 10.55, 10.6, 10.65, 17, 17.01, 17.02,
                                17.03, 17.11, 17.12, 17.13]
@@ -395,11 +412,19 @@ X   0.3   -> Channel Power across prbs (for a given tti)
     idxs_to_plot = [0.1, 1, 2, 3.45, 3.65, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
 
     # idxs_to_plot = all_plots_available
-    idxs_to_plot = [3.4, 3.45]
+    
+    
+    idxs_to_plot = [1, 2]
+    idxs_to_plot = [10.15, 10.25]
+    # , 3.5, 3.65]
+    idxs_to_plot = [11.4]
+    ues = [0]
+    # estimate interference should be different from 0!
+    
     
     # Test save_plot
-    save_plots = False
-    saveformat = 'pdf'
+    save_plots = True
+    saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
     base_plots_folder = 'Plots\\' 
     
     for i in idxs_to_plot:

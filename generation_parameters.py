@@ -221,20 +221,20 @@ class Generation_parameters:
         
         # Antenna types, one input per frequency
         # [a single 'omni' or 'patch' or 'dipole' or 'array']        
-        self.user_ant_type = np.array(["array",
-                                       "array"], dtype=np.object)
+        self.user_ant_type = np.array(["omni",
+                                       "omni"], dtype=np.object)
         self.cam_ant_type = np.array(["array",
                                       "array"], dtype=np.object)  
-        self.bs_ant_type = np.array(["array",
-                                     "array"], dtype=np.object)
+        self.bs_ant_type = np.array(["omni",
+                                     "omni"], dtype=np.object)
         
         
         # If the antenan type in an array, this information is used:
         # Antenna structure and element spacing
-        self.bs_ant_config = np.array([[4, 4], [8, 8]], dtype=np.double)
+        self.bs_ant_config = np.array([[1, 1], [1, 1]], dtype=np.double)
         self.bs_ant_element_spacing = 0.5
         # User's Headset
-        self.user_ant_config = np.array([[2, 2], [4, 4]], dtype=np.double)
+        self.user_ant_config = np.array([[1, 1], [1, 1]], dtype=np.double)
         self.user_ant_element_spacing = 0.5
         # Cameras
         self.cam_ant_config = np.array([[2, 2], [4, 4]], dtype=np.double)
@@ -264,7 +264,9 @@ class Generation_parameters:
         # Distinguish between orthogonal polarisations? Basically, 
         # if the elemenets of each dual-polarised antenna should have separated
         # channel responses. This is important for layers.
-        self.diff_orthogonal_polarisation = 1
+        self.diff_orthogonal_polarisation = 0
+        # TODO: check whether this needs to be 0 when our elements are not 
+        #       cross polarized
         
         # To apply the Human Blockage models to the computed channel.
         # It will generate twice as much data, as the non-blocked channel needs
@@ -289,7 +291,9 @@ class Generation_parameters:
         
         self.tracks_filename = self.matlab_folder + \
             f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
-        
+            #r'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat'
+            
+              
         self.conf_folder = self.matlab_folder + 'QuaDRiGa\\quadriga_src\\config\\'
         
         if ' ' in self.conf_folder:
@@ -396,7 +400,7 @@ class Generation_parameters:
         self.parallelisation_level = 'UE'  # 'None', 'FR', 'BS', 'UE'
         
         # Maximum number of time divisions
-        self.time_divisions = 2
+        self.time_divisions = 1
         # Note: The total number of instances is derived from the 2 vars above
         
         # Number of instances to execute per batch (Python needs a core also)
@@ -869,6 +873,7 @@ class Generation_parameters:
         user_height = 1.4  # [m] 
         cam_height = 1     # [m]
         
+        # Either seat the users automatically, or use a customized arrangement
         use_standard_arrangement = 1
         
         # Table format: 'quadrangular', 'rectangular' or 'round'/'circular'
@@ -887,7 +892,7 @@ class Generation_parameters:
         # Distances that define the placement of 2 cameras per user in the room
         # (This conf. has an angle of 30º from the perpendicular 
         # to the user to each camera)
-        d_u = 0.6   # distance along perpendicular to the user
+        d_u = 0.6  # distance along perpendicular to the user
         d_s = 0.3  # distance from the perpendicular to each side (2 cameras)
         
         
