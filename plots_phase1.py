@@ -64,7 +64,7 @@ always_compute = True
 
 
 #-------------------------
-stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Stats' + '\\'
+stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\João\SXRSIMv3\Stats' + '\\'
 seeds = [1]
 speeds = [1]
 csi_periodicities = [5]
@@ -166,7 +166,6 @@ VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
 #      we need to load those 3 seeds to compute the average.
 file_sets = []
 
-
 # Create the file set combinations from the variables given previously
 
 for comb in combinations:
@@ -175,7 +174,7 @@ for comb in combinations:
                     f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
                     f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
     
-    stats_dir_end = r'Sim_SPEED-3_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_2' + '\\'
+    stats_dir_end = r'Sim_SPEED-4_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_2' + '\\'
     
     # stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_v1' + '\\'
     

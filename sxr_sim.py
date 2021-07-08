@@ -18,7 +18,7 @@ import application_traffic as at
 import simulation_parameters as sim_par
 
 # parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks" + '\\'
-parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+parent_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\João\SXRSIMv3\Matlab\TraceGeneration" + '\\'
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
 seed = 1
@@ -27,7 +27,7 @@ speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-folders_to_simulate = ["Sim_2021-07-07_10h33m29s_SEED1"]
+folders_to_simulate = ["Sim_SEED1"]
 
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
@@ -409,7 +409,7 @@ for param in sim_params:
     # Phase 1: CSI update
         # 1-a) Update the Latest CSI tti (based on CSI periodicity)
         #  Check if the precoder and other CSI measurements should be updated 
-        if tti % sp.csi_period == 0 and tti != 0:
+        if tti % sp.csi_period == 0:
             # If an UE was updated before this tti, it needs to be updatedagain
             last_csi_tti = tti
             
