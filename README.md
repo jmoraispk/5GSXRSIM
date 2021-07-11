@@ -4,8 +4,9 @@
 1. Windows (for the parallelization tool)
 2. Python Libraries:
     * numpy
-    * matplotlib
     * scipy
-    * joblib
-
+    * joblib     (          for generation) 
+    * matplotlib (          for data analysis)
+    * moviepy    (optional, for data analysis, use pip) 
+    * PyPDF2     (optional, for data analysis) 
 3. Matlab Runtime Compiler 9.8 (for Matlab 2020a)
