@@ -27,7 +27,7 @@ speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-folders_to_simulate = ["Sim_SEED1"]
+folders_to_simulate = ["Sim_2021-07-08_14h58m53s_SEED1"]
 
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 

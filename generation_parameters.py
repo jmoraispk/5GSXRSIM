@@ -264,10 +264,9 @@ class Generation_parameters:
         # Distinguish between orthogonal polarisations? Basically, 
         # if the elemenets of each dual-polarised antenna should have separated
         # channel responses. This is important for layers.
-        self.diff_orthogonal_polarisation = 0
-        # TODO: check whether this needs to be 0 when our elements are not 
-        #       cross polarized
-        
+        self.diff_orthogonal_polarisation = 1
+        # When the elements are not cross polarized, this variable should be 0.
+
         # To apply the Human Blockage models to the computed channel.
         # It will generate twice as much data, as the non-blocked channel needs
         # to be generated and saved in the first place
