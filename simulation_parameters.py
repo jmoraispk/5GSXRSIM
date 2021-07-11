@@ -204,6 +204,11 @@ class Simulation_parameters:
         #       packets in the buffer, that's it.
         self.always_schedule_every_ue = True
         
+        ##########################################
+        # - self.csi_tti_delay = 0
+        # - self.always_schedule_every_ue = False
+        ##########################################
+        
         # TODO: This variable is here because the simulator is not read for
         # not having it. What happens is the following:
             # if we put this to false, then only the UEs with things to send
@@ -277,7 +282,6 @@ class Simulation_parameters:
         self.precoders_folder = self.matlab_folder + 'Precoders\\'
         
         # A precoder for each antenna, for each frequency [freq][bs_idx]
-        # TODO: delete the v2 part when the new version is working.
         self.precoders_files = \
             [["precoders_4_4_-60_60_12_0_-60_60_12_0_pol_1"], 
              ["precoders_8_8_-60_60_12_0_-60_60_12_0_pol_1"]]
@@ -296,7 +300,9 @@ class Simulation_parameters:
         
         # Space the I frames across the GoP for the existant UEs
         self.uniformly_space_UE_I_frames = False
-        # TODO: read the 'todo' at the end of the simulation parameters ...
+        # Note: until the TODO in the end of simulation parameters is solved, 
+        #       this should be set to False. Otherwise we fall into the 
+        #       interference unpredictability problem again.
         
         # Group of Pictures ( Made of: 1 I frame and (GoP-1) P frames )
         self.GoP = 6                     # [6, 9 or 12]
@@ -393,11 +399,6 @@ class Simulation_parameters:
         
                 
     def compute_vars_simulation(self, bw):
-        
-        
-        # TODO: organise this in more functions. perhaps one that loads and 
-        # computes from vars.mat, and other that computes from the general
-        # parameters defined previously
         
         # Check if variables have values in the correct ranges
         self.check_vars_simulation()
@@ -564,7 +565,6 @@ class Simulation_parameters:
         # Currently we only consider this overhead, which probably doesn't 
         # account for guard symbols or symbols of other types (e.g. in DL
         # frame, there are only DL symbols)
-        # It also doesn't account for############################################################
         self.DL_radio_efficiency = \
             1 - self.DL_radio_overhead[self.sim_freq_idx]
         self.UL_radio_efficiency = \
