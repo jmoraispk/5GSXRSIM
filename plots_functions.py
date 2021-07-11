@@ -10,18 +10,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
 
-# For MP4 short clips:
-from moviepy.editor import VideoClip
-from moviepy.video.io.bindings import mplfig_to_npimage
+import utils as ut
+
+from test3 import plot_for_ues
+from test3 import plot_for_ues_double
+
+try:
+    # For MP4 short clips:
+    from moviepy.editor import VideoClip
+    from moviepy.video.io.bindings import mplfig_to_npimage
+except ModuleNotFoundError:
+    # Error handling
+    print('Could not find moviepy module. Did you pip it into the current env?')
+    print('Making GIFs and Videos will not work.')
 
 # Note: there's probably a better way that avoids using the import below,
 # see app_trafic_plots done in v2.
 # import matplotlib.ticker as ticker 
 
-import utils as ut
-
-from test3 import plot_for_ues
-from test3 import plot_for_ues_double
 
 
 def t_student_mapping(N, one_sided=True, confidence=0.95):
