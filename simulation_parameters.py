@@ -224,7 +224,7 @@ class Simulation_parameters:
         
         # In case we need to know how much power is received given a certain
         # choice of GoB
-        self.save_power_per_CSI_beam = True
+        self.save_power_per_CSI_beam = False
         
         # Instead of checking which is the best beam through a loop, 
         # create matrices and multiply them. For some sizes of the grid and
@@ -283,8 +283,8 @@ class Simulation_parameters:
         
         # A precoder for each antenna, for each frequency [freq][bs_idx]
         self.precoders_files = \
-            [["precoders_4_4_-60_60_12_0_-60_60_12_0_pol_1"], 
-             ["precoders_8_8_-60_60_12_0_-60_60_12_0_pol_1"]]
+            [["1-omni-element"], 
+             ["1-omni-element"]]
         
         # the case above has a single precoder for each frequency
         # The selected precoder path, with the simulated frequency, is
@@ -482,8 +482,10 @@ class Simulation_parameters:
             # only.
             # Therefore we will break it here. In a meeting, we need the 2 
             # polarisations to cope with the rapid changes in orientation.
-            raise Exception('Not enough coefficients! Only supports '
-                            'single antenna elements, not cross-polarised.')
+            pass
+            # TODO: check whether this is a hard limitation or not.
+            # raise Exception('Not enough coefficients! Only supports '
+            #                 'single antenna elements, not cross-polarised.')
         else:
             self.n_polarisations = 2
             # This number of polarisations is assumed throughout the simulator. 

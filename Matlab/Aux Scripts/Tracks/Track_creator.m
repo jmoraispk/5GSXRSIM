@@ -23,8 +23,8 @@ load('vars_4ues.mat');
 %   - SEED
 %   - mvnt_values
 % speaking_time = 4;
-mvnt_vals = 7:7;
-SEEDs = [1:7 9:14 16:20];
+mvnt_vals = 4;
+SEEDs = [1:5];
 
 for SEED = SEEDs
     % SEED is set just in the beginning of the first set of tracks

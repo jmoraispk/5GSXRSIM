@@ -806,19 +806,20 @@ def update_channel_vars(tti, TTIs_per_batch, n_ue, coeffs, channel,
     ttis = np.arange(tti, tti + TTIs_per_batch)
     
     for ue in range(n_ue):
+        
+        # coeffs is a dictionary with the channel betwee BS-UE
         c = coeffs[(0, ue)] # c is [n_rx, n_tx, n_prb, n_tti]
         
-        # channel is [n_ue,tti]
-        # channel_per_prb is [n_ue, tti, n_prb]
         
         # a) take the power between any two elements
         # b) get the average per prb (is not )
         # c) 
         
         for t_idx in range(len(ttis)):
+            # channel is [n_ue,tti]
             channel[ttis[t_idx]][ue] = \
                 10 * np.log10(np.sum(np.mean(np.abs(c[:,:,:,t_idx]) ** 2, 2)))
-        
+                # channel_per_prb is [n_ue, tti, n_prb]
             # The second check is to prevent this to run before it is properly
             # implemented and tested. The save_prb_vars should be enough.
             # PS: actually, separate in channel and sig_pow vars to be specific
@@ -1069,9 +1070,23 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
     
     [azi_len, el_len] = precoder_dict[(bs, 'size')]
     
+    # Compute best beam in a vectorized manner
     matrix_instead_of_loop = False
     
-    if matrix_instead_of_loop:
+    curr_max_ch_gain = 0
+    
+    power_per_beam_list = []
+        
+    
+    # Check whether beamforming is ON or OFF (if there's only 1 element, no BF)
+    if ch_resp.shape == (1,1):
+        best_idx = 0
+        curr_max_ch_gain = np.abs(ch_resp)[0][0]
+        best_ue_weights = [1]
+        best_bs_weights = [1]
+    
+    
+    elif matrix_instead_of_loop:
         # create macro channel matrix (AE_UE x N_GOB) x AE_BS
         H = np.vstack(ch_resp)
         
@@ -1104,15 +1119,11 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
             power_per_beam_list = list_of_ch_gains
     else:
         
-        curr_max_ch_gain = 0
-        
-        power_per_beam_list = []
-        
         # Loop over all angles to find the best precoder
         # for beam_idx in range(n_beams, i.e. # of columns of W):
-        codebook_subset = precoder_dict[(bs, 'matrix')] 
+        codebook_subset = precoder_dict[(bs, 'matrix')]
         # NOTE: you can provide subsets of the whole codebook
-          
+        
         for dir_idx in range(precoder_dict[(bs, 'n_directions')]):
             
             w = codebook_subset[:,dir_idx]
@@ -1654,6 +1665,7 @@ def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs,
             # 1- Precoder Estimation
             # a) Check if the precoder should be updated (CSI periodicity)
             if curr_beam_pairs[(bs, ue, 0)].last_updated < last_csi_tti:
+                pow_per_beam = [[] for i in range(n_layers)]
                 # Update the precoders of all layers with info from the 
                 # latest_csi_tti (passed relative: tti_with_csi)
                 update_precoders(bs,
@@ -1665,9 +1677,12 @@ def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs,
                                  tti_with_csi,
                                  n_layers,
                                  n_csi_beams,
-                                 power_per_beam[tti][ue],
+                                 pow_per_beam,
                                  save_power_per_CSI_beam,
                                  vectorize)
+                
+                if save_power_per_CSI_beam:
+                    power_per_beam[tti][ue] = pow_per_beam
                 
                 for l in range(n_layers):
                     curr_beam_pairs[(bs, ue, l)].last_updated = tti
@@ -1869,19 +1884,18 @@ def power_control(tti, bs_max_pow, scheduled_UEs, scheduled_layers,
 def final_mcs_update(tti, curr_schedule, est_interference,
                      wideband_noise_power, n_prb, TTI_dur_in_secs,
                      freq_compression_ratio, estimated_SINR, 
-                     use_olla, olla, tbs_divisor, efficiency, bw_multiplier):
+                     use_olla, olla, tbs_divisor, efficiency, bw_multiplier,
+                     scheduled_UEs, scheduled_layers):
     # With all choices made, there may have been changes to the SINRs
     # Update the estimations such that the best MCS is used
     # There may also have been updates to the interference, pro-actively
     # from the radiation pattern or with other techniques...
-    
     for entry in curr_schedule['DL']:
         
         sinr = calc_SINR(entry.tx_power, 
                          entry.beam_pair.ch_power_gain, 
                          est_interference[tti][entry.ue][entry.layer_idx],
                          wideband_noise_power)
-        
         
         (cqi, bler) = calc_CQI(sinr)
         
@@ -1910,9 +1924,15 @@ def final_mcs_update(tti, curr_schedule, est_interference,
 
         entry.tb_max_size = get_TB_size(entry.bits_to_send, tbs_divisor)
 
-    # Remove the entries that have no bit rate (cqi = 0)    
+
+    for entry in curr_schedule['DL']:
+        if entry.cqi == 0:
+            scheduled_UEs[tti][entry.ue] = 0
+            scheduled_layers[tti][entry.ue] -= 1 
+            
     curr_schedule['DL'] = [entry for entry in curr_schedule['DL'] 
-                           if entry.cqi != 0]        
+                           if entry.cqi != 0]
+    
     
     
 ######################### SIMULATION WRAPPERS ######################
@@ -1953,18 +1973,12 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                 
                 ch_matrix = channel_matrix(coeffs, entry.ue, other_entry.bs,
                                            prb, tti_relative, other_entry.pol)
-    
+                
                 # Sum the interference (worst case scenario probabilistically)
                 interference_pow_per_prb[prb] += \
                     calc_rx_power_lin(other_entry.tx_power / n_prb, 
                                       other_entry.beam_pair.bs_weights,
                                       entry.beam_pair.ue_weights, ch_matrix)
-                    
-                # a = calc_rx_power_lin(other_entry.tx_power / n_prb, 
-                #                       other_entry.beam_pair.bs_weights,
-                #                       entry.beam_pair.ue_weights, ch_matrix)
-                # print(a)
-                
 
             # Add the external inter-cell interference 
             interference_pow_per_prb[prb] += \

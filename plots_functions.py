@@ -207,8 +207,8 @@ def get_vars_to_load(idx, vars_to_load_names):
                  10.1: [1], 10.15: [1], 10.2: [1], 10.25: [1], 
                  10.3: [1], 10.31: [1], 10.4: [1], 10.45: [1], 
                  10.5: [1], 10.55: [1], 10.6: [1], 10.65: [1], 
-                 10.7: [], 10.8: [1], 10.9: [1], 10.11: [1],
-                 11: [15], 11.1: [15], 11.2: [15], 11.3: [4], 
+                 10.7: [1], 10.8: [1], 10.9: [1], 10.11: [1],
+                 11: [15], 11.1: [15], 11.2: [15], 11.3: [4], 11.4: [10,15],
                  13: [14],
                  14.1: [1], 14.2: [1], 
                  15: [18], 
@@ -256,7 +256,7 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     10.5: [16], 10.55: [16], 10.6: [17], 10.65: [17], 
                     10.7: [14,15,16,17,18,19,20,21,22,23], 
                     10.8: [22,27], 10.9: [23,27], 10.11: [22,23,27],
-                    11: [24], 11.1: [], 11.2: [], 11.3: [25], 
+                    11: [24], 11.1: [], 11.2: [], 11.3: [25], 11.4: [],
                     13: [],
                     14.1: [], 14.2: [],
                     15: [28], 
@@ -1197,7 +1197,6 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                                 x_axis_label=x_label_time, 
                                 y_labels=['Signal Power [dBm]', 
                                           'Interference Power [dBm]'],
-                                use_legend=True, legend_loc='lower center', 
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
     
@@ -1220,7 +1219,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                          x_axis_label=x_label_time, 
                          y_axis_label='Interference Power [dB]',  
                          y_labels=['Estimated', 'Realised'],
-                         use_legend=True, legend_loc='lower center', ncols=2,
+                         use_legend=True,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
                             
@@ -1674,7 +1673,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
                     
-            
+        # Scheduled UEs: each UE is 1 when it is scheduled and 0 when it is not 
+        #                [same axis]
         if plot_idx == 11.2:
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][15]], 
                          use_legend=True, legend_inside=True, 
@@ -1692,7 +1692,17 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             if save_fig:
                 plt.savefig(file_name, format=save_format)        
                 print(f'Saved: {file_name}')
-                
+        
+        if plot_idx == 11.4: 
+            plot_for_ues_double(ues, x_vals, [sim_data_trimmed[f][10]], 
+                                [sim_data_trimmed[f][15]], 
+                                x_axis_label=x_label_time, 
+                                y_labels=['Signal Power [W]', 
+                                          'Scheduled UEs'],
+                                savefig=save_fig, filename=file_name, 
+                                saveformat=save_format) 
+        
+        
         # Number of co-scheduled layers per UE
         if plot_idx == 13:
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][14]],

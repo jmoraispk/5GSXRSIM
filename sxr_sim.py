@@ -18,7 +18,7 @@ import application_traffic as at
 import simulation_parameters as sim_par
 
 # parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks" + '\\'
-parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+parent_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\João\SXRSIMv3\Matlab\TraceGeneration" + '\\'
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
 seed = 1
@@ -36,7 +36,7 @@ freq_idxs = [0]
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
 # application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
 
-csi_periodicities = [20]
+csi_periodicities = [5]
 application_bitrates = [100]
 
 # Put to [None] when not looping users, and the user_list is manually set below
@@ -116,7 +116,7 @@ for param in sim_params:
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'{seed_str}_SPEED-{sp.speed_idx}_FREQ-{freq_idx}_' + \
                  f'CSIPER-{csi_periodicity}_APPBIT-{application_bitrate}_' + \
-                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}'
+                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}_2'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
@@ -130,6 +130,7 @@ for param in sim_params:
     # cam_buffers = [] # we assume cameras are wired.
     packet_sequences_DL = [0] * sp.n_phy
     # Compute offsets to space out user I frames.
+    sp.uniformly_space_UE_I_frames = True # TODO: make sure we want this True
     if sp.uniformly_space_UE_I_frames:
         I_frame_offsets = np.linspace(0, sp.GoP / sp.FPS, sp.n_phy + 1)[:-1]
     else:
@@ -245,6 +246,8 @@ for param in sim_params:
     est_su_mimo_bitrate = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     ue_priority = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     all_delays = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+    
+    # The UEs with an active link
     scheduled_UEs = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     scheduled_layers = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     su_mimo_setting = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
@@ -261,8 +264,8 @@ for param in sim_params:
     
     
     if sp.save_per_prb_variables:
-        sig_pow_per_prb = ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers,
-                                             sp.n_prb])
+        sig_pow_per_prb = ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, 
+                                              sp.n_layers, sp.n_prb])
         channel_per_prb = [] # ut.make_py_list(3, [sp.n_ue, sp.sim_TTIs])
     else:
         sig_pow_per_prb = []
@@ -551,10 +554,12 @@ for param in sim_params:
                                  sp.TTI_dur_in_secs, sp.freq_compression_ratio, 
                                  estimated_SINR, sp.use_olla, olla,
                                  sp.tbs_divisor, sp.DL_radio_efficiency, 
-                                 sp.bandwidth_multiplier)
+                                 sp.bandwidth_multiplier, scheduled_UEs, 
+                                 scheduled_layers)
             
         # ################## END OF SCHEDULING UPDATE ####################
-        
+        # print(tti)
+        # print('here')
         # Phase 3: TTI Simulation
         sls.tti_simulation(curr_schedule, slot_type, sp.n_prb, sp.debug, 
                            coeffs, tti_relative, 
@@ -567,11 +572,6 @@ for param in sim_params:
                            sp.TTI_dur_in_secs, realised_bitrate_total, 
                            beams_used, sig_pow_per_prb, mcs_used, 
                            sp.save_per_prb_variables, experienced_signal_power)
-        
-        # TODO: solve this. Determine whether the current 'reaction' to picking
-        #       the same beam is what the system should do.
-        # if realised_SINR[tti][0][2] == 0:
-        #     print(f'fucking hell tti:{tti}')
         
         if sp.debug:
             print(f'----------Done measuring tti {tti} ---------------------')
