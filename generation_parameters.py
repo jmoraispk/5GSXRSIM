@@ -184,7 +184,7 @@ class Generation_parameters:
         
         # Load specific tracks. Note: if tracks aren't created, this needs to
         # be set to False to create the vars.mat
-        self.load_tracks_from_file = True
+        self.load_tracks_from_file = False
         
         # Indices of users seats: these indices depend on the number of seats!
         # Phy user disposition 
@@ -264,7 +264,7 @@ class Generation_parameters:
         # Distinguish between orthogonal polarisations? Basically, 
         # if the elemenets of each dual-polarised antenna should have separated
         # channel responses. This is important for layers.
-        self.diff_orthogonal_polarisation = 1
+        self.diff_orthogonal_polarisation = 0
         # When the elements are not cross polarized, this variable should be 0.
 
         # To apply the Human Blockage models to the computed channel.
@@ -289,8 +289,9 @@ class Generation_parameters:
         self.matlab_folder = self.curr_path + '\\Matlab\\'
         
         self.tracks_filename = self.matlab_folder + \
-            f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
-            #r'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat'
+            r'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat'
+            #f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
+            
             
               
         self.conf_folder = self.matlab_folder + 'QuaDRiGa\\quadriga_src\\config\\'
