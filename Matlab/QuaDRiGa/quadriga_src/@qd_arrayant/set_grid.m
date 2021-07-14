@@ -57,12 +57,12 @@ if ~exist('use_interpolate','var') || isempty(use_interpolate)
 end
 
 if ~( any( size(elevation_grid) == 1 ) && isnumeric(elevation_grid) && isreal(elevation_grid) &&...
-        max(elevation_grid)<=pi/2+1e-7 && min(elevation_grid)>=-pi/2-1e-7 )
+        max(elevation_grid)<=pi/2 && min(elevation_grid)>=-pi/2 )
     error('QuaDRiGa:qd_arrayant:wrongInputValue','??? "elevation_grid" must be a vector containing values between -pi/2 and pi/2')
 end
 
 if ~( any( size(azimuth_grid) == 1 ) && isnumeric(azimuth_grid) && isreal(azimuth_grid) &&...
-        max(azimuth_grid)<=pi+1e-7 && min(azimuth_grid)>=-pi-1e-7 )
+        max(azimuth_grid)<=pi && min(azimuth_grid)>=-pi )
     error('QuaDRiGa:qd_arrayant:wrongInputValue','??? "azimuth_grid" must be a vector containing values between -pi and pi')
 end
 
@@ -99,7 +99,9 @@ else
     if use_interpolate
         el = repmat( elevation_grid' , 1 , numel(azimuth_grid) );
         az = repmat( azimuth_grid , numel(elevation_grid) , 1 );
-        [V,H] = h_qd_arrayant.interpolate( az , el, 1:h_qd_arrayant.no_elements  );
+        [ V,H ] = h_qd_arrayant.interpolate( reshape(az,1,[]), reshape(el,1,[]) );
+        V = reshape(V.',numel(elevation_grid),numel(azimuth_grid),[]);
+        H = reshape(H.',numel(elevation_grid),numel(azimuth_grid),[]);
         
     else
         no_elements = h_qd_arrayant.no_elements;
