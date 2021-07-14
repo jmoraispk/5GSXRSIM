@@ -804,7 +804,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                 
                 # Position
                 initial_pos = np.reshape(f_sp.initial_pos_backup,
-                                                  (n_ues, 3, 1))
+                                         (n_ues, 3, 1))
                 sim_data_computed[f][33] = (f_sp.pos_backup + initial_pos)
 
                 # Orientation
