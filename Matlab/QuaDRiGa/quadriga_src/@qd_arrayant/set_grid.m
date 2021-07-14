@@ -57,12 +57,12 @@ if ~exist('use_interpolate','var') || isempty(use_interpolate)
 end
 
 if ~( any( size(elevation_grid) == 1 ) && isnumeric(elevation_grid) && isreal(elevation_grid) &&...
-        max(elevation_grid)<=pi/2 && min(elevation_grid)>=-pi/2 )
+        max(elevation_grid)<=pi/2+1e-7 && min(elevation_grid)>=-pi/2-1e-7 )
     error('QuaDRiGa:qd_arrayant:wrongInputValue','??? "elevation_grid" must be a vector containing values between -pi/2 and pi/2')
 end
 
 if ~( any( size(azimuth_grid) == 1 ) && isnumeric(azimuth_grid) && isreal(azimuth_grid) &&...
-        max(azimuth_grid)<=pi && min(azimuth_grid)>=-pi )
+        max(azimuth_grid)<=pi+1e-7 && min(azimuth_grid)>=-pi-1e-7 )
     error('QuaDRiGa:qd_arrayant:wrongInputValue','??? "azimuth_grid" must be a vector containing values between -pi and pi')
 end
 
