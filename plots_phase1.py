@@ -64,7 +64,7 @@ always_compute = True
 
 
 #-------------------------
-stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\João\SXRSIMv3\Stats' + '\\'
+stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Stats' + '\\'
 seeds = [1]
 speeds = [1]
 csi_periodicities = [5]
@@ -75,6 +75,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
+layer = 0
 trim_ttis = [20, int(4000 * 1)]
 TTI_dur_in_secs = 0.25e-3
 
@@ -160,6 +161,9 @@ VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
                      'avg_sinr_multitrace',               # 38
                      '']
 
+# (Loaded) Vars with information per layer
+vars_with_layers = [2,3,5,6,7,8,9,10,12,13]
+
 # file_sets has the sets of files to load at any given time.
 # e.g. if we want to make a plot for each seed, we just want to load one seed
 #      at a time. But if we want to make a plot that is the average of 3 seeds
@@ -174,20 +178,12 @@ for comb in combinations:
                     f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
                     f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
     
-    stats_dir_end = r'Sim_SPEED-4_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_2' + '\\'
-    
-    # stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_v1' + '\\'
+    stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_ROTFACTOR-1' + '\\'
     
     print(f'\nDoing for: {stats_dir_end}')
     
     stats_dir = stats_folder + stats_dir_end
     
-    # Can't recal what this is for...
-    # if use_in_loop:
-    #     extra_str = f'_f{comb[1]}_{trim_ttis}s'
-    # else:
-    #     extra_str = ''
-        
     results_filename = results_folder + 'results' # + extra_str
     
     if not ut.isdir(results_folder):
@@ -413,11 +409,10 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     # idxs_to_plot = all_plots_available
     
     
-    idxs_to_plot = [1, 2]
-    idxs_to_plot = [10.15, 10.25]
+    # idxs_to_plot = [1, 2]
+    # idxs_to_plot = [10.15, 10.25]
     # , 3.5, 3.65]
-    idxs_to_plot = [11.4]
-    ues = [0]
+    # idxs_to_plot = [5.2]
     # estimate interference should be different from 0!
     
     
@@ -456,14 +451,14 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
         if multi_trace:
             raise Exception('not ready yet...')
         
-        plt_func.compute_sim_data(i, ues, ttis, VARS_NAME_LOAD, 
+        plt_func.compute_sim_data(i, layer, ues, ttis, VARS_NAME_LOAD, 
                                   VARS_NAME_COMPUTE, which_vars_to_compute, 
-                                  which_vars_to_load, 
-                                  sim_data_trimmed, sim_data_computed,
-                                  file_set)
+                                  which_vars_to_load, sim_data_trimmed, 
+                                  sim_data_computed, file_set, 
+                                  vars_with_layers)
         
         # Plots:
-        plt_func.plot_sim_data(i, file_set, ues, ttis, x_vals, 
+        plt_func.plot_sim_data(i, file_set, layer, ues, ttis, x_vals, 
                                sim_data_trimmed, sim_data_computed,
                                results_filename, base_plots_folder, 
                                save_plots, save_format=saveformat)
