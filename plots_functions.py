@@ -853,7 +853,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                sim_data_computed[f][v] is None:
                 pass
                 folder = sim_data_trimmed[0][0].precoders_folder + '\\'
-                file = 'beam_details_4_4_-60_60_12_0_-60_60_12_0_pol_1.mat'
+                file = 'beam_details_4_4_4_4_pol_3_RI_1_ph_1_new.mat'
                 
                 # [121][6]:
                 # 121 beams x (HPBW-AZ, HPBW-EL, 
@@ -1260,8 +1260,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues_double(ues, x_vals, [sim_data_trimmed[f][9]], 
                                 [sim_data_trimmed[f][4]], 
                                 x_label_time, 
-                                y_label=['MCS index', 
-                                         'Bit rate [Mbps]'],        
+                                y_labels=['MCS index', 
+                                          'Bit rate [Mbps]'],        
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
         
@@ -1285,7 +1285,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues_double(ues, x_vals, [sim_data_trimmed[f][7][:,:,0]], 
                                 [sim_data_trimmed[f][7][:,:,1]],
                                 x_label_time, 
-                                y_label=['Azimuth [º]', 'Elevation[º]'],
+                                y_labels=['Azimuth [º]', 'Elevation[º]'],
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
     
