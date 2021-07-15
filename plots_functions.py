@@ -307,12 +307,6 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
     
     vars_to_not_trim = ['sp', 'buffers']
     
-    # Within the variables to trim, which have per layer information that
-    # require further trimming (e.g. to select one layer or single-layer mode):
-    vars_with_no_layer = ['realised_bitrate_total', 'experienced_signal_power',
-                          'olla', 'su_mimo_setting', 'channel', 
-                          'scheduled_UEs']
-    
     # Convert to NumPy arrays and trim to obtain only the useful parts
     for f in range(len(files)):
         for v in vars_to_trim:
@@ -335,14 +329,6 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
             sim_data_trimmed[f][v_idx] = \
                 np.array(sim_data_loaded[f][v_idx])[trim_ttis[0]:trim_ttis[1]]
             
-            if v in vars_with_no_layer:
-                continue
-            
-            # Select the layer we want (single-layer plot for now)
-            
-            l_idx = 0
-            sim_data_trimmed[f][v_idx] = sim_data_trimmed[f][v_idx][:,:,l_idx]
-            
             # # Select the downlink ttis only
             #sim_data[f][v_idx] = np.delete(sim_data[v_idx, f], ul_ttis, axis=0)
     
@@ -353,17 +339,18 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
     pass
 
 
-def compute_sim_data(plot_idx, ues, ttis, 
+def compute_sim_data(plot_idx, layer, ues, ttis, 
                      all_loadable_var_names, all_computable_var_names, 
                      vars_to_compute, vars_to_trim,
-                     sim_data_trimmed, sim_data_computed,
-                     file_set):
+                     sim_data_trimmed, sim_data_computed, file_set,
+                     vars_with_layers):
     
     # Setup some useful variables:
     n_ues = len(ues)
     n_ttis = len(ttis)
     n_files = len(file_set)
     usual_shape = (n_ttis, n_ues)
+    
     
     # Let's handle first the single_trace computations
     # In this first computation phase, we compute variables per trace only.
@@ -379,6 +366,11 @@ def compute_sim_data(plot_idx, ues, ttis,
         for var_to_compute in vars_to_compute:
             # Index of where to put our freshly computed variable
             v = all_computable_var_names.index(var_to_compute)
+            
+            # These variables need layer trimming, if we want a single-layer plot: 
+            if v in vars_with_layers and \
+               not (sim_data_trimmed[f][v] is None):
+                sim_data_trimmed[f][v] = sim_data_trimmed[f][v][:,:,layer]
             
             # Check trim dependencies, to make sure the variable has been 
             # trimmed properly. Otherwise, we can't continue with computation
@@ -900,9 +892,9 @@ def compute_sim_data(plot_idx, ues, ttis,
                 pass
 
 
-def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed, 
-                  sim_data_computed, results_filename, base_folder, save_fig, 
-                  save_format='svg'):
+def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals, 
+                  sim_data_trimmed, sim_data_computed, results_filename, 
+                  base_folder, save_fig, save_format='svg'):
     
     """
         THE MEANING OF EACH PLOT INDEX IS IN PLOTS_PHASE1.PY.

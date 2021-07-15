@@ -854,7 +854,7 @@ def copy_last_coeffs(coeffs, last_x):
 Form channel matrix functions
 """
 
-def channel_matrix(coeffs, ue, bs, prb, tti_relative, pol):
+def channel_matrix(coeffs, ue, bs, prb, tti_relative, pol=-1):
     
     if pol == -1:
         c = coeffs[(bs, ue)][:,:,prb,tti_relative]
@@ -879,25 +879,25 @@ def load_precoders(precoders_paths, vectorize_GoB):
     angular domain with a given resolution. This information will be read from
     the precoder file.
     """
-    precoder_dict = {}
+    precoders_dict = {}
     
     for bs in range(len(precoders_paths)):
         
         precoder_file = scipy.io.loadmat(precoders_paths[bs])
         
-        precoder_dict[(bs, 'matrix')] = precoder_file['precoders_matrix']
-        precoder_dict[(bs, 'directions')] = \
+        precoders_dict[(bs, 'matrix')] = precoder_file['precoders_matrix']
+        precoders_dict[(bs, 'directions')] = \
             precoder_file['precoders_directions']
         n_azi_beams = precoder_file['n_azi_beams'][0][0] # 11
         n_ele_beams = precoder_file['n_ele_beams'][0][0] # 11
-        n_directions = precoder_dict[(bs, 'directions')].shape[1]
+        n_directions = precoders_dict[(bs, 'directions')].shape[1]
         
         # Store angle information along with the precoders
         # Size = [# of precoders with very similar azimuths, 
         #         # of precoders with very similar elevations] 
         # for a square GoBs, it is the square root of the total # of precoders
-        precoder_dict[(bs, 'size')] = [n_azi_beams, n_ele_beams]
-        precoder_dict[(bs, 'n_directions')] = n_directions
+        precoders_dict[(bs, 'size')] = [n_azi_beams, n_ele_beams]
+        precoders_dict[(bs, 'n_directions')] = n_directions
         
         
         
@@ -905,57 +905,35 @@ def load_precoders(precoders_paths, vectorize_GoB):
         # if vectorize_GoB:
         #     # If the GoB is vectorized, create the full precoder matrix 
         #     # AE_BS x N_GoB, where N_GoB is the number of beams in the grid
-        #     n_beams = np.prod(precoder_dict[(bs)])
-        #     precoder_dict[(bs, 'full-matrix')] = np.zeros()
+        #     n_beams = np.prod(precoders_dict[(bs)])
+        #     precoders_dict[(bs, 'full-matrix')] = np.zeros()
         #     for azi_idx in range(n_azi_vals):
         #         for el_idx in range(n_el_vals):
         #             beam_idx = el_idx + azi_idx * n_el_vals
-        #             precoder_dict[(bs, 'full-matrix')][:, beam_idx] = \
-        #                 precoder_dict[(bs, azi_idx, el_idx)]
+        #             precoders_dict[(bs, 'full-matrix')][:, beam_idx] = \
+        #                 precoders_dict[(bs, azi_idx, el_idx)]
         
-    return precoder_dict
+    return precoders_dict
     
 
-def print_precoder_dict(precoder_dict, bs_idx, print_directions=False, 
+def print_precoders_dict(precoders_dict, bs_idx, print_directions=False, 
                         print_precoders=False):
     try:
-        size = precoder_dict[(bs_idx, 'size')]
-        n_directions = precoder_dict[(bs_idx, 'n_directions')]
+        size = precoders_dict[(bs_idx, 'size')]
+        n_directions = precoders_dict[(bs_idx, 'n_directions')]
         print(f'Codebook for BS {bs_idx} has size {size} '
               f'-> {n_directions} directions')
         if print_directions or print_precoders:
             for dir_idx in range(n_directions):               
                 if print_directions:
-                    ang = precoder_dict[(bs_idx, 'directions')][:,dir_idx]
+                    ang = precoders_dict[(bs_idx, 'directions')][:,dir_idx]
                     print(f'Ang: [{ang[0]:2},{ang[1]:2}];')
                 if print_precoders:    
-                    p = precoder_dict[(bs_idx, 'matrix')][:,dir_idx]
+                    p = precoders_dict[(bs_idx, 'matrix')][:,dir_idx]
                     print(p)
     except KeyError:
         print('KEY ERROR!!')
 
-
-class Beam_pairs_list():
-    """
-    The list of best beam pairs between a UE and a BS, in a given layer.
-    """
-    def __init__(self):
-        # When the precoder list was last updated (absolute tti)
-        # (In this TTI, the most up-to-date CSI was used)
-        self.last_updated = -1
-        
-        self.beam_list = []
-    
-    
-    def print_list(self):
-        if self.beam_list == [None] * len(self.beam_list):
-            print('No beams in the list.')
-            return
-        
-        for beam_pair in self.beam_list:
-            if beam_pair:
-                beam_pair.print_pair()
-                
 
 class Beam_pair():
     """
@@ -971,7 +949,7 @@ class Beam_pair():
     def __init__(self):
         # Grid of Beams specific: direction at which the BS beam is pointing
         self.ang = [0, 0]
-        self.ang_idx = [0, 0]
+        self.beam_idx = [0, 0]
 
         # The correct polarisation combination must be saved, because this
         # determines the coefficients to be used when using that beam pair.
@@ -983,7 +961,8 @@ class Beam_pair():
         # For other combinations, change channel_matrix() to create the 
         # appropriate channel matrix. For now, all transmissions use all 
         # antennas.
-        self.pol = -1 
+        self.pol = -1  # Note: this is not used anymore, but
+                       #       the channel_matrix() function still supports it.
         
         # Notice that polarisation and polarisation combination are different
         # things. When talking about combinations, we are referring to a 
@@ -1005,7 +984,10 @@ class Beam_pair():
         # The linear power channel gain 
         self.ch_power_gain = 0
 
-
+        # When the precoder list was last updated (absolute tti)
+        # (In this TTI, the most up-to-date CSI was used)
+        self.last_updated = -1
+    
     def print_pair(self):
         print(f'Ang: [{self.ang[0]:2},{self.ang[1]:2}]; '
               f'Gain: {self.ch_power_gain:.2e}')
@@ -1040,7 +1022,8 @@ def interleave(arrays, axis=0, out=None):
     return np.stack(arrays, axis=axis+1, out=out).reshape(shape)
 
 
-def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
+def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs, 
+                         codebook_subset_directions, ch_resp, bs, n_csi_beams,
                          save_power_per_CSI_beam, vectorize):
     """
     Given a precoder dictionary, and a channel response, and a bs index, 
@@ -1048,7 +1031,7 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
     value of internal product). 
     """
     
-    if n_best > 1:
+    if n_csi_beams > 1:
         raise Exception('NEEDS IMPLEMENTATION!')
         # The change is really simple:
             # create a beam list before the loop
@@ -1066,17 +1049,14 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
     # normalized vectors won't suffer any change.
     
     
-    # The channel response is a square matrix of AE_UE x AE_BS
-    
-    [azi_len, el_len] = precoder_dict[(bs, 'size')]
-    
     # Compute best beam in a vectorized manner
     matrix_instead_of_loop = False
     
     curr_max_ch_gain = 0
     
     power_per_beam_list = []
-        
+    best_beam_relative_idxs = []    
+    beam_pairs = []
     
     # Check whether beamforming is ON or OFF (if there's only 1 element, no BF)
     if ch_resp.shape == (1,1):
@@ -1091,7 +1071,7 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
         H = np.vstack(ch_resp)
         
         # get full codebook
-        W = precoder_dict[(bs, 'all')]
+        W = codebook_subset
         
         # assume * means the dot product (Although in Python it doesn't!!!)
         # W_UE = (H*W)^H/|H*W|
@@ -1118,13 +1098,7 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
         if save_power_per_CSI_beam:
             power_per_beam_list = list_of_ch_gains
     else:
-        
-        # Loop over all angles to find the best precoder
-        # for beam_idx in range(n_beams, i.e. # of columns of W):
-        codebook_subset = precoder_dict[(bs, 'matrix')]
-        # NOTE: you can provide subsets of the whole codebook
-        
-        for dir_idx in range(precoder_dict[(bs, 'n_directions')]):
+        for dir_idx in range(codebook_subset.shape[1]):
             
             w = codebook_subset[:,dir_idx]
             
@@ -1156,8 +1130,9 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
     # Create and load the best Beam Pair found
     beam_pair = Beam_pair()
     
-    beam_pair.ang_idx = best_idx
-    beam_pair.ang = precoder_dict[(bs, 'directions')][:,best_idx]
+    best_beam_relative_idxs.append(best_idx)
+    beam_pair.beam_idx = q_idxs[best_idx]
+    beam_pair.ang = codebook_subset_directions[:,best_idx]
     
     beam_pair.bs_weights = best_bs_weights
     beam_pair.ue_weights = best_ue_weights
@@ -1165,12 +1140,14 @@ def find_best_beam_pairs(precoder_dict, ch_resp, bs, n_best, n_layers,
     # Save the channel gain (linear/electric field)**2 = power gain
     beam_pair.ch_power_gain = curr_max_ch_gain ** 2
     
+    beam_pairs.append(beam_pair)
+    
     # Return best n_best beams 
-    return ([beam_pair], power_per_beam_list)
+    return (beam_pairs, power_per_beam_list, best_beam_relative_idxs)
 
 
-def update_precoders(bs, ue, curr_beam_pairs, precoder_dict, curr_coeffs, 
-                     last_coeffs, tti_csi, n_layers, n_csi_beams, 
+def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs, 
+                     last_coeffs, tti_csi, n_layers, n_csi_beams, rot_factor, 
                      power_per_beam, save_power_per_CSI_beam, vectorize):
     
     """
@@ -1189,54 +1166,136 @@ def update_precoders(bs, ue, curr_beam_pairs, precoder_dict, curr_coeffs,
     
     # mean across frequency
     mean_coeffs = []
-    beam_list = []
-    for l in range(n_layers):
     
-        # Compute the means for all polarisation combinations
-        mean_coeffs.append(np.mean(
-            coeffs[(bs, ue)][:,l::n_layers,:,tti_csi], 2))
+    # Note: Currently we using the same codebook_subset for both layers.
+    subset_GoB = not (rot_factor is None)
+    if subset_GoB:
+        q_idxs = orthogonal_precoder_indices1(N1=4, N2=4, O1=4, O2=4, 
+                                              RI=n_layers, q=rot_factor)
+        
+        codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs]
+    else:
+        codebook_subset = precoders_dict[(bs, 'matrix')]
+    
+    # The channel response is a square matrix of AE_UE x AE_BS
+    [azi_len, el_len] = precoders_dict[(bs, 'size')]
+    
+    codebook_subset_directions = precoders_dict[(bs, 'directions')]
+    
+    for l in range(n_layers):
+        # Compute the means across frequency
+        mean_coeffs.append(np.mean(coeffs[(bs, ue)][:,:,:,tti_csi], 2))
         
         # Save list of best beam pairs on that polarisation combination
-        (best_beam_pairs, power_per_beam[l]) = \
-            find_best_beam_pairs(precoder_dict, mean_coeffs[l], 
-                                 bs, n_csi_beams, n_layers, 
+        (best_beam_pairs, power_per_beam[l], best_beam_relative_idxs) = \
+            find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
+                                 codebook_subset_directions, mean_coeffs[l], 
+                                 bs, n_csi_beams, 
                                  save_power_per_CSI_beam, vectorize)
-            
-        beam_list.append(best_beam_pairs)
-        curr_beam_pairs[(bs,ue,l)].beam_list = beam_list[l]
-                
-    
-    
-    # if n_layers > 1: # Not fully implemented yet..........
-    #     beam_list = [[] for p in range(n_layers)]
-    #     for p in range(n_layers):
-    #         # Compute the means for all polarisation combinations
-    #         mean_coeffs.append(np.mean(
-    #             coeffs[(bs, ue)][:,p::2,:,tti_csi], 2))
-            
-    #         # Save list of best beam pairs on that polarisation combination
-    #         beam_list[p] = \
-    #             find_best_beam_pairs(precoder_dict, mean_coeffs[p], 
-    #                                  bs, n_csi_beams, n_layers)
-            
-    #         for n in range(n_csi_beams):
-    #             beam_list[n].pol = p
-            
-    #         curr_beam_pairs[(bs,ue,p)].beam_list = beam_list
-                
-    # else:
-    #     mean_coeffs = np.mean(coeffs[(bs, ue)][:,:,:,tti_csi], 2)
         
-    #     # Save list of best beam pairs
-    #     beam_list = find_best_beam_pairs(precoder_dict, mean_coeffs, 
-    #                                      bs, n_csi_beams, n_layers)
-    #     for n in range(n_csi_beams):
-    #         beam_list[n].pol = 2  # marking single layer
-            
-    #     curr_beam_pairs[(bs,ue,p)].beam_list = beam_list
+        # Best Beam Pairs is a list with the best n_csi_beams pairs for a layer
+        
+        # Remove beams picked from codebook (so the next layer doesn't pick them)
+        if n_layers > 1:
+            # Trim indices, codebook and directions accordingly
+            q_idxs = np.delete(q_idxs, best_beam_relative_idxs)
+            codebook_subset = np.delete(codebook_subset, 
+                                        best_beam_relative_idxs, axis=1)
+            codebook_subset_directions = np.delete(codebook_subset_directions, 
+                                                   best_beam_relative_idxs, 
+                                                   axis=1)
+        
+        # Take the beam list and compress it to a single precoder
+        # e.g. by scaling each beam according with the feedback
+        # beam list is n_csi_beams=l long, and we need to merge it into 1 
+        # beam pair (don't forget to update the receiver precoder!)
+        if n_csi_beams == 1:
+            created_beam_pair = best_beam_pairs[0]
+        else:
+            pass # to implement when l>1
+        curr_beam_pairs[(bs,ue,l)] = created_beam_pair
                 
     return
 
+def orthogonal_precoder_indices1(N1, N2, O1, O2, RI, q, q1=-1, q2=-1):
+    """
+    Parameters
+    ----------
+    N1 : Logical ports along horizontal.
+    N2 : Logical ports along vertical.
+    O1 : Oversampling factor along horizontal logical ports.
+    O2 : Oversampling factor along vertical logical ports.
+    RI : Rank Indicator (1 = single rank/layer codebook, 2 = dual-rank)
+    q: rotation factor (0 to 15):
+        3 7 11 15
+        2 6 10 14
+        1 5  9 13
+        0 4  8 12
+    q1: horizontal rotation factor
+    q2: vertical rotation factor
+    Returns
+    -------
+    q_idxs : column indices of orthogonal beams in the set given by q.
+
+    """
+    
+    if q1 != -1 and q2 != -1:
+        q = q2 + q1 * O1
+    
+    
+    # Step 1: Map to the column index of the first beam in the orthogonal set
+    gob_col_size = N2 * O2
+    
+    if q <= 3:
+        pass 
+    elif 4 <= q <= 7:
+        q = q + (gob_col_size - O2) * 1
+    elif 8 <= q <= 11:
+        q = q - 8 + (gob_col_size - O2) * 2
+    elif 12 <= q <= 15:
+        q = q - 12 + (gob_col_size - O2) * 3
+    else: 
+        raise Exception('That value of q is not supported. Integers 0 to 15.')
+    
+    # Step 2: Sum 'offsets' to get the remaining beams in the set
+    q_col_idxs = q + np.arange(0,N2) * N2*O2*O1
+    q_idxs_list = [q_idx + np.arange(0,N1) * N1 for q_idx in q_col_idxs]
+    q_idxs = np.array(q_idxs_list).reshape((-1))
+    
+    if RI == 2:
+        q_idxs = np.hstack((q_idxs, q_idxs + N1*N2*O1*O2))
+
+    return q_idxs
+
+
+def orthogonal_precoder_indices2(N1, N2, O1, O2, q, q1=-1, q2=-1):    
+    """
+    THIS FUNCTION IS NOT WORKING. It's the 3GPP way of getting the rotation
+    factor q.
+    """
+    N1 = 4
+    N2 = 4
+    O1 = 4
+    O2 = 4
+    N = N1 * N2
+    n1 = np.arange(0, N1)
+    n2 = np.arange(0, N1)
+    q1 = np.arange(0, O1)
+    q2 = np.arange(0, O2)
+    q1 = 0
+    q2 = 0
+    k1 = O1 * n1 + q1
+    k2 = O2 * n2 + q2
+    
+    # continue here...
+    k = k2 + k1 * N1*O1
+    print(N,k)
+    q = q2 + q1 * O1  # 0-15
+    q1 = q * 4
+    q2 = q * 4
+    q_idxs = []
+    
+    return q_idxs
 
 """
 OLLA functions
@@ -1312,7 +1371,7 @@ def su_mimo_setting_bitrate_single_layer(bs, ue, n_prb,
         print('---------- Option 1 ------------')
     
 
-    beam_pair = curr_beam_pairs[(bs, ue, 0)].beam_list[0]
+    beam_pair = curr_beam_pairs[(bs, ue, 0)]
     signal_power = tx_pow_dl_per_layer * beam_pair.ch_power_gain
     
     sinr_db = \
@@ -1362,13 +1421,14 @@ def su_mimo_setting_bitrate_dual_layer(bs, ue, n_layers, n_prb,
     This is used to decide if it is best to use one layer or two layers 
     to a UE.
     
-    IMPORTANT!!!!!! THIS FUNCTION IS DEPRECATED AND NEEDS SERIOUS UPDATE. 
-    TO RESTART DEVELOPING, COPY THE ONE ABOVE!
+    NOTE: THIS FUNCTION, ONLY RETURNS THE SUM OF THE BITRATES OF THE TWO
+          LAYERS WITH THE ESTIMATED INTEFERENCE PER LAYER
     """
     
     # TODO: ADD multi-layer interference or some way of choosing when 
     #       multi-layer transmission is worth having.
     #       Don't forget to change in su_mimo_choice
+    
     if debug:
         print('---------- Option 2 ------------')
     
@@ -1378,55 +1438,54 @@ def su_mimo_setting_bitrate_dual_layer(bs, ue, n_layers, n_prb,
     opt2_bits_across = [0] * n_layers
     opt2_bitrates = [0] * n_layers
     
-    
+        
     # Compute signal power of both layers
-    for p in range(n_layers):
-        beam_pair = curr_beam_pairs[(bs, ue, p)].beam_list[0]
-        signal_power = tx_pow_dl_per_layer * beam_pair.total_ch_power_gain
+    for l in range(n_layers):
+        beam_pair = curr_beam_pairs[(bs, ue, l)]
+        signal_power = tx_pow_dl_per_layer * beam_pair.ch_power_gain
         
         if debug:
-            print(f"Opt2-P{p} RSS: {signal_power[p]:.2f} W")
-            print(f"Opt2-P{p} Inter: "
-                  f"{est_dl_interference[tti][ue][p]:.2f} dbW")
-            print(f"Opt2-P{p} Noise: {noise_power:.2f} dBW")
+            print(f"Opt2-L{l} RSS: {10*np.log10(signal_power*1e3):.2f} dBm")
+            print(f"Opt2-L{l} Inter: "
+                  f"{10*np.log10(est_dl_interference[tti][ue][l]*1e3):.2f} db")
+            print(f"Opt2-L{l} Noise: {10*np.log10(noise_power*1e3):.2f} dBm")
 
             
-        opt2_sinr_db[p] = 10 * np.log10(signal_power / 
-                                        (est_dl_interference[tti][ue][p]
+        opt2_sinr_db[l] = 10 * np.log10(signal_power / 
+                                        (est_dl_interference[tti][ue][l]
                                          + noise_power))
     
         if debug:
-            print(f"Opt2-P{p} SINR: {opt2_sinr_db[p]:.2f} dB")
+            print(f"Opt2-L{l} SINR: {opt2_sinr_db[l]:.2f} dB")
         
-        (opt2_cqi[p], opt2_bler[p]) = calc_CQI(opt2_sinr_db[p])
+        (opt2_cqi[l], opt2_bler[l]) = calc_CQI(opt2_sinr_db[l])
         if debug:
-            print(f"Opt2-P{p} CQI: {opt2_cqi[p]:.2f}")
-            print(f"Opt2-P{p} BLER: {opt2_bler[p]:.2f}")
+            print(f"Opt2-L{l} CQI: {opt2_cqi[l]:.2f}")
+            print(f"Opt2-L{l} BLER: {opt2_bler[l]:.2f}")
         
         if use_olla:
-            opt2_cqi[p] = apply_olla(opt2_cqi[p], olla)
+            opt2_cqi[l] = apply_olla(opt2_cqi[l], olla)
             if debug:
-                print(f"Opt2-P{p} MCS idx after OLLA: {opt2_cqi[p]:.2f}")
+                print(f"Opt2-P{l} MCS idx after OLLA: {opt2_cqi[l]:.2f}")
     
-        opt2_bits_across[p] = \
-            estimate_bits_to_be_sent(opt2_cqi[p], n_prb, 
+        opt2_bits_across[l] = \
+            estimate_bits_to_be_sent(opt2_cqi[l], n_prb, 
                                      freq_compression_ratio)
     
         if debug:
-            print(f"Opt2-P{p} bits across est.: {opt2_bits_across[p]:.2f}")
+            print(f"Opt2-P{l} bits across est.: {opt2_bits_across[l]:.2f}")
     
         # From the bits estimated to be sent in the TTI, 
         # compute the expected bitrate
-        opt2_bitrates[p] = (opt2_bits_across[p] / 
+        opt2_bitrates[l] = (opt2_bits_across[l] / 
                             ut.get_seconds(TTI_duration))
     
         if debug:
-            print(f"Opt2-P{p} partial bit rate: {opt2_bitrates[p]:.2f}")
-    
-    
+            print(f"Opt2-L{l} partial bit rate: {opt2_bitrates[l]:.2f}")
+
     opt2_final_bitrate = sum(opt2_bitrates)
     if debug:
-        print(f"Opt2-P{p} bit rate: {opt2_final_bitrate:.2f}")
+        print(f"Opt2-L{l} bit rate: {opt2_final_bitrate:.2f}")
     
     return opt2_final_bitrate
     
@@ -1444,14 +1503,8 @@ class Schedule_entry():
         # Beam pair used
         self.beam_pair = beam_pair
         
-        # Just when dual-layer transmissions come into play, this starts
-        # to play a role.
+        # When transmitting two layers, this indexes the layer of each entry.
         self.layer_idx = 0
-        
-        # If -1, both polarisations are used. see Beam_pair() for the full
-        # definition. 
-        self.pol = self.beam_pair.pol
-            
             
         # The remaining variables will be filled only when a more accurate
         # estimation is made: after the MU-MIMO choice of UEs
@@ -1487,16 +1540,21 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim):
     If the beam is at least the so much appart, it is compatible. Less than
     that, and it is not.
     """
+    # TODO: update for the new GoB (currently only works for beam_distance=1)
     
-    beam_distance = np.linalg.norm(abs(np.array(bp1.ang_idx) - 
-                                       np.array(bp2.ang_idx)))
+    # Don't compute distances if the limit distance if off
+    if beam_dist_lim <= 0:
+        return True
     
-    if beam_distance >= beam_dist_lim:
-        beam_compatibility = True
-    else:
-        beam_compatibility = False
+    beam_distance = bp1.beam_idx - bp2.beam_idx
     
-    return beam_compatibility
+    if bp1.beam_idx - bp2.beam_idx <= 1:
+        pass
+
+    #beam_distance = np.linalg.norm(abs(np.array(bp1.beam_idx) - 
+                                       #np.array(bp2.beam_idx)))
+    
+    return beam_distance >= beam_dist_lim
 
 
 def is_compatible_with_schedule(new_entry, schedule, beam_dist_lim):
@@ -1601,8 +1659,7 @@ def tti_info_copy_and_update(tti, TTI_duration, first_coeff_tti, n_phy,
     # loop. This way, we guarantee that the next DL slot has the right info
     
     # Copy interference estimated from the previous tti
-    copy_interference_estimates(n_phy, n_layers, 
-                                est_dl_interference, tti)
+    copy_interference_estimates(n_phy, n_layers, est_dl_interference, tti)
     
     # Copy bit rate averages from the previous tti
     copy_avg_bitrate(n_phy, avg_bitrate, tti)
@@ -1657,7 +1714,7 @@ def interference_measurements_update(ues, n_layers, tti, last_csi_tti,
 def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs, 
                          curr_beam_pairs, last_csi_tti, 
                          precoders_dict, coeffs, last_coeffs, 
-                         n_layers, n_csi_beams, power_per_beam,
+                         n_layers, n_csi_beams, rot_factor, power_per_beam,
                          save_power_per_CSI_beam, vectorize):
     
     for ue in active_UEs[tti]:
@@ -1677,6 +1734,7 @@ def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs,
                                  tti_with_csi,
                                  n_layers,
                                  n_csi_beams,
+                                 rot_factor, 
                                  pow_per_beam,
                                  save_power_per_CSI_beam,
                                  vectorize)
@@ -1710,6 +1768,7 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
     
     for ue in schedulable_UEs_dl:
         bs = serving_BS_dl[ue]
+        # estimate the power of each layer
         tx_pow_dl_per_layer = bs_max_pow / len(schedulable_UEs_dl)
         
         # Option 1: single-layer
@@ -1729,6 +1788,7 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
                                                  debug=debug_su_mimo_choice)
         
         if n_layers > 1:
+            # estimate the power of each layer
             tx_pow_dl_per_layer = (bs_max_pow / 
                                    (len(schedulable_UEs_dl) * n_layers))
             
@@ -1751,10 +1811,11 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
         else:
             option2_bitrate = 0
         
-        su_mimo_bitrates[tti][ue] = bandwidth_mult * dl_radio_efficiency * \
+        su_mimo_bitrates[tti][ue][:] = bandwidth_mult * dl_radio_efficiency * \
             np.array([option1_bitrate, option2_bitrate])
-        est_su_mimo_bitrate[tti][ue] = max(su_mimo_bitrates[tti][ue])
-        # Number of layers to be transmitted to the ue
+        est_su_mimo_bitrate[tti][ue] = max(su_mimo_bitrates[tti][ue][:])
+        
+        # Number of layers to be transmitted for each ue
         su_mimo_setting[tti][ue] = 1 + \
             np.where(su_mimo_bitrates[tti][ue] == 
                      est_su_mimo_bitrate[tti][ue])[0][0]
@@ -1800,7 +1861,7 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
 
 def mu_mimo_choice(tti, curr_priorities, curr_schedule, serving_BS_dl, 
                    su_mimo_setting, curr_beam_pairs, 
-                   min_beam_distance, scheduled_UEs, 
+                   min_beam_distance, scheduled_UEs, scheduling_method,
                    scheduled_layers, debug):
     
     """
@@ -1813,19 +1874,32 @@ def mu_mimo_choice(tti, curr_priorities, curr_schedule, serving_BS_dl,
 
     if debug:
         curr_scheduled_ues = []
-        
+    
+    last_ue = -1
+
     for (ue, priority) in curr_priorities:
         if debug:
             print(f"UE {ue} has priority {priority}")
             
         bs = serving_BS_dl[ue]
-        
+        if scheduling_method == 'SU':
+            # check whether the next entry is still for the same UE. If not,
+            # do not schedule!
+            if ue != last_ue and last_ue != -1:
+                break
+        elif scheduling_method == 'MU':
+            pass # No action needed..
+
+        last_ue = ue
+
         # The layers in curr_beam_pairs are sorted based on channel_quality
-        for p in range(su_mimo_setting[tti][ue]):
-            beam_pair = curr_beam_pairs[(bs,ue,p)].beam_list[0]
+        for l in range(su_mimo_setting[tti][ue]):
+            beam_pair = curr_beam_pairs[(bs,ue,l)]
                 
             new_schedule_entry = Schedule_entry(bs, ue, beam_pair)
-                        
+            
+            new_schedule_entry.layer_idx = l
+
             if is_compatible_with_schedule(new_schedule_entry, 
                                            curr_schedule['DL'], 
                                            min_beam_distance):
@@ -1868,17 +1942,15 @@ def power_control(tti, bs_max_pow, scheduled_UEs, scheduled_layers,
     layer dependent.
     """
     
-    if sum(scheduled_UEs[tti]) == 0 or len(curr_schedule['DL']) == 0:
+    if len(curr_schedule['DL']) == 0:
         return
     
     tx_pow_per_ue = bs_max_pow / sum(scheduled_UEs[tti])
     
     for schedule_entry in curr_schedule['DL']:
         # If the UE has 2 layers, distribute the power between them
-        if scheduled_layers[tti][schedule_entry.ue] > 1:
-            schedule_entry.tx_power = tx_pow_per_ue / 2
-        else:
-            schedule_entry.tx_power = tx_pow_per_ue
+        schedule_entry.tx_power = (tx_pow_per_ue / 
+                                   scheduled_layers[tti][schedule_entry.ue])
 
 
 def final_mcs_update(tti, curr_schedule, est_interference,
@@ -1972,7 +2044,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                     continue
                 
                 ch_matrix = channel_matrix(coeffs, entry.ue, other_entry.bs,
-                                           prb, tti_relative, other_entry.pol)
+                                           prb, tti_relative)
                 
                 # Sum the interference (worst case scenario probabilistically)
                 interference_pow_per_prb[prb] += \
@@ -1986,7 +2058,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
             
             # Compute Signal Power
             ch_matrix = channel_matrix(coeffs, entry.ue, entry.bs,
-                                       prb, tti_relative, entry.pol)
+                                       prb, tti_relative)
             
             # Here the use of wideband precoders is very clear and evident
             sig_pow_of_prb[prb] = \
@@ -2008,7 +2080,8 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
         
         # We can store all power for a UE like this because there's only
         # one layer:
-        experienced_signal_power[tti][entry.ue] = np.mean(sig_pow_of_prb[prb])
+        experienced_signal_power[tti][entry.ue][entry.layer_idx] = \
+            np.mean(sig_pow_of_prb[prb])
         
         # Update realised interference
         real_dl_interference[tti][entry.ue][entry.layer_idx] = \
