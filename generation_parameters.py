@@ -221,20 +221,20 @@ class Generation_parameters:
         
         # Antenna types, one input per frequency
         # [a single 'omni' or 'patch' or 'dipole' or 'array']        
-        self.user_ant_type = np.array(["omni",
-                                       "omni"], dtype=np.object)
+        self.user_ant_type = np.array(["array",
+                                       "array"], dtype=np.object)
         self.cam_ant_type = np.array(["array",
                                       "array"], dtype=np.object)  
-        self.bs_ant_type = np.array(["omni",
-                                     "omni"], dtype=np.object)
+        self.bs_ant_type = np.array(["array",
+                                     "array"], dtype=np.object)
         
         
         # If the antenan type in an array, this information is used:
         # Antenna structure and element spacing
-        self.bs_ant_config = np.array([[1, 1], [1, 1]], dtype=np.double)
+        self.bs_ant_config = np.array([[4, 4], [8, 8]], dtype=np.double)
         self.bs_ant_element_spacing = 0.5
         # User's Headset
-        self.user_ant_config = np.array([[1, 1], [1, 1]], dtype=np.double)
+        self.user_ant_config = np.array([[2, 2], [4, 4]], dtype=np.double)
         self.user_ant_element_spacing = 0.5
         # Cameras
         self.cam_ant_config = np.array([[2, 2], [4, 4]], dtype=np.double)
@@ -264,7 +264,7 @@ class Generation_parameters:
         # Distinguish between orthogonal polarisations? Basically, 
         # if the elemenets of each dual-polarised antenna should have separated
         # channel responses. This is important for layers.
-        self.diff_orthogonal_polarisation = 0
+        self.diff_orthogonal_polarisation = 1
         # When the elements are not cross polarized, this variable should be 0.
 
         # To apply the Human Blockage models to the computed channel.
