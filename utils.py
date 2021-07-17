@@ -21,7 +21,7 @@ import pickle
 # Some modules are quite optional, since they are only used for some features
 # In these cases, we import with a protective import: only imports if it exists
 try:
-    import PyPDF2 # Needs 'pdf' package installed.
+    import PyPDF2 # Needs 'pdf' package installed. 
 except ModuleNotFoundError:
     # Error handling
     print('Could not find PyPDF module. Did you pip it into the current env?')
@@ -385,6 +385,7 @@ def make_py_list(dim, siz):
         if dim > 4:
             raise Exception('Make Py list only implements for dim <= 4')
             
+        # THIS IS A 'L' NOT 1    
         return l
 
 def elementwise_comparison_loop(l1, l2):

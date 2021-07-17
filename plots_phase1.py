@@ -14,7 +14,6 @@ import numpy as np
 import utils as ut
 import plots_functions as plt_func
 
-
 """
 There are just 3 ways of expanding this script:
     1- To add a new variable to be loaded (needs trimming as well)
@@ -64,7 +63,7 @@ always_compute = True
 
 
 #-------------------------
-stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\João\SXRSIMv3\Stats' + '\\'
+stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats' + '\\'
 seeds = [1]
 speeds = [1]
 csi_periodicities = [5]
@@ -75,15 +74,19 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [20, int(4000 * 1)]
+trim_ttis = [0, int(4000 * 0.5)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
-x_vals = ttis * TTI_dur_in_secs
 
+# Number of TTI as x-label
+# x_vals = ttis
+x_vals = ttis * TTI_dur_in_secs
 
 # From the simulated UEs, which UEs do we want to plot?
 ues = [i for i in range(4)]
+
+#ues = [0]
 
 
 #----------------------
@@ -170,14 +173,14 @@ file_sets = []
 
 for comb in combinations:
 
-    stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
-                    f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
-                    f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
+    # stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
+    #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
+    #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
     
-    stats_dir_end = r'Sim_SPEED-4_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_2' + '\\'
+    # stats_dir_end = r'Sim_SPEED-4_FREQ-0_CSIPER-5_APPBIT-50_USERS-None_BW-100_LATBUDGET-10_2' + '\\'
     
-    # stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_v1' + '\\'
-    
+    stats_dir_end = r'Sim_SEED1_SPEED-4_FREQ-0_CSIPER-5_APPBIT-30_USERS-None_BW-100_LATBUDGET-15' + '\\'
+    stats_dir_end = r'Sim_SEED5_SPEED-4_FREQ-0_CSIPER-5_APPBIT-25_USERS-None_BW-100_LATBUDGET-20' + '\\'
     print(f'\nDoing for: {stats_dir_end}')
     
     stats_dir = stats_folder + stats_dir_end
@@ -274,7 +277,10 @@ X   0.3   -> Channel Power across prbs (for a given tti)
     3.2   -> Signal power (only) in [dB], == BEAMFORMED CHANNEL!)
     3.3   -> Signal power vs Interference power (Watt)[single axis]
     3.35  -> Signal power vs Interference power (Watt)[double axis]
-    3.4   -> Signal power vs Interference power (dBW) [single axis]
+    
+    !!! Check why channel plots shows more multipath fading only for User 0 
+    3.4   -> Signal power vs Interference power (dBW) [single axis] 
+    
     3.45  -> Signal power vs Interference power (dBW) [double axis]
     3.5   -> Signal power vs Interference power (dBm) [single axis]
     3.55  -> Signal power vs Interference power (dBm) [double axis]
@@ -408,21 +414,54 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
 
     all_idxs_available = all_plots_available + all_non_plots_available
 
-    idxs_to_plot = [0.1, 1, 2, 3.45, 3.65, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
-
+    # idxs_to_plot = [0.1, 1, 2, 3.45, 3.65, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
     # idxs_to_plot = all_plots_available
+   
+    """
+    Zheng
+    
+    TODO: METRICS
+        Compare for different Schedulers (PF vs Delay vs Delay/Frametype): 
+        - Avg PLR/latency of Frames 
+        - Avg PLR/latency of I- vs P-frame packets
+        
+        New plot functions to add:
+        - PLR/Delay of I- vs P-frame packets over all TTIs
+          -> Compare e.g. with SINR, etc. 
+        - Print out #packets (with I/P-frame labels) in e.g. buffer of one UE
+        - 
+        - ......
+        
+    Current Observations: 
+        - SINR/Channel power for UE 0 shows man FF characteristics, while UE 1-3
+          don't show channel fluctuations on a TTI/ms scale (Plot 0.1, 3.4, ...)
+        - Average latency for frames is very low -> 2.0 ms while latency budget
+          is set to 15 ms, but average drop rate is still 10 on average with 
+          high STD of 4% (Plot 10.7)
+        
+
+    """
+   
+    
+    #idxs_to_plot = [10.2]
+    #idxs_to_plot = [11.1]
     
     
-    idxs_to_plot = [1, 2]
-    idxs_to_plot = [10.15, 10.25]
-    # , 3.5, 3.65]
-    idxs_to_plot = [11.4]
-    ues = [0]
+    # Throughput [Mbps]
+    # idxs_to_plot = [1]
+    # SINR[dB] + BLER% 
+    # idxs_to_plot = [1, 2.4]  
+    # Latency and PLR
+    idxs_to_plot = [10.7]  
+    # MCS per user 
+    # idxs_to_plot = [4.2]  
+    
+    
+    # ues = [0]
     # estimate interference should be different from 0!
     
-    
     # Test save_plot
-    save_plots = True
+    save_plots = False
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
     base_plots_folder = 'Plots\\' 
     

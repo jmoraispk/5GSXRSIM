@@ -1,8 +1,8 @@
 # System-Level Simulator functions
 
 
-import utils as ut
-import numpy as np
+import utils as ut 
+import numpy as np 
 import numpy.linalg 
 
 import scipy.io
@@ -80,6 +80,41 @@ def MLWDF_scheduler(avg_thrput, curr_expected_bitrate,
     return a * curr_delay * pf_scheduler(avg_thrput, curr_expected_bitrate)
 
 
+# Yet to be used by the scheduler and properly implemented within traffic generation
+def frametype_scheduler(avg_thrput, curr_expected_bitrate, 
+                    curr_delay, delay_threshold, frame_type, delta=0.1, ):
+    """
+    Parameters
+    ----------
+    avg_thrput : weighted over many ttis
+    curr_expected_bitrate : bitrate estimated as achievable for the curr tti
+    lat : current delay of the packet at the head of the queue
+    frame_type : String indicating whether packet contains bits belonging to
+                 I or P-frame 
+    delta : upper limit of packet loss rate 
+            (0: NO PACKET CAN BE LOST!, 1: who cares)
+            Note: it was made to differentiate between several QoS.
+            So, if all users have the same priority, there's no weight from
+            it, and can be considered a constant.
+
+    Returns
+    -------
+    Returns the priority for a given user computed essentially with the 
+    M-LWDF Scheduler plus taking into account whether packet belongs to an I 
+    or a P-frame, with I-frames having higher priority 
+    """
+    
+    # Is it natural log or log10?
+    a = -np.log(delta) / delay_threshold
+    
+    if frame_type == 'I':
+        frame_weight = 2.5
+    else:   frame_weight = 0.5    
+    
+    return frame_weight * a * curr_delay * pf_scheduler(avg_thrput, 
+                                                        curr_expected_bitrate)
+
+
 def exp_pf_scheduler(avg_thrput, curr_expected_bitrate,
                      curr_delay, c, delay_threshold, all_delays,
                      kappa=100, epsilon=0.1):
@@ -111,11 +146,10 @@ def exp_pf_scheduler(avg_thrput, curr_expected_bitrate,
                   pf_scheduler(avg_thrput, curr_expected_bitrate))
 
 
-
 def scheduler(scheduler_choice, avg_throughput_ue, estimated_bitrate,
               buffer_head_of_queue_delay, delay_threshold, 
               scheduler_param_delta, scheduler_param_c, all_delays):
-    
+              # TODO: 'frametype' input  
     if scheduler_choice == 'PF':
         priority = pf_scheduler(avg_throughput_ue, 
                                 estimated_bitrate)
@@ -126,6 +160,14 @@ def scheduler(scheduler_choice, avg_throughput_ue, estimated_bitrate,
                                    buffer_head_of_queue_delay, 
                                    delay_threshold, 
                                    scheduler_param_delta)
+        
+    elif scheduler_choice == 'Frametype':
+      priority = frametype_scheduler(avg_throughput_ue, 
+                                      estimated_bitrate, 
+                                      buffer_head_of_queue_delay, 
+                                      delay_threshold,
+                                      frame_type,
+                                      scheduler_param_delta)    
    
     elif scheduler_choice == 'EXP/PF':
         priority = exp_pf_scheduler(avg_throughput_ue, 
@@ -142,28 +184,26 @@ def scheduler(scheduler_choice, avg_throughput_ue, estimated_bitrate,
 
 
 
-
-
 """
 MCS table implemented in the functions below:
     Table 5.2.2.1-3 from 38.214
     For maximum BLER of 0.1 and up to 256 QAM.
     
     CQI index | modulation | code rate x 1024 | efficiency | Bit Rate [kbps]
-    1              QPSK             78 	      0.1523 	     25,59375
-    2              QPSK            193 	      0.3770 	     63,328125
-    3              QPSK            449 	      0.8770         147,328125
-    4             16QAM            378           1.4766 	    248,0625
-    5             16QAM            490    	      1.9141 	    321,5625
-    6	         16QAM 	           616 	          2.4063       404,25
+    1              QPSK             78 	         0.1523 	     25,59375
+    2              QPSK            193 	         0.3770 	     63,328125
+    3              QPSK            449 	         0.8770         147,328125
+    4            16QAM             378           1.4766 	    248,0625
+    5            16QAM             490    	     1.9141 	    321,5625
+    6	         16QAM 	           616 	         2.4063         404,25
     7	         64QAM             466           2.7305 	    458,71875
     8	         64QAM             567           3.3223 	    558,140625
     9	         64QAM             666           3.9023 	    655,59375
     10	         64QAM             772           4.5234 	    759,9375
     11	         64QAM             873           5.1152 	    859,359375
     12	        256QAM             711           5.5547 	    933,1875
-    13	        256QAM             797           6.2266	   1046,0625
-    14	        256QAM             885           6.9141	   1161,5625
+    13	        256QAM             797           6.2266	       1046,0625
+    14	        256QAM             885           6.9141	       1161,5625
     15	        256QAM             948           7.4063 	   1244,25
     
 """
@@ -461,7 +501,7 @@ def calc_SINR(tx_pow, ch_pow_gain, interference, noise_power):
     
     sinr_linear = sig_pow / (noise_power + interference)
     
-    return 10 * np.log10(sinr_linear)
+    return 10 * np.log10(sinr_linear) - 50
 
 
 
@@ -748,7 +788,8 @@ def load_coeffs(tti, time_div_idx, n_time_divs, ttis_per_time_div,
         # offset in samples
         offset = int(offset_in_ttis / time_compression_ratio)
         
-        print('Loading: ')
+        # TODO: Removed for now 
+        # print('Loading: ')
                     
     for bs in specific_bss:
         for ue in specific_ues:
@@ -763,8 +804,8 @@ def load_coeffs(tti, time_div_idx, n_time_divs, ttis_per_time_div,
             
             coeff_shape = (n_ue_coeffs[ue], n_bs_coeffs[bs], 
                            prbs, samples_per_time_div)
-            
-            print(f'\rLoading for UE {ue}, BS {bs}...', end='')
+            # TODO: Removed for now 
+            # print(f'\rLoading for UE {ue}, BS {bs}...', end='')
             
             coeffs_aux = \
                 load_coeffs_part(name_to_load).reshape(coeff_shape, order='F')
@@ -1768,7 +1809,8 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
 def compute_priorities(tti, ue_priority, all_delays, buffers, 
                        schedulable_UEs_dl, scheduler_name, avg_bitrate, 
                        est_su_mimo_bitrate, delay_threshold, 
-                       scheduler_param_delta, scheduler_param_c):
+                       scheduler_param_delta, scheduler_param_c): 
+                       # TODO: 'frametype'
         
     # Current head of queue delays of all UEs, necessary for scheduling 
     # with a latency-aware scheduler
@@ -1789,6 +1831,7 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
                       scheduler_param_delta,
                       scheduler_param_c,
                       all_delays)
+                      # TODO: Pass over 'frametype'
         # print(f"UE {ue} has priority {ue_priority[tti][ue]}")
         
     curr_priorities = sorted([(ue, ue_priority[tti][ue])

@@ -18,7 +18,7 @@ import application_traffic as at
 import simulation_parameters as sim_par
 
 # parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks" + '\\'
-parent_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\João\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+parent_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Matlab\TraceGeneration" + '\\'
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
 seed = 1
@@ -27,27 +27,32 @@ speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-folders_to_simulate = ["Sim_SEED1"]
+folders_to_simulate = ["Sim_SEED5"]
 
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
 freq_idxs = [0]
 
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
-# application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
-
 csi_periodicities = [5]
-application_bitrates = [100]
 
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
 users = [None]
 
-# bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
-bandwidths = [50] # MHz
 
+"""
+Zheng 
+TODO: Check for traces generated with omni-array what combinations of bitrate,
+      bw and latency allow for decent PLR!!!
+
+"""
+# application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
+application_bitrates = [20]
+# bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
+bandwidths = [100] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
-latencies = [10]
+latencies = [20]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
@@ -101,6 +106,7 @@ for param in sim_params:
     sp = sim_par.Simulation_parameters(sim_folder, freq_idx, csi_periodicity,
                                        application_bitrate, user_list, bw, 
                                        lat_budget)
+       
     # NOTE: 
         # a) users will subset the generated users;
         # b) bw will use the frequency samples of the generated bandwidht
@@ -112,11 +118,11 @@ for param in sim_params:
     
     # Take care of the output
     include_timestamp = False 
-    seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
+    seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split(' ')[0]
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'{seed_str}_SPEED-{sp.speed_idx}_FREQ-{freq_idx}_' + \
                  f'CSIPER-{csi_periodicity}_APPBIT-{application_bitrate}_' + \
-                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}_2'
+                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
@@ -130,7 +136,7 @@ for param in sim_params:
     # cam_buffers = [] # we assume cameras are wired.
     packet_sequences_DL = [0] * sp.n_phy
     # Compute offsets to space out user I frames.
-    sp.uniformly_space_UE_I_frames = True # TODO: make sure we want this True
+    
     if sp.uniformly_space_UE_I_frames:
         I_frame_offsets = np.linspace(0, sp.GoP / sp.FPS, sp.n_phy + 1)[:-1]
     else:
@@ -152,6 +158,9 @@ for param in sim_params:
             at.gen_packet_sequence(frame_sequence_DL, 
                                    sp.packet_size, burstiness_param=0.5,
                                    overlap_packets_of_diff_frames=0)
+                                   # TODO: 'frametype'     
+                                   # all packets will be labeled whether they 
+                                   # contain bits of I- or P-frame
         if sp.verbose:
             print('DL packets:')
             #packet_sequences_DL.print_packets(first_x_packets=3)
@@ -307,7 +316,7 @@ for param in sim_params:
             else:
                 print(f"TTI: {tti}")
             
-        if tti % 100 == 0:
+        if tti % 1000 == 0:
             print(f"TTI: {tti}")
         
         # If necessary, load new set of coefficients
@@ -323,7 +332,8 @@ for param in sim_params:
             # From current TTI discover which time div we are in
             curr_time_div = sls.get_curr_time_div(tti, sp.time_div_ttis)
             
-            print('Loading batch of coeffs.')
+            # TODO: Removed for now
+            # print('Loading batch of coeffs.')
             # curr_coeff_batch = sls.get_curr_time_div(tti, sp.TTIs_per_batch)
             # print(f'Loading batch of coeffs #{curr_coeff_batch} '
             #       f'from time div {curr_time_div}.')
@@ -354,8 +364,9 @@ for param in sim_params:
                                 sp.ae_bs,  
                                 sp.n_prb,
                                 sp.TTIs_per_batch)
-        
-            print('Batch loaded.')
+            
+            # TODO: Removed for now
+            # print('Batch loaded.')
             
             # Update channel trace variables such that we can easily relate
             # channel quality with received signal and etc..
@@ -363,7 +374,7 @@ for param in sim_params:
             sls.update_channel_vars(tti, sp.TTIs_per_batch, sp.n_ue, coeffs,
                                     channel, channel_per_prb, 
                                     sp.save_per_prb_variables)
-            
+        
         # Copy information from previous ttis and update some parameters
         tti_timestamp, tti_relative = \
             sls.tti_info_copy_and_update(tti, sp.TTI_duration, first_coeff_tti, 
@@ -410,7 +421,7 @@ for param in sim_params:
         # 1-a) Update the Latest CSI tti (based on CSI periodicity)
         #  Check if the precoder and other CSI measurements should be updated 
         if tti % sp.csi_period == 0:
-            # If an UE was updated before this tti, it needs to be updatedagain
+            # If an UE was updated before this tti, it needs to be updated again
             last_csi_tti = tti
             
             # The UE will be updated with information from this tti
@@ -522,6 +533,7 @@ for param in sim_params:
                                        ut.get_seconds(sp.delay_threshold), 
                                        sp.scheduler_param_delta, 
                                        sp.scheduler_param_c)
+                                       # TODO: Add Frametype input var
 
             if sp.debug:
                 print(curr_priorities)

@@ -554,8 +554,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                             
                             sim_data_computed[f][v][frame_idx][ue] = \
                                 dropped_packets / total_packets * 100
-            
-            
+                        
             # COMPUTE INDEX 16: Average Packet Latency across all frames
             if var_to_compute == 'avg_pck_lat_per_frame' and \
                sim_data_computed[f][v] is None:

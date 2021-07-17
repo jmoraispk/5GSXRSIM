@@ -21,6 +21,36 @@ import utils as ut
 # them in Packet Sequences
 # Also, functions to manage the Buffers in UEs uplinking and BSs downlinking
 
+"""
+TODO Zheng
+
+- Add information about Frame type (I or P) in the IP packets. 
+  (Perhaps add separate array with containing 'I/0' or 'P/1')
+  Information should be used by the scheduler to calculate UE priority
+  Option to save stats about drop rate of packets containing I or P frames
+      
+  SEE BELOW!!!:    
+- When users are scheduled, (multiple) transport blocks at the head of
+  their buffer are being sent. When scheduling priority is computed with
+  frame-type information, how and where exactly should the frame-type 
+  be incorporated???
+  - Should a single transport block only contain packets belonging to 
+    one certain type of frame? 
+  - Following from that, should the buffer have a function to sort the packets,
+    so that those containing I-frames will be at the front, and the scheduler 
+    looks at the number of I-frame packets in the upcoming e.g. 100 packets and 
+    and have some kind of multiplier alongside the HOL delay to compute the 
+    UE priority?
+    E.g. 0 - 9 = 1x, 10 - 19 = 1.1x, 20 - 20 = 1.2x, etc......
+    => Depends on size of packets relative to size of TBs!!! 
+       (What about dynamic TB sizes???)
+
+-> Add attribute in buffer containing packet's frame-type
+-> Add method to sort the buffer firstly by frame-type and then HOL delay
+   -> Return #I-frame packets (from the e.g. first 100 packets in buffer)
+   -> Use this information in the scheduler    
+
+"""
 
 class Frame_Sequence:
     def __init__(self, sizes, types, timestamps, fps):
@@ -68,7 +98,8 @@ class Frame_Sequence:
 
 class Packet_Sequence:
     def __init__(self, default_packet_size, timestamps, packet_bitrate,
-                 parent_frames, frame_sequence):
+                 parent_frames, frame_sequence): 
+                 # TODO: frametype   
         # Packet size for all packets in the sequence
         self.packet_size = default_packet_size  # [bytes]
         # Packet timestamps
@@ -77,6 +108,8 @@ class Packet_Sequence:
         self.parent_frames = parent_frames
         # Parent Frame sequence
         self.parent_sequence = frame_sequence
+        # Frametype of parent frame 
+        # self.packet_type = frame_type # TODO: Placeholder
         # Bitrate of the packets arriving, when it is constant
         self.packet_bitrate = packet_bitrate
         # Some utilities
@@ -232,7 +265,7 @@ def gen_frame_sequence(I_size, GoP, IP_ratio, FPS, offset=0):
 
 
 def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
-                        overlap_packets_of_diff_frames=0):
+                        overlap_packets_of_diff_frames=0): # TODO: 'frametype'
     
     """
     Generates a Packet_Sequences from a Frame_Sequence
@@ -247,12 +280,14 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
     NOTE2: each packet has a parent frame, and the indices of those two lists
            must be coordinated
            Furthermore, the packet timestamps need to be sorted!
+    TODO:  Incorporate info about I or P frame with these lists as well 
            
            
     A final comment about the packet arrival rate's transitions:
     they are abrupt. In a ms there can be no packets, and the next, we can
     have the maximum packet arrival rate. Our assumption is that gradually
     getting to the actual bit arrival rate is less realistic.
+    
     """
     
     if overlap_packets_of_diff_frames:
@@ -293,6 +328,9 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
     packet_timestamps = []
     packet_parent_frames = []
     
+    # TODO: Add frame type information to every packet (used in scheduling)
+    packet_type = []
+    
     # We need to start in the I frame, because P frames won't overlap among
     # themselves.
     
@@ -316,6 +354,7 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
         time_per_frame = frame_size / packet_bitrate
         
         # All packets are (assumed to be) created equal, i.e. same size.
+        # TODO: Explore different options here!
         num_packets = int(np.ceil(frame_size / packet_size))
 
         first_packet_timestamp = frame_sequence.timestamps[frame_idx]
@@ -353,8 +392,10 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
         packet_timestamps += new_packet_times
         
         packet_parent_frames += [frame_idx] * num_packets
-    
-    
+        
+        # TODO: frametype 
+        # packet_type += [frame_sequence.types] * num_packets 
+        # frame_sequence.types
     # Sort both timestamps and parent frames
     packet_parent_frames_aux = copy.deepcopy(packet_parent_frames)
     packet_parent_frames = [parent_frame for _, parent_frame in 
@@ -362,8 +403,12 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
                                        packet_parent_frames_aux))]
     packet_timestamps.sort()
     
+    #TODO: (Does this need to be sorted as well?)
+    packet_type.sort()
+    
     return Packet_Sequence(packet_size, packet_timestamps, packet_bitrate, 
                            packet_parent_frames, frame_sequence)
+                           # TODO: packet_type 
 
 
 def get_start_times(n, mode, FPS):       
@@ -383,7 +428,8 @@ class Frame_Info():
         print(f'Dropped packets = {self.dropped_packets}\n'
               f'Avg. latency of successful packets = {self.avg_lat}\n'
               f'Successful packets = {self.successful_packets}')
-        
+
+
 class Buffer:
     def __init__(self, parent_packet_sequence, packet_delay_threshold):
         """
@@ -777,6 +823,7 @@ def gen_transport_blocks(buffer, bits_left_to_put_into_TBs, tb_size, tti):
     or in case the buffer has less bits in it than the transport blocks can 
     carry.
     The index is the packet start index of that transport block.
+    
     """
     
     list_of_transport_blocks = []

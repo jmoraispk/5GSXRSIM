@@ -162,7 +162,7 @@ class Simulation_parameters:
         self.olla_stepsize = 0.1
         
         
-        # Scheduler - ['PF', 'M-LWDF', 'EXP/PF']
+        # Scheduler - ['PF', 'M-LWDF', 'EXP/PF'] TODO: ['Frametype']
         self.scheduler = 'M-LWDF'
         
         # Scheduler parameters
@@ -177,7 +177,7 @@ class Simulation_parameters:
         # For frequency range 1 and FR2, respectively.
         self.UL_radio_overhead = [0.08, 0.10]
         self.DL_radio_overhead = [0.14, 0.18]
-        
+        # self.DL_radio_overhead = [0.01, 0.02]
         
         # For convenience, levels 1, 2, ..., 11. ((PRB number is = level x 25))
         # self.scheduler_granularity_level = 1
@@ -300,7 +300,8 @@ class Simulation_parameters:
         # ##################### Application Parameters ########################
         
         # Space the I frames across the GoP for the existant UEs
-        self.uniformly_space_UE_I_frames = False
+        # Set here instead of in sxr_sim
+        self.uniformly_space_UE_I_frames = True
         # TODO: read the 'todo' at the end of the simulation parameters ...
         
         # Group of Pictures ( Made of: 1 I frame and (GoP-1) P frames )
@@ -394,7 +395,8 @@ class Simulation_parameters:
         #           "3GPP can be respected.")
         #     ut.stop_execution()
         
-        ut.parse_input(self.scheduler, ['PF', 'M-LWDF', 'EXP/PF'])
+        # 'Frametype'
+        ut.parse_input(self.scheduler, ['PF', 'M-LWDF', 'EXP/PF']) 
         
                 
     def compute_vars_simulation(self, bw):
@@ -414,9 +416,10 @@ class Simulation_parameters:
         
         # Load Variables from previous simulation
         
-        print(f"Loading variables from {self.reload_vars_file}... "
-              f"It may generate a warning due to unsupported formats, "
-              f"namely Quadriga formats. Ignore it :)")
+        # TODO: Removed for now
+        # print(f"Loading variables from {self.reload_vars_file}... "
+        #       f"It may generate a warning due to unsupported formats, "
+        #       f"namely Quadriga formats. Ignore it :)")
         vars_dict = scipy.io.loadmat(self.reload_vars_file)
         
         # Extraction of variables
@@ -532,12 +535,12 @@ class Simulation_parameters:
         self.user_idxs = np.arange(0, self.n_phy)
         self.cam_idxs = np.arange(self.n_phy, self.n_ue)
 
-        
-        print(f'Preparing to simulate {self.n_ue} UEs, {self.n_bs} BSs, '
-              f' at frequency {self.freq/1e9} GHz.'
-              f'Instances per time division: {self.instances_per_time_div}. '
-              f'Using {self.time_divisions} time divisions, it results in '
-              f'a total of {self.n_total_instances} instances to generate.')
+        # TODO: Removed for now
+        # print(f'Preparing to simulate {self.n_ue} UEs, {self.n_bs} BSs, '
+        #       f' at frequency {self.freq/1e9} GHz.'
+        #       f'Instances per time division: {self.instances_per_time_div}. '
+        #       f'Using {self.time_divisions} time divisions, it results in '
+        #       f'a total of {self.n_total_instances} instances to generate.')
         
         
         
@@ -583,8 +586,9 @@ class Simulation_parameters:
         # different bandwidth. If we start doing subband precoding or 
         # scheduling, then this should change. 
         if bw != None:
-            print(f'Warning! Overriding bandwidth from {self.bandwidth/1e6} '
-                  f'to {bw} MHz!')
+            # TODO: Removed for now
+            # print(f'Warning! Overriding bandwidth from {self.bandwidth/1e6} '
+            #       f'to {bw} MHz!')
             self.bandwidth_multiplier = bw * 1e6 / self.bandwidth
             self.bandwidth = bw * 1e6
         
