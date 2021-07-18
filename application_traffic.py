@@ -98,18 +98,19 @@ class Frame_Sequence:
 
 class Packet_Sequence:
     def __init__(self, default_packet_size, timestamps, packet_bitrate,
-                 parent_frames, frame_sequence): 
+                 parent_frames, frame_sequence, frame_types): 
                  # TODO: frametype   
         # Packet size for all packets in the sequence
-        self.packet_size = default_packet_size  # [bytes]
+        self.packet_size = default_packet_size  # [bits!!!]
         # Packet timestamps
         self.timestamps = timestamps
         # The frame from which the packet was generated (frame indice)        
         self.parent_frames = parent_frames
         # Parent Frame sequence
         self.parent_sequence = frame_sequence
+        # print(frame_sequence.types)
         # Frametype of parent frame 
-        # self.packet_type = frame_type # TODO: Placeholder
+        self.packet_type = frame_types# TODO: Placeholder
         # Bitrate of the packets arriving, when it is constant
         self.packet_bitrate = packet_bitrate
         # Some utilities
@@ -288,7 +289,7 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
     have the maximum packet arrival rate. Our assumption is that gradually
     getting to the actual bit arrival rate is less realistic.
     
-    """
+    """  
     
     if overlap_packets_of_diff_frames:
         print('Warning: I am not sure whether the overlap function is ' + \
@@ -394,8 +395,8 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
         packet_parent_frames += [frame_idx] * num_packets
         
         # TODO: frametype 
-        # packet_type += [frame_sequence.types] * num_packets 
-        # frame_sequence.types
+        packet_type += [frame_sequence.types[frame_idx]] * num_packets
+        
     # Sort both timestamps and parent frames
     packet_parent_frames_aux = copy.deepcopy(packet_parent_frames)
     packet_parent_frames = [parent_frame for _, parent_frame in 
@@ -404,11 +405,10 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
     packet_timestamps.sort()
     
     #TODO: (Does this need to be sorted as well?)
-    packet_type.sort()
+    # packet_type.sort()
     
     return Packet_Sequence(packet_size, packet_timestamps, packet_bitrate, 
-                           packet_parent_frames, frame_sequence)
-                           # TODO: packet_type 
+                           packet_parent_frames, frame_sequence, packet_type)
 
 
 def get_start_times(n, mode, FPS):       
@@ -473,6 +473,7 @@ class Buffer:
         self.is_empty = True
         
         # self.num_packets_in_buffer = 0
+    
         
         # Shortcut for the number of packets the buffer can hold
         self.buffer_size = parent_packet_sequence.num_packets
@@ -490,6 +491,9 @@ class Buffer:
         self.frame_infos = [[Frame_Info()
                              for i in range(self.parent_packet_seq.GoP)]]
         
+        # TODO: Number of packets containing I-frames in current buffer 
+        self.num_I_packets = 0
+                
     
     def get_relative_time(self, t):
         """
@@ -604,6 +608,18 @@ class Buffer:
             # added, since the queue is updated from that already.
             self.head_of_queue_lat = tti - self.cursor_a
         
+        
+    def update_number_I_packets(self):
+        """
+        TODO: Look at first xxx packets in the buffer and returns the current 
+        number of packets containing an I-frame
+        """         
+        # Reset number of I-frame packets
+        self.num_I_packets = 0
+        for i in range(self.buffer_size): # self.buffer_size
+            if self.parent_packet_seq.packet_type[i] == 'I':    
+                self.num_I_packets += 1
+    
     
     def increment_dropped_packet_stats(self, packet_idx):
         period = self.period_packet_belongs(packet_idx)
@@ -720,6 +736,7 @@ class Buffer:
     def update_queue_time(self, tti):
         self.add_new_packets(tti)
         self.update_head_of_queue_delay(tti)
+        # self.update_number_I_packets()
         self.discard_late_packets(tti)
         
         

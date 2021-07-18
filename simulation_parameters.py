@@ -54,7 +54,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = 4000 * 1
+        self.sim_TTIs = 1000 # 4000 * 1
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -163,6 +163,7 @@ class Simulation_parameters:
         
         
         # Scheduler - ['PF', 'M-LWDF', 'EXP/PF'] TODO: ['Frametype']
+        self.scheduler = 'Frametype' 
         self.scheduler = 'M-LWDF'
         
         # Scheduler parameters
@@ -396,7 +397,7 @@ class Simulation_parameters:
         #     ut.stop_execution()
         
         # 'Frametype'
-        ut.parse_input(self.scheduler, ['PF', 'M-LWDF', 'EXP/PF']) 
+        ut.parse_input(self.scheduler, ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']) 
         
                 
     def compute_vars_simulation(self, bw):

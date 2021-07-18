@@ -152,7 +152,7 @@ for param in sim_params:
         if sp.verbose:  
             print('DL frames:')
             frame_sequence_DL.print_frames()
-           
+            
         # Create Packet sequences
         packet_sequences_DL[ue] = \
             at.gen_packet_sequence(frame_sequence_DL, 
@@ -171,6 +171,7 @@ for param in sim_params:
         
         # From the packet sequences, initialise the Buffers:
         # Buffers for each user, physically located at the BSs
+        # TODO: packet sequences added to buffer now contain frame type
         user_buffers.append(at.Buffer(packet_sequences_DL[ue], 
                                       sp.delay_threshold))
     
@@ -304,7 +305,7 @@ for param in sim_params:
     print('--------- Starting simulation ---------') 
     
     # Loop for every TTI
-    for tti in range(0, sp.sim_TTIs):
+    for tti in range(0, 4):   # sp.sim_TTIs):
         
         # Note: tti is the index of the TTI. The time value of the TTI is 
         #       given by tti_timestamp. This is done such that we don't have 
@@ -410,8 +411,11 @@ for param in sim_params:
             raise Exception('Invalid slot type.')
         
         # 0- c) Update Queues: Add packets, update delays, drop late packets
-        sls.update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti)
+        sls.update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti)        
         
+        if sp.debug:
+            for ue in ue_idxs:
+                print(ue, buffers[ue].num_I_packets)
         # active UEs are the UEs with non-empty buffers. We are putting those
         # to True, always, because we don't have a robust interference 
         # estimation. This is why the I frames need to be synchronized!

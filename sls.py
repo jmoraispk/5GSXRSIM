@@ -82,15 +82,18 @@ def MLWDF_scheduler(avg_thrput, curr_expected_bitrate,
 
 # Yet to be used by the scheduler and properly implemented within traffic generation
 def frametype_scheduler(avg_thrput, curr_expected_bitrate, 
-                    curr_delay, delay_threshold, frame_type, delta=0.1, ):
+                        curr_delay, delay_threshold, buffer, delta=0.1):
     """
     Parameters
     ----------
     avg_thrput : weighted over many ttis
     curr_expected_bitrate : bitrate estimated as achievable for the curr tti
     lat : current delay of the packet at the head of the queue
-    frame_type : String indicating whether packet contains bits belonging to
-                 I or P-frame 
+    buffer : look into buffer and check amount of I-frame packets currently
+             present
+    TODO : Are packet auto-sorted and put in buffer at generation? Meaning that 
+           frame-types list will always look the same? (167 out of 337, 50%) 
+                 
     delta : upper limit of packet loss rate 
             (0: NO PACKET CAN BE LOST!, 1: who cares)
             Note: it was made to differentiate between several QoS.
@@ -100,16 +103,34 @@ def frametype_scheduler(avg_thrput, curr_expected_bitrate,
     Returns
     -------
     Returns the priority for a given user computed essentially with the 
-    M-LWDF Scheduler plus taking into account whether packet belongs to an I 
+    M-LWDF Scheduler plus taking into account whether packets belong to an I 
     or a P-frame, with I-frames having higher priority 
     """
     
     # Is it natural log or log10?
     a = -np.log(delta) / delay_threshold
     
-    if frame_type == 'I':
-        frame_weight = 2.5
-    else:   frame_weight = 0.5    
+    # Weight parameter depending on number of I-frame packets at head of buffer 
+    frame_weight = 0
+        
+    if buffer.num_I_packets < 10:
+        frame_weight = 0.5
+    elif buffer.num_I_packets < 20:   
+        frame_weight = 0.75
+    elif buffer.num_I_packets < 30:   
+        frame_weight = 1.0
+    elif buffer.num_I_packets < 40:   
+        frame_weight = 1.25 
+    elif buffer.num_I_packets < 50:   
+        frame_weight = 1.5
+    elif buffer.num_I_packets < 60:   
+        frame_weight = 1.75
+    elif buffer.num_I_packets < 70:   
+        frame_weight = 2.0
+    elif buffer.num_I_packets < 80:   
+        frame_weight = 2.25         
+    elif buffer.num_I_packets >= 80:   
+        frame_weight = 2.5         
     
     return frame_weight * a * curr_delay * pf_scheduler(avg_thrput, 
                                                         curr_expected_bitrate)
@@ -148,7 +169,7 @@ def exp_pf_scheduler(avg_thrput, curr_expected_bitrate,
 
 def scheduler(scheduler_choice, avg_throughput_ue, estimated_bitrate,
               buffer_head_of_queue_delay, delay_threshold, 
-              scheduler_param_delta, scheduler_param_c, all_delays):
+              scheduler_param_delta, scheduler_param_c, all_delays, buffer):
               # TODO: 'frametype' input  
     if scheduler_choice == 'PF':
         priority = pf_scheduler(avg_throughput_ue, 
@@ -163,11 +184,11 @@ def scheduler(scheduler_choice, avg_throughput_ue, estimated_bitrate,
         
     elif scheduler_choice == 'Frametype':
       priority = frametype_scheduler(avg_throughput_ue, 
-                                      estimated_bitrate, 
-                                      buffer_head_of_queue_delay, 
-                                      delay_threshold,
-                                      frame_type,
-                                      scheduler_param_delta)    
+                                     estimated_bitrate, 
+                                     buffer_head_of_queue_delay, 
+                                     delay_threshold,
+                                     buffer,
+                                     scheduler_param_delta)    
    
     elif scheduler_choice == 'EXP/PF':
         priority = exp_pf_scheduler(avg_throughput_ue, 
@@ -1668,9 +1689,9 @@ def update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti):
         # 1- Queue Update 
         #   a) Add new packets (update entry cursor)
         #   b) Update head of queue delay
-        #   c) Discard packets that won't make it in the latency budged
+        #   c) Discard packets that won't make it in the latency budget
         buffers[ue].update_queue_time(tti_timestamp)
-    
+        buffers[ue].update_number_I_packets()
         if not buffers[ue].is_empty:
             # These UEs have something to send this TTI.
             active_UEs[tti].append(ue)
@@ -1830,8 +1851,9 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
                       delay_threshold,
                       scheduler_param_delta,
                       scheduler_param_c,
-                      all_delays)
-                      # TODO: Pass over 'frametype'
+                      all_delays, 
+                      buffers[ue])
+                      # TODO: Pass over 'frametype' -> in buffer
         # print(f"UE {ue} has priority {ue_priority[tti][ue]}")
         
     curr_priorities = sorted([(ue, ue_priority[tti][ue])

@@ -74,7 +74,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [0, int(4000 * 0.5)]
+trim_ttis = [0, int(1000)]      # 4000 * 8)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -448,7 +448,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     
     
     # Throughput [Mbps]
-    # idxs_to_plot = [1]
+    # idxs_to_plot = [0.1]
     # SINR[dB] + BLER% 
     # idxs_to_plot = [1, 2.4]  
     # Latency and PLR
