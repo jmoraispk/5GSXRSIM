@@ -522,7 +522,7 @@ def calc_SINR(tx_pow, ch_pow_gain, interference, noise_power):
     
     sinr_linear = sig_pow / (noise_power + interference)
     
-    return 10 * np.log10(sinr_linear) - 50
+    return 10 * np.log10(sinr_linear) - 40
 
 
 

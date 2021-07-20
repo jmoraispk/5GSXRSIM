@@ -74,7 +74,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [0, int(1000)]      # 4000 * 8)]
+trim_ttis = [0, int(4000 * 5)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -456,6 +456,8 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     # MCS per user 
     # idxs_to_plot = [4.2]  
     
+    # Packet sequences per user 
+    idxs_to_plot = [14.2]  
     
     # ues = [0]
     # estimate interference should be different from 0!

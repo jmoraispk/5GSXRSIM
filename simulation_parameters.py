@@ -54,7 +54,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = 1000 # 4000 * 1
+        self.sim_TTIs = 4000 * 1
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -162,8 +162,8 @@ class Simulation_parameters:
         self.olla_stepsize = 0.1
         
         
-        # Scheduler - ['PF', 'M-LWDF', 'EXP/PF'] TODO: ['Frametype']
-        self.scheduler = 'Frametype' 
+        # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
+        # self.scheduler = 'Frametype' 
         self.scheduler = 'M-LWDF'
         
         # Scheduler parameters

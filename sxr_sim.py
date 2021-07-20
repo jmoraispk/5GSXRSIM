@@ -45,10 +45,26 @@ users = [None]
 Zheng 
 TODO: Check for traces generated with omni-array what combinations of bitrate,
       bw and latency allow for decent PLR!!!
+      
+TODO: "Debug" packet_types of packet sequences in buffer with I-frame spacing
+ 
+TODO: Subband-scheduling:
+      How to define/differentiate the PRBs and frequency samples 
+      #PRBs and #Freq defined in sim_par??? 
+      => Check mappings in official standards
+      => Will variables, calculations etc. be independent for subbands???
+      => Which are 'global'? E.g. UE buffers, inter-cell-interference, ...
+      => Which are separate per subband? E.g. SINR, MCS, 'Precoders'(?)
+      How to integrate into simulation loop???
+      E.g.: 
+      for (each TTI):
+          for (each scheduling-PRBs/subband):
+              do: simulation.....                  
+    
 
 """
 # application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
-application_bitrates = [20]
+application_bitrates = [25]
 # bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
 bandwidths = [100] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
@@ -305,7 +321,7 @@ for param in sim_params:
     print('--------- Starting simulation ---------') 
     
     # Loop for every TTI
-    for tti in range(0, 4):   # sp.sim_TTIs):
+    for tti in range(0, sp.sim_TTIs):
         
         # Note: tti is the index of the TTI. The time value of the TTI is 
         #       given by tti_timestamp. This is done such that we don't have 

@@ -360,6 +360,7 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
 
         first_packet_timestamp = frame_sequence.timestamps[frame_idx]
         packet_interval = ut.timestamp(time_per_frame / num_packets)
+                
         
         # only necessary on frames after the I frame
         if not overlap_packets_of_diff_frames and frame_idx != I_frame_idx:
