@@ -74,7 +74,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [0, int(4000 * 5)]
+trim_ttis = [0, int(4000 * 1)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -179,8 +179,9 @@ for comb in combinations:
     
     # stats_dir_end = r'Sim_SPEED-4_FREQ-0_CSIPER-5_APPBIT-50_USERS-None_BW-100_LATBUDGET-10_2' + '\\'
     
-    stats_dir_end = r'Sim_SEED1_SPEED-4_FREQ-0_CSIPER-5_APPBIT-30_USERS-None_BW-100_LATBUDGET-15' + '\\'
-    stats_dir_end = r'Sim_SEED5_SPEED-4_FREQ-0_CSIPER-5_APPBIT-25_USERS-None_BW-100_LATBUDGET-20' + '\\'
+    stats_dir_end = r'Sim_SEED5_SPEED-4_FREQ-0_CSIPER-5_APPBIT-25_USERS-None_BW-100_LATBUDGET-50' + '\\'
+    # stats_dir_end = r'Sim_SEED5_SPEED-4_FREQ-0_CSIPER-5_APPBIT-25_USERS-None_BW-100_LATBUDGET-20' + '\\'
+    # stats_dir_end = r'Sim_SEED5_SPEED-4_FREQ-0_CSIPER-5_APPBIT-40_USERS-None_BW-200_LATBUDGET-20' + '\\'
     print(f'\nDoing for: {stats_dir_end}')
     
     stats_dir = stats_folder + stats_dir_end
@@ -447,17 +448,17 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     #idxs_to_plot = [11.1]
     
     
-    # Throughput [Mbps]
+    # Power [Mbps]
     # idxs_to_plot = [0.1]
-    # SINR[dB] + BLER% 
-    # idxs_to_plot = [1, 2.4]  
+    # Throughput + SINR[dB]&BLER%
+    idxs_to_plot = [1, 2.4]  
     # Latency and PLR
     idxs_to_plot = [10.7]  
     # MCS per user 
     # idxs_to_plot = [4.2]  
     
     # Packet sequences per user 
-    idxs_to_plot = [14.2]  
+    # idxs_to_plot = [14.2]  
     
     # ues = [0]
     # estimate interference should be different from 0!

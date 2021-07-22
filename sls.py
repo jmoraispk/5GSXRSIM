@@ -113,24 +113,28 @@ def frametype_scheduler(avg_thrput, curr_expected_bitrate,
     # Weight parameter depending on number of I-frame packets at head of buffer 
     frame_weight = 0
         
-    if buffer.num_I_packets < 10:
-        frame_weight = 0.5
-    elif buffer.num_I_packets < 20:   
-        frame_weight = 0.75
-    elif buffer.num_I_packets < 30:   
-        frame_weight = 1.0
-    elif buffer.num_I_packets < 40:   
-        frame_weight = 1.25 
-    elif buffer.num_I_packets < 50:   
+    if buffer.num_I_packets == 0:
+        frame_weight = 1
+    elif buffer.num_I_packets == 1:   
+        frame_weight = 1.1
+    elif buffer.num_I_packets == 2:   
+        frame_weight = 1.2
+    elif buffer.num_I_packets == 3:   
+        frame_weight = 1.3 
+    elif buffer.num_I_packets == 4:   
+        frame_weight = 1.4
+    elif buffer.num_I_packets == 5:   
         frame_weight = 1.5
-    elif buffer.num_I_packets < 60:   
-        frame_weight = 1.75
-    elif buffer.num_I_packets < 70:   
-        frame_weight = 2.0
-    elif buffer.num_I_packets < 80:   
-        frame_weight = 2.25         
-    elif buffer.num_I_packets >= 80:   
-        frame_weight = 2.5         
+    elif buffer.num_I_packets == 6:   
+        frame_weight = 1.6
+    elif buffer.num_I_packets == 7:   
+        frame_weight = 1.7         
+    elif buffer.num_I_packets == 8:   
+        frame_weight = 1.8         
+    elif buffer.num_I_packets == 9:   
+        frame_weight = 1.9     
+    elif buffer.num_I_packets == 10:   
+        frame_weight = 2.0         
     
     return frame_weight * a * curr_delay * pf_scheduler(avg_thrput, 
                                                         curr_expected_bitrate)
@@ -522,7 +526,7 @@ def calc_SINR(tx_pow, ch_pow_gain, interference, noise_power):
     
     sinr_linear = sig_pow / (noise_power + interference)
     
-    return 10 * np.log10(sinr_linear) - 40
+    return 10 * np.log10(sinr_linear) - 40 # Add some neighbor BS interference
 
 
 

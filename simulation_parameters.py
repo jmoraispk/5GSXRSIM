@@ -180,6 +180,8 @@ class Simulation_parameters:
         self.DL_radio_overhead = [0.14, 0.18]
         # self.DL_radio_overhead = [0.01, 0.02]
         
+        
+        # TODO: Sub-band scheduling
         # For convenience, levels 1, 2, ..., 11. ((PRB number is = level x 25))
         # self.scheduler_granularity_level = 1
         # self.n_schedulable_subbands = 1
@@ -210,7 +212,7 @@ class Simulation_parameters:
         # - self.always_schedule_every_ue = False
         ##########################################
         
-        # TODO: This variable is here because the simulator is not read for
+        # TODO: This variable is here because the simulator is not ready for
         # not having it. What happens is the following:
             # if we put this to false, then only the UEs with things to send
             # are scheduled. The problem with this is that now we cannot
@@ -220,7 +222,8 @@ class Simulation_parameters:
             # There are workarounds, but take time. So: postponed for later.
         
         # In case we need per PRB information on the channel and signal 
-        # strength. TODO: check if the channel is also working.
+        # strength. 
+        #TODO: check if the channel is also working.
         self.save_per_prb_variables = False
         
         # In case we need to know how much power is received given a certain
@@ -370,7 +373,7 @@ class Simulation_parameters:
         self.VR_or_AR = 'VR'
         
         # Default Packet size
-        self.packet_size = 1500  # bytes
+        self.packet_size = 15000 # 1500  # bytes
         
         # Packet latency Budget [ms]
         self.packet_lat_budget = lat_budget
@@ -391,12 +394,11 @@ class Simulation_parameters:
         
         
         # if not (1 <= self.scheduler_granularity_level <= 11):
-        #     print("Scheduling block level must be between 1 and 11 suc that "
+        #     print("Scheduling block level must be between 1 and 11 such that "
         #           "the limits of MIN 24 PRBs and MAX 275 PRBs defined by "
         #           "3GPP can be respected.")
         #     ut.stop_execution()
         
-        # 'Frametype'
         ut.parse_input(self.scheduler, ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']) 
         
                 
@@ -553,6 +555,10 @@ class Simulation_parameters:
         # TODO: we are calling PRB what are actually frequency samples.
         #       we are doing that because in wideband precoding and scheduling
         #       there is no difference.
+        #       
+        #       
+        
+        
         
         # In Hertz, the fundamental bandwidths:
         # self.subcarrier_spacing = 15e3 * 2 ** self.simulation_numerology
@@ -584,7 +590,7 @@ class Simulation_parameters:
         # ################### Override variables ###########################
         
         # This considers the samples of the generated bandwidth were for a 
-        # different bandwidth. If we start doing subband precoding or 
+        # different bandwidth. If we start doing sub-band precoding or 
         # scheduling, then this should change. 
         if bw != None:
             # TODO: Removed for now

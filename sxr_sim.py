@@ -48,18 +48,23 @@ TODO: Check for traces generated with omni-array what combinations of bitrate,
       
 TODO: "Debug" packet_types of packet sequences in buffer with I-frame spacing
  
-TODO: Subband-scheduling:
+TODO: Sub-band scheduling:
       How to define/differentiate the PRBs and frequency samples 
       #PRBs and #Freq defined in sim_par??? 
       => Check mappings in official standards
-      => Will variables, calculations etc. be independent for subbands???
+      => Will variables, calculations etc. be independent for sub-bands???
       => Which are 'global'? E.g. UE buffers, inter-cell-interference, ...
-      => Which are separate per subband? E.g. SINR, MCS, 'Precoders'(?)
+      => Which are separate per sub-band? E.g. SINR, MCS, 'Precoders'(?)
       How to integrate into simulation loop???
       E.g.: 
       for (each TTI):
-          for (each scheduling-PRBs/subband):
+          most simulation..
+          for (each scheduling-PRBs/sub-band):
               do: simulation.....                  
+
+Ideas:
+      - Symbol-level scheduling? 
+      - Mini-slots/Multiple slots?
     
 
 """
@@ -68,7 +73,7 @@ application_bitrates = [25]
 # bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
 bandwidths = [100] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
-latencies = [20]
+latencies = [50]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
@@ -155,10 +160,12 @@ for param in sim_params:
     
     if sp.uniformly_space_UE_I_frames:
         I_frame_offsets = np.linspace(0, sp.GoP / sp.FPS, sp.n_phy + 1)[:-1]
+        I_frame_offsets = np.linspace(0.15, 0.0, 4)
+        # np.flipud(I_frame_offsets)
     else:
         I_frame_offsets = [0] * sp.n_phy
       
-    for ue in range(sp.n_phy):
+    for ue in range(0, sp.n_phy): # start at 1 for debug!!!
         # Generate frame sequences
         frame_sequence_DL = at.gen_frame_sequence(sp.I_size_DL,
                                                   sp.GoP,

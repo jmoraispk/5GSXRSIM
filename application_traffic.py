@@ -395,8 +395,6 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
         
         packet_parent_frames += [frame_idx] * num_packets
         
-        # TODO: frametype 
-        packet_type += [frame_sequence.types[frame_idx]] * num_packets
         
     # Sort both timestamps and parent frames
     packet_parent_frames_aux = copy.deepcopy(packet_parent_frames)
@@ -405,9 +403,13 @@ def gen_packet_sequence(frame_sequence, packet_size, burstiness_param,
                                        packet_parent_frames_aux))]
     packet_timestamps.sort()
     
-    #TODO: (Does this need to be sorted as well?)
-    # packet_type.sort()
-    
+    # TODO: Frametype 
+    frame_idxs.sort()
+    for frame_idx in frame_idxs: 
+        frame_size = frame_sequence.sizes[frame_idx]
+        num_packets = int(np.ceil(frame_size / packet_size))
+        packet_type += [frame_sequence.types[frame_idx]] * num_packets
+             
     return Packet_Sequence(packet_size, packet_timestamps, packet_bitrate, 
                            packet_parent_frames, frame_sequence, packet_type)
 
@@ -617,7 +619,7 @@ class Buffer:
         """         
         # Reset number of I-frame packets
         self.num_I_packets = 0
-        for i in range(self.buffer_size): # self.buffer_size
+        for i in range(6): # self.buffer_size): # "DPI depth parameter"
             if self.parent_packet_seq.packet_type[i] == 'I':    
                 self.num_I_packets += 1
     
