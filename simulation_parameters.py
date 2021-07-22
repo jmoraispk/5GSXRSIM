@@ -373,7 +373,7 @@ class Simulation_parameters:
         self.VR_or_AR = 'VR'
         
         # Default Packet size
-        self.packet_size = 15000 # 1500  # bytes
+        self.packet_size = 750 # 1500  # bytes
         
         # Packet latency Budget [ms]
         self.packet_lat_budget = lat_budget
