@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker 
 
 import utils as ut
-#(0.53, -0.01)
 
 # - fill var
 # - plot format
@@ -24,7 +23,8 @@ import utils as ut
 
 def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
                  title='', linewidths='', tune_opacity=False, opacity=[],
-                 y_labels='', xlim=[], ylim=[], use_legend=False,
+                 y_labels='', xlim=[], ylim=[], tight_x_axis=False,
+                 tight_y_axis=False, use_legend=False,
                  legend_inside=False, legend_loc="center",
                  ncols=1, size=1, width=6.4, 
                  height=4.8, same_axs=False, n1=-1, n2=-1,
@@ -226,7 +226,7 @@ def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
         else:
             x_data = x_vals[:,ue]
         
-        for y_idx in range(n_y_vals):            
+        for y_idx in range(n_y_vals):
             if same_axs:
                 if n_ues == 1:
                     p_idx = y_idx
@@ -241,6 +241,12 @@ def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
                 y_data = y_vals[y_idx]
             else:
                 y_data = y_vals[y_idx][:,ue]
+            
+            
+            # Check sizes of x and y: trimming problem?
+            if len(x_data) != len(y_data):
+                raise Exception('x and y values have different dimensions. '
+                                'Problem with trimming?')
             
             try:
                 if plot_type_left == 'line':
@@ -280,7 +286,7 @@ def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
                                 'tuple for each ue')
         else:
             # ax_handle.set_xlim([min(x_data)-1, max(x_data)+1])
-            ax_handle.autoscale(enable=True, axis='x', tight=True)
+            ax_handle.autoscale(enable=True, axis='x', tight=tight_x_axis)
         
         if ylim != []:
             if isinstance(ylim, tuple):
@@ -291,7 +297,7 @@ def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
                 raise Exception('ylim badly formatted: list of tuples, one '
                                 'tuple for each ue')
         else:
-            ax_handle.autoscale(enable=True, axis='y', tight=True)
+            ax_handle.autoscale(enable=True, axis='y', tight=tight_y_axis)
             
         # Set legend
         if use_legend and legend_inside:
@@ -387,7 +393,6 @@ def plot_for_ues_double(ue_list, x_vals, y_vals_left, y_vals_right,
             idx = ue_list.index(ue)
             
         ax1_handle = axs[idx]
-        ax2_handle = ax1_handle.twinx()
         for y_idx_left in range(len(y_vals_left)):
             if plot_type_left == 'line':
                 ax1_handle.plot(x_vals, y_vals_left[y_idx_left][:, ue], 
@@ -405,6 +410,7 @@ def plot_for_ues_double(ue_list, x_vals, y_vals_left, y_vals_right,
                 raise Exception(f'No plot type named "{plot_type_left}" '
                                  'for left plot.')
             
+        ax2_handle = ax1_handle.twinx()
         for y_idx_right in range(len(y_vals_right)):
             tot_idx = y_idx_right + len(y_vals_left)
             if plot_type_right == 'line':

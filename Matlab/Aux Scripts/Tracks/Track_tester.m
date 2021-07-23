@@ -30,16 +30,16 @@ SEED = 1;
 snapshot_interval = 100;
 display_orientation = 1;
 pause_interval = 3;
-pause_duration = 2;
+pause_duration = 0;
 shade = 0;
 make_gif(4) = 1;
 plot_only_phy_users = 0;     % 0 means all phy + vir users are plotted.
 plot_with_layout = 0;        % 1 if layout is needed in the gif.
 
-for mvnt_val = 3:3  % check the speed here!
+for mvnt_val = 4:4  % check the speed here!
     filename = ['Tracks\Track', '_SEED', num2str(SEED), ...
                 '_SPEED', num2str(mvnt_val), '_UE', num2str(n_rx), '.mat'];
-    filename = 'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat';
+    filename = 'Tracks\Track_SEED1_SPEED4_UE4.mat';
     l_aux = load(filename).l_aux;
     
     for i = 1:1 % do for up only..

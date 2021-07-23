@@ -184,7 +184,7 @@ class Generation_parameters:
         
         # Load specific tracks. Note: if tracks aren't created, this needs to
         # be set to False to create the vars.mat
-        self.load_tracks_from_file = True
+        self.load_tracks_from_file = False
         
         # Indices of users seats: these indices depend on the number of seats!
         # Phy user disposition 
@@ -265,7 +265,8 @@ class Generation_parameters:
         # if the elemenets of each dual-polarised antenna should have separated
         # channel responses. This is important for layers.
         self.diff_orthogonal_polarisation = 1
-        
+        # When the elements are not cross polarized, this variable should be 0.
+
         # To apply the Human Blockage models to the computed channel.
         # It will generate twice as much data, as the non-blocked channel needs
         # to be generated and saved in the first place
@@ -288,8 +289,11 @@ class Generation_parameters:
         self.matlab_folder = self.curr_path + '\\Matlab\\'
         
         self.tracks_filename = self.matlab_folder + \
-            f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
-        
+            r'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat'
+            #f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
+            
+            
+              
         self.conf_folder = self.matlab_folder + 'QuaDRiGa\\quadriga_src\\config\\'
         
         if ' ' in self.conf_folder:
@@ -396,7 +400,7 @@ class Generation_parameters:
         self.parallelisation_level = 'UE'  # 'None', 'FR', 'BS', 'UE'
         
         # Maximum number of time divisions
-        self.time_divisions = 2
+        self.time_divisions = 1
         # Note: The total number of instances is derived from the 2 vars above
         
         # Number of instances to execute per batch (Python needs a core also)
@@ -869,6 +873,7 @@ class Generation_parameters:
         user_height = 1.4  # [m] 
         cam_height = 1     # [m]
         
+        # Either seat the users automatically, or use a customized arrangement
         use_standard_arrangement = 1
         
         # Table format: 'quadrangular', 'rectangular' or 'round'/'circular'
@@ -887,7 +892,7 @@ class Generation_parameters:
         # Distances that define the placement of 2 cameras per user in the room
         # (This conf. has an angle of 30º from the perpendicular 
         # to the user to each camera)
-        d_u = 0.6   # distance along perpendicular to the user
+        d_u = 0.6  # distance along perpendicular to the user
         d_s = 0.3  # distance from the perpendicular to each side (2 cameras)
         
         

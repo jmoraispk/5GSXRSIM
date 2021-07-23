@@ -10,18 +10,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
 
-# For MP4 short clips:
-from moviepy.editor import VideoClip
-from moviepy.video.io.bindings import mplfig_to_npimage
+import utils as ut
+
+from test3 import plot_for_ues
+from test3 import plot_for_ues_double
+
+try:
+    # For MP4 short clips:
+    from moviepy.editor import VideoClip
+    from moviepy.video.io.bindings import mplfig_to_npimage
+except ModuleNotFoundError:
+    # Error handling
+    print('Could not find moviepy module. Did you pip it into the current env?')
+    print('Making GIFs and Videos will not work.')
 
 # Note: there's probably a better way that avoids using the import below,
 # see app_trafic_plots done in v2.
 # import matplotlib.ticker as ticker 
 
-import utils as ut
-
-from test3 import plot_for_ues
-from test3 import plot_for_ues_double
 
 
 def t_student_mapping(N, one_sided=True, confidence=0.95):
@@ -207,8 +213,8 @@ def get_vars_to_load(idx, vars_to_load_names):
                  10.1: [1], 10.15: [1], 10.2: [1], 10.25: [1], 
                  10.3: [1], 10.31: [1], 10.4: [1], 10.45: [1], 
                  10.5: [1], 10.55: [1], 10.6: [1], 10.65: [1], 
-                 10.7: [], 10.8: [1], 10.9: [1], 10.11: [1],
-                 11: [15], 11.1: [15], 11.2: [15], 11.3: [4], 
+                 10.7: [1], 10.8: [1], 10.9: [1], 10.11: [1],
+                 11: [15], 11.1: [15], 11.2: [15], 11.3: [4], 11.4: [10,15],
                  13: [14],
                  14.1: [1], 14.2: [1], 
                  15: [18], 
@@ -256,7 +262,7 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     10.5: [16], 10.55: [16], 10.6: [17], 10.65: [17], 
                     10.7: [14,15,16,17,18,19,20,21,22,23], 
                     10.8: [22,27], 10.9: [23,27], 10.11: [22,23,27],
-                    11: [24], 11.1: [], 11.2: [], 11.3: [25], 
+                    11: [24], 11.1: [], 11.2: [], 11.3: [25], 11.4: [],
                     13: [],
                     14.1: [], 14.2: [],
                     15: [28], 
@@ -301,12 +307,6 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
     
     vars_to_not_trim = ['sp', 'buffers']
     
-    # Within the variables to trim, which have per layer information that
-    # require further trimming (e.g. to select one layer or single-layer mode):
-    vars_with_no_layer = ['realised_bitrate_total', 'experienced_signal_power',
-                          'olla', 'su_mimo_setting', 'channel', 
-                          'scheduled_UEs']
-    
     # Convert to NumPy arrays and trim to obtain only the useful parts
     for f in range(len(files)):
         for v in vars_to_trim:
@@ -329,14 +329,6 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
             sim_data_trimmed[f][v_idx] = \
                 np.array(sim_data_loaded[f][v_idx])[trim_ttis[0]:trim_ttis[1]]
             
-            if v in vars_with_no_layer:
-                continue
-            
-            # Select the layer we want (single-layer plot for now)
-            
-            l_idx = 0
-            sim_data_trimmed[f][v_idx] = sim_data_trimmed[f][v_idx][:,:,l_idx]
-            
             # # Select the downlink ttis only
             #sim_data[f][v_idx] = np.delete(sim_data[v_idx, f], ul_ttis, axis=0)
     
@@ -347,17 +339,18 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
     pass
 
 
-def compute_sim_data(plot_idx, ues, ttis, 
+def compute_sim_data(plot_idx, layer, ues, ttis, 
                      all_loadable_var_names, all_computable_var_names, 
                      vars_to_compute, vars_to_trim,
-                     sim_data_trimmed, sim_data_computed,
-                     file_set):
+                     sim_data_trimmed, sim_data_computed, file_set,
+                     vars_with_layers):
     
     # Setup some useful variables:
     n_ues = len(ues)
     n_ttis = len(ttis)
     n_files = len(file_set)
     usual_shape = (n_ttis, n_ues)
+    
     
     # Let's handle first the single_trace computations
     # In this first computation phase, we compute variables per trace only.
@@ -373,6 +366,11 @@ def compute_sim_data(plot_idx, ues, ttis,
         for var_to_compute in vars_to_compute:
             # Index of where to put our freshly computed variable
             v = all_computable_var_names.index(var_to_compute)
+            
+            # These variables need layer trimming, if we want a single-layer plot: 
+            if v in vars_with_layers and \
+               not (sim_data_trimmed[f][v] is None):
+                sim_data_trimmed[f][v] = sim_data_trimmed[f][v][:,:,layer]
             
             # Check trim dependencies, to make sure the variable has been 
             # trimmed properly. Otherwise, we can't continue with computation
@@ -897,9 +895,9 @@ def compute_sim_data(plot_idx, ues, ttis,
                 pass
 
 
-def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed, 
-                  sim_data_computed, results_filename, base_folder, save_fig, 
-                  save_format='svg'):
+def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals, 
+                  sim_data_trimmed, sim_data_computed, results_filename, 
+                  base_folder, save_fig, save_format='svg'):
     
     """
         THE MEANING OF EACH PLOT INDEX IS IN PLOTS_PHASE1.PY.
@@ -1200,7 +1198,6 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                                 x_axis_label=x_label_time, 
                                 y_labels=['Signal Power [dBm]', 
                                           'Interference Power [dBm]'],
-                                use_legend=True, legend_loc='lower center', 
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
     
@@ -1223,7 +1220,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                          x_axis_label=x_label_time, 
                          y_axis_label='Interference Power [dB]',  
                          y_labels=['Estimated', 'Realised'],
-                         use_legend=True, legend_loc='lower center', ncols=2,
+                         use_legend=True,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
                             
@@ -1259,7 +1256,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                                 [sim_data_trimmed[f][4]], 
                                 x_label_time, 
                                 y_labels=['MCS index', 
-                                         'Bit rate [Mbps]'],        
+                                          'Bit rate [Mbps]'],
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
         
@@ -1677,7 +1674,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
                     
-            
+        # Scheduled UEs: each UE is 1 when it is scheduled and 0 when it is not 
+        #                [same axis]
         if plot_idx == 11.2:
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][15]], 
                          use_legend=True, legend_inside=True, 
@@ -1695,7 +1693,17 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             if save_fig:
                 plt.savefig(file_name, format=save_format)        
                 print(f'Saved: {file_name}')
-                
+        
+        if plot_idx == 11.4: 
+            plot_for_ues_double(ues, x_vals, [sim_data_trimmed[f][10]], 
+                                [sim_data_trimmed[f][15]], 
+                                x_axis_label=x_label_time, 
+                                y_labels=['Signal Power [W]', 
+                                          'Scheduled UEs'],
+                                savefig=save_fig, filename=file_name, 
+                                saveformat=save_format) 
+        
+        
         # Number of co-scheduled layers per UE
         if plot_idx == 13:
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][14]],

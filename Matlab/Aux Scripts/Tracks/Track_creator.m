@@ -10,7 +10,16 @@
 %                 users had changed.
 
 % INPUT THE CORRECT PATH to the vars.mat of choice
-load('vars_4ues.mat'); 
+load('vars.mat'); 
+
+
+if n_time_divisions == 1
+    disp(['WARNING: there will be errors if the # time divisions is 1. ', ...
+          'This was made to glue time divisions. Create a normal track ', ...
+          'otherwise.']);
+end
+
+
 % About the vars.mat: barely any information is needed from the vars.mat
 % file. A normal simulation with that number of users with those positions
 % is enough. No need to generate the whole thing, we just need the vars.mat
@@ -23,8 +32,8 @@ load('vars_4ues.mat');
 %   - SEED
 %   - mvnt_values
 % speaking_time = 4;
-mvnt_vals = 7:7;
-SEEDs = [1:7 9:14 16:20];
+mvnt_vals = 4;
+SEEDs = [1:5];
 
 for SEED = SEEDs
     % SEED is set just in the beginning of the first set of tracks

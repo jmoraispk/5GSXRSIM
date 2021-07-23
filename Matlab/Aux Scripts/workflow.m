@@ -1,6 +1,6 @@
 %% Parallel Simulation: Setup Phase
 
-n_div = 4;
+n_div = 1;
 n_freq = 2; n_rx = 1; n_tx = 8;
 parallelisation_level = 3;
 if parallelisation_level == 0

@@ -360,6 +360,8 @@ def make_py_list(dim, siz):
     of empty lists.
     """
     
+    if len(siz) > dim:
+        raise Exception('More dimensions given than the maximum dimension!')
     if len(siz) == dim:
         l = np.zeros(siz).tolist()
         return l

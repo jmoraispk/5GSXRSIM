@@ -3,6 +3,10 @@ function [] = rotate_all_elements(ant, ant_conf, ang, axis, ...
     % Rotates all elements in the array
     n = ant_conf(1) * ant_conf(2);
     
+    if diff_pol && n == 1
+        disp('WARNING: did you meant single polarization?');
+    end
+        
     if diff_pol
         n = n * 2;
     end

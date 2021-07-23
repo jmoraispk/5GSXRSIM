@@ -34,7 +34,7 @@ class Frame_Sequence:
         # maybe there's no point making verification if only functions in this
         # module interact with this class.
         
-        # Frame Size [MB]
+        # Frame Size [bits]
         self.sizes = sizes
         # Type of Frame ['I', 'P']
         self.types = types
