@@ -842,12 +842,14 @@ def compute_sim_data(plot_idx, ues, ttis,
                 
                 sim_data_computed[f][34] = ori_line
 
-            # COMPUTE INDEX 35: Avg. SINR across the trace
+            # COMPUTE INDEX 35: Beam details (correct HPBWs, ...)
             if var_to_compute == 'individual_beam_gob_details' and \
                sim_data_computed[f][v] is None:
                 pass
                 folder = sim_data_trimmed[0][0].precoders_folder + '\\'
-                file = 'beam_details_4_4_-60_60_12_0_-60_60_12_0_pol_1.mat'
+                # file = 'beam_details_4_4_-60_60_12_0_-60_60_12_0_pol_1.mat'
+                file = 'beam_details_4_4_4_4_pol_3_RI_1_ph_-1_new.mat'
+                print(f'Loading beam details file: {file}')
                 
                 # [121][6]:
                 # 121 beams x (HPBW-AZ, HPBW-EL, 
@@ -861,7 +863,8 @@ def compute_sim_data(plot_idx, ues, ttis,
                                     'beam details need to be generated '
                                     'separately?')
 
-            # COMPUTE INDEX 36: Avg. SINR across the trace
+            # COMPUTE INDEX 36: When the UEs are not scheduled, keep the same
+            #                   beam, for visualization purposes. 
             if var_to_compute == 'beams_processed' and \
                sim_data_computed[f][v] is None:
                 # if not scheduled, keep the same beam (it will only change
@@ -1255,7 +1258,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues_double(ues, x_vals, [sim_data_trimmed[f][9]], 
                                 [sim_data_trimmed[f][4]], 
                                 x_label_time, 
-                                y_label=['MCS index', 
+                                y_labels=['MCS index', 
                                          'Bit rate [Mbps]'],        
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
@@ -1280,7 +1283,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues_double(ues, x_vals, [sim_data_trimmed[f][7][:,:,0]], 
                                 [sim_data_trimmed[f][7][:,:,1]],
                                 x_label_time, 
-                                y_label=['Azimuth [º]', 'Elevation[º]'],
+                                y_labels=['Azimuth [º]', 'Elevation[º]'],
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
     
@@ -1865,9 +1868,9 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                 tan_aux = np.tan(np.deg2rad(sim_data_computed[f][36]))
     
                 # Load final info
-                azi_vals = f_sp.gob_azi_vals.tolist()
-                el_vals = f_sp.gob_el_vals.tolist()
-                len_el_vals = len(el_vals)
+                directions = f_sp.gob_directions
+                n_directions = f_sp.gob_n_beams
+                
                     
                     
             
@@ -1962,13 +1965,26 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                         
                         beam_azi = sim_data_computed[f][36][idx_uncomp, ue, 0]
                         beam_el = sim_data_computed[f][36][idx_uncomp, ue, 1]
-                                            
-                        beam_azi_idx = azi_vals.index(beam_azi)
-                        beam_el_idx = el_vals.index(beam_el)
-                        beam_idx = beam_azi_idx * len_el_vals + beam_el_idx 
-                        # and to get back to azi and el beam indices: 
-                        # beam_azi_idx = np.floor(best_beam_idx/11).astype(int)
-                        # beam_el_idx = best_beam_idx % 11                    
+                        curr_dir = [beam_azi, beam_el]
+                        
+                        # TODO: *screaming while pulling hair* 
+                        #       WHY IS THIS NOT WORKING?!?!?!
+                        
+                        # beam_idx = [i for i in range(directions.shape[1])
+                        #             if np.array_equal(directions[:, i], 
+                        #                               np.array(curr_dir))]
+                        
+                        # a = [i for i in range(directions.shape[1])
+                        #      if i == 150]
+                        
+                        dir_idxs_azi = \
+                            np.where(f_sp.gob_directions[0,:] == beam_azi)
+                        dir_idxs_el = \
+                            np.where(f_sp.gob_directions[1,:] == beam_el)
+                        
+                        
+                        beam_idx = np.intersect1d(dir_idxs_azi, dir_idxs_el)[0]
+                        
                         # in [degree]
                         if plot_idx in [17.02, 17.12]:
                             azi_HPBW = el_HPBW = 25

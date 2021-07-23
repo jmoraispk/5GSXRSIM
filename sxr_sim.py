@@ -18,7 +18,7 @@ import application_traffic as at
 import simulation_parameters as sim_par
 
 # parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks" + '\\'
-parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+parent_folder = r"C:\Users\kizhakkekundils\Documents\THESIS\SXRSIMv3\SXRSIMv3\Matlab\TraceGeneration" + '\\'
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
 seed = 1
@@ -116,7 +116,7 @@ for param in sim_params:
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'{seed_str}_SPEED-{sp.speed_idx}_FREQ-{freq_idx}_' + \
                  f'CSIPER-{csi_periodicity}_APPBIT-{application_bitrate}_' + \
-                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}'
+                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}_coph-1'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
