@@ -184,7 +184,7 @@ class Generation_parameters:
         
         # Load specific tracks. Note: if tracks aren't created, this needs to
         # be set to False to create the vars.mat
-        self.load_tracks_from_file = False
+        self.load_tracks_from_file = True
         
         # Indices of users seats: these indices depend on the number of seats!
         # Phy user disposition 
@@ -217,7 +217,7 @@ class Generation_parameters:
         # When creating one speaker list automatically, these two parameters
         # are needed to set what speakers and for how long each speaks.
         self.only_vir_speak = True
-        self.speaking_time = 2
+        self.speaking_time = 4
         
         # Antenna types, one input per frequency
         # [a single 'omni' or 'patch' or 'dipole' or 'array']        
@@ -400,7 +400,7 @@ class Generation_parameters:
         self.parallelisation_level = 'UE'  # 'None', 'FR', 'BS', 'UE'
         
         # Maximum number of time divisions
-        self.time_divisions = 1
+        self.time_divisions = 2
         # Note: The total number of instances is derived from the 2 vars above
         
         # Number of instances to execute per batch (Python needs a core also)

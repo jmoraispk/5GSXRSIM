@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Jul  4 13:33:50 2020
-
 @author: janeiroja
-
-
 Parameters concerning System-Level simulation (Application traffic, and more..)
 """
 
@@ -19,10 +16,11 @@ import utils as ut
 
 class Simulation_parameters:
     def __init__(self, folder_to_load, freq_idx, csi_periodicity, 
-                 application_bitrate, user_list, bw, lat_budget):
+                 application_bitrate, user_list, bw, lat_budget, rot_factor):
 
         # 1- Init General Variables (General parameters and Vari)
-        self.set_simulation_param(freq_idx, csi_periodicity, user_list)
+        self.set_simulation_param(freq_idx, csi_periodicity, user_list, 
+                                  rot_factor)
         
         # 2- Init IO parameters (which folders to write to, and so on)
         self.set_io_param(folder_to_load)
@@ -36,7 +34,8 @@ class Simulation_parameters:
         # 5- Compute the variables required to generate traffic
         self.compute_application_traffic_vars()
 
-    def set_simulation_param(self, freq_idx, csi_periodicity, user_list):
+    def set_simulation_param(self, freq_idx, csi_periodicity, user_list, 
+                             rot_factor):
         # ################# Mode 1: General Parameters  #######################
         # Note: everything will be zero-indexed from now on, because now we
         #       are in Python land
@@ -77,21 +76,31 @@ class Simulation_parameters:
         self.sim_n_phy = self.sim_n_ue
         self.sim_n_bs = len(self.specify_bss)
         
-        self.bf_method = 'gob' # 'reciprocity'
-        IMPLEMENTED_LAYERS_IMPLICIT_BF = 2
-        IMPLEMENTED_LAYERS_EXPLICIT_BF = 1
+        # SU: Schedule one user at the time, as many layers as defined in n_layers
+        # MU: Scheduled all users (remember the interference problem) at each
+        #     tti, if their layers are compatible...
+        self.scheduling_method = 'SU' 
         
-        if self.bf_method == 'gob':
-            self.n_layers = IMPLEMENTED_LAYERS_EXPLICIT_BF 
-        elif self.bf_method == 'reciprocity':
-            self.n_layers = IMPLEMENTED_LAYERS_IMPLICIT_BF 
-        else:
-            raise Exception('BF method not recognized.')
+        self.bf_method = 'gob' # 'reciprocity'
+        IMPLEMENTED_LAYERS_IMPLICIT_BF = 0
+        IMPLEMENTED_LAYERS_EXPLICIT_BF = 2
         
         # Maximum 2 layers per UE
         self.n_layers = 1
         
-        # Maximum 8 layers for all UEs
+        if self.bf_method == 'gob':
+            if self.n_layers > IMPLEMENTED_LAYERS_EXPLICIT_BF :
+                raise Exception(f'GoB supports only '
+                                f'{IMPLEMENTED_LAYERS_EXPLICIT_BF} layers')
+        elif self.bf_method == 'reciprocity':
+           if self.n_layers > IMPLEMENTED_LAYERS_IMPLICIT_BF :
+                raise Exception(f'GoB supports only '
+                                f'{IMPLEMENTED_LAYERS_IMPLICIT_BF} layers')
+        else:
+            raise Exception('BF method not recognized.')
+        
+        
+        # Maximum total layers, summed over all UEs
         self.max_mu_mimo_layers = 99 # Doesn't do anything yet anyway
         
         
@@ -108,7 +117,10 @@ class Simulation_parameters:
         # In case we want to test some intelligent way of handling multiple
         # reports
         self.n_csi_beams = 1
-        
+
+        # Rotation Factor (put to None for not applying)
+        self.rot_factor = rot_factor
+
         # How frequently to update CSI? 
         # CSI: Precoders and Interference measurements
         self.csi_period = csi_periodicity
@@ -204,6 +216,11 @@ class Simulation_parameters:
         #       packets in the buffer, that's it.
         self.always_schedule_every_ue = True
         
+        ##########################################
+        # - self.csi_tti_delay = 0
+        # - self.always_schedule_every_ue = False
+        ##########################################
+        
         # TODO: This variable is here because the simulator is not read for
         # not having it. What happens is the following:
             # if we put this to false, then only the UEs with things to send
@@ -219,7 +236,7 @@ class Simulation_parameters:
         
         # In case we need to know how much power is received given a certain
         # choice of GoB
-        self.save_power_per_CSI_beam = True
+        self.save_power_per_CSI_beam = False
         
         # Instead of checking which is the best beam through a loop, 
         # create matrices and multiply them. For some sizes of the grid and
@@ -277,10 +294,9 @@ class Simulation_parameters:
         self.precoders_folder = self.matlab_folder + 'Precoders\\'
         
         # A precoder for each antenna, for each frequency [freq][bs_idx]
-        # TODO: delete the v2 part when the new version is working.
         self.precoders_files = \
-            [["precoders_4_4_4_4_pol_3_RI_1_ph_-1_new"], 
-             ["precoders_8_8_4_4_pol_3_RI_1_ph_1"]] # TODO: UPDATE FOR F2 AS WELL
+            [["precoders_4_4_4_4_pol_3_RI_1_ph_1_new"], 
+             ["1-omni-element"]]
         
         # the case above has a single precoder for each frequency
         # The selected precoder path, with the simulated frequency, is
@@ -296,7 +312,9 @@ class Simulation_parameters:
         
         # Space the I frames across the GoP for the existant UEs
         self.uniformly_space_UE_I_frames = False
-        # TODO: read the 'todo' at the end of the simulation parameters ...
+        # Note: until the TODO in the end of simulation parameters is solved, 
+        #       this should be set to False. Otherwise we fall into the 
+        #       interference unpredictability problem again.
         
         # Group of Pictures ( Made of: 1 I frame and (GoP-1) P frames )
         self.GoP = 6                     # [6, 9 or 12]
@@ -390,14 +408,11 @@ class Simulation_parameters:
         #     ut.stop_execution()
         
         ut.parse_input(self.scheduler, ['PF', 'M-LWDF', 'EXP/PF'])
+
+        ut.parse_input(self.scheduling_method, ['SU', 'MU'])
         
                 
     def compute_vars_simulation(self, bw):
-        
-        
-        # TODO: organise this in more functions. perhaps one that loads and 
-        # computes from vars.mat, and other that computes from the general
-        # parameters defined previously
         
         # Check if variables have values in the correct ranges
         self.check_vars_simulation()
@@ -481,8 +496,10 @@ class Simulation_parameters:
             # only.
             # Therefore we will break it here. In a meeting, we need the 2 
             # polarisations to cope with the rapid changes in orientation.
-            raise Exception('Not enough coefficients! Only supports '
-                            'single antenna elements, not cross-polarised.')
+            pass
+            # TODO: check whether this is a hard limitation or not.
+            # raise Exception('Not enough coefficients! Only supports '
+            #                 'single antenna elements, not cross-polarised.')
         else:
             self.n_polarisations = 2
             # This number of polarisations is assumed throughout the simulator. 
@@ -564,7 +581,6 @@ class Simulation_parameters:
         # Currently we only consider this overhead, which probably doesn't 
         # account for guard symbols or symbols of other types (e.g. in DL
         # frame, there are only DL symbols)
-        # It also doesn't account for############################################################
         self.DL_radio_efficiency = \
             1 - self.DL_radio_overhead[self.sim_freq_idx]
         self.UL_radio_efficiency = \
@@ -719,5 +735,3 @@ class Simulation_parameters:
         
         
         
-        
-

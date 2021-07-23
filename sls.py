@@ -67,7 +67,6 @@ def MLWDF_scheduler(avg_thrput, curr_expected_bitrate,
             Note: it was made to differentiate between several QoS.
             So, if all users have the same priority, there's no weight from
             it, and can be considered a constant.
-
     Returns
     -------
     Returns the priority for a given user computed with the Maximum-Largest
@@ -220,7 +219,6 @@ def get_BLER_from_fitted_MCS_curves(cqi, sinr):
     ----------
     cqi : index for the MCS to be used
     sinr : wanna guess this one?
-
     Returns
     -------
     A tuple with 
@@ -422,7 +420,6 @@ def get_TB_size(bits_to_be_sent, tbs_divisor, n_layers=0, v='v1'):
     
     See also:
         https://www.resurchify.com/5G-tutorial/5G-NR-Throughput-Calculator.php
-
     
     Note before implementing v2: for the uplink is too complicated to do 
     the same. So, either do the same as for the DL, or stick with v1.
@@ -675,7 +672,6 @@ def time_interpolation(ttis, ttis_c, coeffs_c, mode='fast'):
     """
     Make an interpolation in the complex domain. For each coefficient, more
     many TTIs are generated. Namely, time_compression_ratio of them.
-
     We interpolate amplitude and phase linearly, through linear interpolations
     of the real and imaginary parts.
     """
@@ -941,8 +937,8 @@ class Beam_pair():
     UE antennas. For organisational purposes, we divide the UE's antennas in 
     two, having a set of antenas (and a beamformer) per polarisation.
     
-    pol 0 means -45º antennas
-    pol 1 means +45º antennas
+    pol 0 means -45? antennas
+    pol 1 means +45? antennas
     """
     
     
@@ -1236,7 +1232,6 @@ def orthogonal_precoder_indices1(N1, N2, O1, O2, RI, q, q1=-1, q2=-1):
     Returns
     -------
     q_idxs : column indices of orthogonal beams in the set given by q.
-
     """
     
     if q1 != -1 and q2 != -1:
