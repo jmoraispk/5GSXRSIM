@@ -616,10 +616,17 @@ class Buffer:
         """
         TODO: Look at first xxx packets in the buffer and returns the current 
         number of packets containing an I-frame
+        -> The exact value of how many packets are looked into might have to 
+        be determined dynamically, with inputs s.a. packet size (from sim_par),
+        maximum achievable throughput (or even better the average achieved TP)
+        per scheduling time slot and sub-band...
+        For 100 MHz and 0.25ms slots, lets put the range as xxxMbit/packet size 
+        -> For now with 480Mbps and 1.5kB packets this gives max. 10 packets 
+        (-> 3000kB - 5 packets; 7500kB - 2 packets)
         """         
         # Reset number of I-frame packets
         self.num_I_packets = 0
-        for i in range(6): # self.buffer_size): # "DPI depth parameter"
+        for i in range(10): # self.buffer_size): # "DPI depth parameter"
             if self.parent_packet_seq.packet_type[i] == 'I':    
                 self.num_I_packets += 1
     
@@ -739,7 +746,7 @@ class Buffer:
     def update_queue_time(self, tti):
         self.add_new_packets(tti)
         self.update_head_of_queue_delay(tti)
-        # self.update_number_I_packets()
+        self.update_number_I_packets()
         self.discard_late_packets(tti)
         
         

@@ -12,6 +12,7 @@ import numpy as np
 # %matplotlib inline
 
 import utils as ut
+import simulation_parameters as sp
 import plots_functions as plt_func
 
 """
@@ -74,10 +75,11 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [0, int(4000 * 1)]
+trim_ttis = [0, int(4000 * 15)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
+
 
 # Number of TTI as x-label
 # x_vals = ttis
@@ -176,12 +178,10 @@ for comb in combinations:
     # stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
     #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
     #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
+       
+    stats_dir_end = r'Sim_SEED4_FREQ-0_CSIPER-5_APPBIT-25_BW-100_LAT-50_LEN-16s_Frametype' + '\\'
+    # stats_dir_end = r'Sim_SEED3_FREQ-0_CSIPER-5_APPBIT-25_BW-100_LAT-50_LEN-16s_M-LWDF' + '\\'
     
-    # stats_dir_end = r'Sim_SPEED-4_FREQ-0_CSIPER-5_APPBIT-50_USERS-None_BW-100_LATBUDGET-10_2' + '\\'
-    
-    stats_dir_end = r'Sim_SEED5_SPEED-4_FREQ-0_CSIPER-5_APPBIT-25_USERS-None_BW-100_LATBUDGET-50' + '\\'
-    # stats_dir_end = r'Sim_SEED5_SPEED-4_FREQ-0_CSIPER-5_APPBIT-25_USERS-None_BW-100_LATBUDGET-20' + '\\'
-    # stats_dir_end = r'Sim_SEED5_SPEED-4_FREQ-0_CSIPER-5_APPBIT-40_USERS-None_BW-200_LATBUDGET-20' + '\\'
     print(f'\nDoing for: {stats_dir_end}')
     
     stats_dir = stats_folder + stats_dir_end
@@ -443,21 +443,15 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
 
     """
    
-    
-    #idxs_to_plot = [10.2]
-    #idxs_to_plot = [11.1]
-    
-    
+    # Latency and PLR
+    idxs_to_plot = [10.7]  
     # Power [Mbps]
     # idxs_to_plot = [0.1]
     # Throughput + SINR[dB]&BLER%
-    idxs_to_plot = [1, 2.4]  
-    # Latency and PLR
-    idxs_to_plot = [10.7]  
+    # idxs_to_plot = [1, 2.4]  
     # MCS per user 
-    # idxs_to_plot = [4.2]  
-    
-    # Packet sequences per user 
+    # idxs_to_plot = [4.2]      
+    # Packet sequences
     # idxs_to_plot = [14.2]  
     
     # ues = [0]
@@ -470,6 +464,8 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     
     for i in idxs_to_plot:
         print(f'Plotting {i}')
+        
+        print(f'TTIs trimmed from {trim_ttis[0]}s to {trim_ttis[1]/4000}s')
         
         # Get which vars need to be loaded and which need to be computed
         which_vars_to_load = plt_func.get_vars_to_load(i, VARS_NAME_LOAD)

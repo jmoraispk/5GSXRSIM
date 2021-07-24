@@ -54,7 +54,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = 4000 * 1
+        self.sim_TTIs = 4000 * 16
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -163,8 +163,8 @@ class Simulation_parameters:
         
         
         # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
-        # self.scheduler = 'Frametype' 
-        self.scheduler = 'M-LWDF'
+        self.scheduler = 'Frametype' 
+        # self.scheduler = 'M-LWDF'
         
         # Scheduler parameters
         self.scheduler_param_c = 10
@@ -197,6 +197,7 @@ class Simulation_parameters:
         # NOTE: this shouldn't be necessary when the 5G compliant 
         # implementation is in place
         # NOTE2: This number will divide the olla step size!
+        # TODO: A new more 5G compliant implementation of TBS calculation!
         self.tbs_divisor = 5
         
         # IMPORTANT: should we always co-schedule all UEs?! This makes the 
@@ -373,7 +374,8 @@ class Simulation_parameters:
         self.VR_or_AR = 'VR'
         
         # Default Packet size
-        self.packet_size = 750 # 1500  # bytes
+        # TODO: Check relation with 
+        self.packet_size = 1500  # bytes
         
         # Packet latency Budget [ms]
         self.packet_lat_budget = lat_budget

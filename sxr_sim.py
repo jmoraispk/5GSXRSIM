@@ -27,7 +27,7 @@ speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-folders_to_simulate = ["Sim_SEED5"]
+folders_to_simulate = ["Sim_SEED4"]
 
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
@@ -135,20 +135,24 @@ for param in sim_params:
         #    We have proved that for wideband precoding and scheduling, it 
         #    result is exactly the same as dupplicating the samples. 
         
-    print('Done setting Simulation Parameters!')
+    # TODO: print('Done setting Simulation Parameters!')
+    
+    sim_dur = int(sp.sim_TTIs / 4000)
     
     # Take care of the output
     include_timestamp = False 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split(' ')[0]
     output_stats_folder = '' #SPEED7' + '\\'
-    output_str = f'{seed_str}_SPEED-{sp.speed_idx}_FREQ-{freq_idx}_' + \
+    output_str = f'{seed_str}_FREQ-{freq_idx}_' + \
                  f'CSIPER-{csi_periodicity}_APPBIT-{application_bitrate}_' + \
-                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}'
-    output_str = output_stats_folder + output_str
+                 f'BW-{bw}_LAT-{lat_budget}_' + \
+                 f'LEN-{sim_dur}s_{sp.scheduler}'
+                 # SPEED-{sp.speed_idx} USERS-{users}_
+    # output_str = output_stats_folder + output_strNo
     
     # Continue the execution
-    print('Initialising variables...')
-    
+    # TODO: print('Initialising variables...') 
+    # print('Using the', sp.scheduler, 'scheduler')    
     
     # -------------------------------- START --------------------------------
       
@@ -325,7 +329,7 @@ for param in sim_params:
     curr_schedule = {}
     
     
-    print('--------- Starting simulation ---------') 
+    # TODO: print('--------- Starting simulation ---------') 
     
     # Loop for every TTI
     for tti in range(0, sp.sim_TTIs):
@@ -340,8 +344,8 @@ for param in sim_params:
             else:
                 print(f"TTI: {tti}")
             
-        if tti % 1000 == 0:
-            print(f"TTI: {tti}")
+        # TODO: if tti % 1000 == 0:
+        #     print(f"TTI: {tti}")
         
         # If necessary, load new set of coefficients
         if tti > last_coeff_tti:
@@ -560,7 +564,6 @@ for param in sim_params:
                                        ut.get_seconds(sp.delay_threshold), 
                                        sp.scheduler_param_delta, 
                                        sp.scheduler_param_c)
-                                       # TODO: Add Frametype input var
 
             if sp.debug:
                 print(curr_priorities)
@@ -634,7 +637,7 @@ for param in sim_params:
         # ####################################################################
         
     
-    print('End of tti loop.')    
+    # TODO: print('End of tti loop.')    
     # One final queue update, in order to account for all the packets that were
     # sent last tti
     for ue in range(sp.n_ue):
@@ -642,8 +645,9 @@ for param in sim_params:
             t = ut.timestamp(s=(tti + 1) * sp.TTI_dur_in_secs)
             buffers[ue].update_head_of_queue_delay(t)
     
+    # TODO: print statements
     print(f'------ Done simulating for {output_str}... ------')
-    print(f'Time enlapsed: {round(time.time() - t_0)} secs.')
+    # print(f'Time enlapsed: {round(time.time() - t_0)} secs.')
     
     
     
