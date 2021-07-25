@@ -408,7 +408,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     # idxs_to_plot = all_plots_available
     
     # idxs_to_plot = [5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.65, 5.15]
-    # idxs_to_plot = [17.02]
+    idxs_to_plot = [17.02]
     # Test save_plot
     save_plots = True
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'

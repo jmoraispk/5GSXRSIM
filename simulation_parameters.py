@@ -295,7 +295,7 @@ class Simulation_parameters:
         
         # A precoder for each antenna, for each frequency [freq][bs_idx]
         self.precoders_files = \
-            [["precoders_4_4_4_4_pol_3_RI_1_ph_1_new"], 
+            [["precoders_4_4_4_4_pol_3_RI_1_ph_1_without_azi_flip"], 
              ["1-omni-element"]]
         
         # the case above has a single precoder for each frequency
