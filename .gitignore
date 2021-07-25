@@ -27,3 +27,6 @@
 !/Matlab/Meeting12.m
 *.txt
 test.py
+*.png
+__init__.py
+dot_to_png.py
