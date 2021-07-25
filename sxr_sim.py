@@ -16,7 +16,7 @@ import utils as ut
 import application_traffic as at
 import simulation_parameters as sim_par
 
-parent_folder = r"Y:\SandraKizhakkekundil\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+parent_folder = r"C:\Users\kizhakkekundils\Documents\THESIS\SXRSIMv3\SXRSIMv3\Matlab\TraceGeneration" + '\\'
 
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))

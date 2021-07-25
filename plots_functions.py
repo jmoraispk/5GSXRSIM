@@ -359,6 +359,9 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
         f_sp = sim_data_trimmed[f][0]
         GoP = f_sp.GoP
         
+        
+        vars_trimmed_already = []
+        
         # Count number of periods and frames
         n_periods = round(ttis[-1] *  f_sp.TTI_dur_in_secs * (GoP - 1))
         n_frames = n_periods * GoP
@@ -368,9 +371,20 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
             v = all_computable_var_names.index(var_to_compute)
             
             # These variables need layer trimming, if we want a single-layer plot: 
-            if v in vars_with_layers and \
-               not (sim_data_trimmed[f][v] is None):
-                sim_data_trimmed[f][v] = sim_data_trimmed[f][v][:,:,layer]
+                
+            # TODO: for double layer plots, don't trim the layer right in the
+            #       beginning. Instead, check whether the plot index will 
+            #       require both layers and if it does, don't select just one
+            #       of them.
+            # if the variable has had it's layer trimmed, don't trim again..
+            for var_to_trim in vars_to_trim:
+                trim_idx = all_loadable_var_names.index(var_to_trim)
+                if trim_idx in vars_with_layers and \
+                   var_to_trim not in vars_trimmed_already and \
+                   not (sim_data_trimmed[f][trim_idx] is None):
+                    sim_data_trimmed[f][trim_idx] = \
+                        sim_data_trimmed[f][trim_idx][:,:,layer]
+                    vars_trimmed_already.append(var_to_trim)
             
             # Check trim dependencies, to make sure the variable has been 
             # trimmed properly. Otherwise, we can't continue with computation
@@ -846,7 +860,7 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                 pass
                 folder = sim_data_trimmed[0][0].precoders_folder + '\\'
                 # file = 'beam_details_4_4_-60_60_12_0_-60_60_12_0_pol_1.mat'
-                file = 'beam_details_4_4_4_4_pol_3_RI_1_ph_1_new.mat'
+                file = 'beam_details_4_4_4_4_pol_3_RI_1_ph_1.mat'
                 print(f'Loading beam details file: {file}')
                 
                 # [121][6]:

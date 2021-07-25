@@ -64,7 +64,7 @@ always_compute = True
 
 
 #-------------------------
-stats_folder = r'Y:\SandraKizhakkekundil\SXRSIMv3\Stats' + '\\'
+stats_folder = r'C:\Users\kizhakkekundils\Documents\THESIS\SXRSIMv3\SXRSIMv3\Stats' + '\\'
 seeds = [1]
 speeds = [1]
 csi_periodicities = [5]
@@ -76,7 +76,7 @@ freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
 layer = 0
-trim_ttis = [20, int(4000 * 16)]
+trim_ttis = [20, int(4000 * 4)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -408,7 +408,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     # idxs_to_plot = all_plots_available
     
     # idxs_to_plot = [5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.65, 5.15]
-    idxs_to_plot = [17.03]
+    # idxs_to_plot = [17.02]
     # Test save_plot
     save_plots = True
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
