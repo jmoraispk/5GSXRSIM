@@ -58,9 +58,21 @@ function [W] = DFT_codebook(N1, N2, O1, O2, pol, RI, cophase_fact)
                 % This creates same precoder (column) for both polarisations. 
                 % Total number of precoders remain same as pol 1 (N1.N2.O1.O2).
                 % W = [2 * N1 * N2, k]
-
-                W = [W2D_rank1_pol1 ; cophase_fact .* W2D_rank1_pol1];
-
+                order_precod = ones(size(N1*N2));
+                m = 1;
+                for p = 1 : N1
+                    for q = 0 : N2 - 1
+                        order_precod(m) = p + q * N1;
+                        m = m + 1;
+                    end
+                end
+                W3 = zeros(size(W2D_rank1_pol1));
+                for j = 1 : (N1 * N2)
+                    W3(j, :) = W2D_rank1_pol1(order_precod(j), :);
+                end
+                W = [W3 ; cophase_fact .* W3];
+                
+                
                 % Add the block diagram multiplication method here after
                 % multiplying correct sized ph with W2D_block and then compare 
                 % of both yields the same result.
