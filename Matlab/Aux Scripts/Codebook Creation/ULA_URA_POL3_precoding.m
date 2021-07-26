@@ -3,7 +3,7 @@ N2 = 4;     % Number of logical antenna elements in ver direction.
 O1 = 4;     % Oversampling factor in horizontal direction: O1 is always 4.
 O2 = 4;     % Oversampling factor in vertical direction: O2 can be 1 or 4.
 
-pol_indicator = 1;          % dual-pol ant array (2 coefts per cross ele).
+pol_indicator = 3;          % dual-pol ant array (2 coefts per cross ele).
 RI = 1;                           % Number of transmission layers.
 
 fc = 1e9;                         % Center frequency.
