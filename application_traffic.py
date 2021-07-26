@@ -624,12 +624,26 @@ class Buffer:
         -> For now with 480Mbps and 1.5kB packets this gives max. 10 packets 
         (-> 3000kB - 5 packets; 7500kB - 2 packets)
         """         
-        # Reset number of I-frame packets
         self.num_I_packets = 0
-        for i in range(10): # self.buffer_size): # "DPI depth parameter"
-            if self.parent_packet_seq.packet_type[i] == 'I':    
-                self.num_I_packets += 1
-    
+        
+        # Loop over all/the first (x) packets in buffer and check the frametype
+        # of the parent frame for every packet
+        # only check for packets in the buffer that have bits left to send!
+        if self.cursor_a_idx < self.cursor_b_idx:
+            for i in range (self.cursor_a_idx, self.cursor_a_idx + 10):
+                if i < self.buffer_size and self.bits_left[i] != 0 and \
+                    self.parent_packet_seq.packet_type[i] == 'I':
+                        self.num_I_packets += 1
+        else:           
+            for i in range(self.cursor_b_idx, self.buffer_size):
+                if self.bits_left[i] != 0 and \
+                self.parent_packet_seq.packet_type[i] == 'I':
+                    self.num_I_packets += 1
+            for i in range(0, self.cursor_a_idx):
+                if self.bits_left[i] != 0 and \
+                self.parent_packet_seq.packet_type[i] == 'I':
+                    self.num_I_packets += 1
+        
     
     def increment_dropped_packet_stats(self, packet_idx):
         period = self.period_packet_belongs(packet_idx)
@@ -744,18 +758,19 @@ class Buffer:
         
     
     def update_queue_time(self, tti):
+        # TODO: Check !!!
         self.add_new_packets(tti)
         self.update_head_of_queue_delay(tti)
+        self.discard_late_packets(tti)    
         self.update_number_I_packets()
-        self.discard_late_packets(tti)
-        
+
         
     def count_non_empty_packets(self):
         """
         Counts packets that are not empty.
         """
         if self.cursor_a_idx < self.cursor_b_idx:
-            # no need for tricks, count packets from a to be
+            # no need for tricks, count packets from a to b
             num_packets = sum(
                 (1 for i in range(self.cursor_a_idx, self.cursor_b_idx + 1)
                  if i < self.buffer_size and self.bits_left[i] != 0))
@@ -802,7 +817,7 @@ class Buffer:
         print(f"Cursor A index: {self.cursor_a_idx}, "
               f"Cursor B index: {self.cursor_b_idx}. "
               f"Diff: {self.cursor_diff()}")
-        
+        # first_x_packets = self.cursor_diff()
         print(f"Have past {self.periods_past} periods.", end='')
         
         print(f"The buffer is "
