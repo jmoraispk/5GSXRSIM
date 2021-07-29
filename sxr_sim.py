@@ -47,7 +47,7 @@ bandwidths = [50] # MHz
 
 # latencies = [10, 20, 30, 40, 50] # ms
 latencies = [10]
-rot_factors = [None]
+rot_factors = [1]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,

@@ -177,7 +177,7 @@ for comb in combinations:
     stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
                     f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
                     f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}_coph-1' + '\\'
-    stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_ROTFACTOR-None_modifiedfinal' + '\\'
+    stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_ROTFACTOR-1_modifiedfinal' + '\\'
     
     print(f'\nDoing for: {stats_dir_end}')
     

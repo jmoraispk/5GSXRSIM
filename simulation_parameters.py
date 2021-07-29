@@ -53,7 +53,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = 4000 * 8
+        self.sim_TTIs = 4000 * 2
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200

@@ -885,16 +885,11 @@ def load_precoders(precoders_paths, vectorize_GoB):
         precoders_dict[(bs, 'directions')] = \
             precoder_file['precoders_directions']
         
-        # precoders_dict[(bs, 'N1')] = precoder_file['N1'][0][0]
-        # precoders_dict[(bs, 'N2')] = precoder_file['N2'][0][0]
-        # precoders_dict[(bs, 'O1')] = precoder_file['O1'][0][0]
-        # precoders_dict[(bs, 'O2')] = precoder_file['O2'][0][0]
+        precoders_dict[(bs, 'N1')] = precoder_file['N1'][0][0]
+        precoders_dict[(bs, 'N2')] = precoder_file['N2'][0][0]
+        precoders_dict[(bs, 'O1')] = precoder_file['O1'][0][0]
+        precoders_dict[(bs, 'O2')] = precoder_file['O2'][0][0]
         
-        
-        precoders_dict[(bs, 'N1')] = 4
-        precoders_dict[(bs, 'N2')] = 4
-        precoders_dict[(bs, 'O1')] = 4
-        precoders_dict[(bs, 'O2')] = 4
         
         n_azi_beams = precoders_dict[(bs, 'N1')] * precoders_dict[(bs, 'O1')]
         n_ele_beams = precoders_dict[(bs, 'N2')] * precoders_dict[(bs, 'O2')]
@@ -1197,7 +1192,7 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
     # The channel response is a square matrix of AE_UE x AE_BS
     [azi_len, el_len] = precoders_dict[(bs, 'size')]
     
-    codebook_subset_directions = precoders_dict[(bs, 'directions')]
+    codebook_subset_directions = precoders_dict[(bs, 'directions')][:, q_idxs]
     
     for l in range(n_layers):
         # Compute the means across frequency
