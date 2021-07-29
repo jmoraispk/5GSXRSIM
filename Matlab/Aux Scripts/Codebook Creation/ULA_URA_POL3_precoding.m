@@ -175,7 +175,8 @@ for p = 1 : length(cophase_fact)
     if save_precoders
             n_azi_beams = N1 * O1;
             n_ele_beams = N2 * O2;
-            precoders_directions = [(az_point_ang1(p, :)); 
+	    % flip to match Quadriga Coupling and match azimuths properly.	
+            precoders_directions = [flip(az_point_ang1(p, :)); 
                                     el_point_ang1(p, :)];
             precoders_matrix = W2;
             

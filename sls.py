@@ -1168,11 +1168,10 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
     if subset_GoB:
         q_idxs = orthogonal_precoder_indices1(N1=4, N2=4, O1=4, O2=4, 
                                               RI=n_layers, q=rot_factor)
-        
-        codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs]
     else:
-        codebook_subset = precoders_dict[(bs, 'matrix')]
+        q_idxs = np.arange(precoders_dict[(bs, 'n_directions')])
     
+    codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs]
     # The channel response is a square matrix of AE_UE x AE_BS
     [azi_len, el_len] = precoders_dict[(bs, 'size')]
     
