@@ -612,38 +612,47 @@ class Buffer:
             self.head_of_queue_lat = tti - self.cursor_a
         
         
-    def update_number_I_packets(self):
+    def get_I_packets_info(self):
         """
-        TODO: Look at first xxx packets in the buffer and returns the current 
-        number of packets containing an I-frame
-        -> The exact value of how many packets are looked into might have to 
-        be determined dynamically, with inputs s.a. packet size (from sim_par),
-        maximum achievable throughput (or even better the average achieved TP)
-        per scheduling time slot and sub-band...
+        TODO: Think about how exactly to implement this functionality!!!
+        
+        Option a) Look at first xxx packets in the buffer and returns the 
+                  current number of packets containing an I-frame and use this
+                  as weight in the scheduler         
+                  -> The exact value of how many packets are looked into might 
+                  have to be determined dynamically, with inputs s.a. packet 
+                  size (from sim_par), maximum achievable throughput (or even 
+                  better the average achieved TP) per scheduling time slot and 
+                  sub-band...
+        
+        Option b) If there are any I-packets in the (first xxx packets of the)
+                  buffer, the weight is determined by the delay of the first 
+                  I-packet, otherwise by the earliest P-packet
+                  
         For 100 MHz and 0.25ms slots, lets put the range as xxxMbit/packet size 
         -> For now with 480Mbps and 1.5kB packets this gives max. 10 packets 
         (-> 3000kB - 5 packets; 7500kB - 2 packets)
         """         
         self.num_I_packets = 0
         
-        # Loop over all/the first (x) packets in buffer and check the frametype
+        # Loop over (all/the first x) packets in buffer and check the frametype
         # of the parent frame for every packet
         # only check for packets in the buffer that have bits left to send!
         if self.cursor_a_idx < self.cursor_b_idx:
-            for i in range (self.cursor_a_idx, self.cursor_a_idx + 10):
+            for i in range (self.cursor_a_idx, self.cursor_b_idx + 1):
                 if i < self.buffer_size and self.bits_left[i] != 0 and \
-                    self.parent_packet_seq.packet_type[i] == 'I':
+                    self.parent_packet_seq.packet_type[i] == 'I': # 
                         self.num_I_packets += 1
         else:           
             for i in range(self.cursor_b_idx, self.buffer_size):
                 if self.bits_left[i] != 0 and \
-                self.parent_packet_seq.packet_type[i] == 'I':
+                   self.parent_packet_seq.packet_type[i] == 'I':
                     self.num_I_packets += 1
             for i in range(0, self.cursor_a_idx):
                 if self.bits_left[i] != 0 and \
-                self.parent_packet_seq.packet_type[i] == 'I':
+                    self.parent_packet_seq.packet_type[i] == 'I':
                     self.num_I_packets += 1
-        
+
     
     def increment_dropped_packet_stats(self, packet_idx):
         period = self.period_packet_belongs(packet_idx)
@@ -691,6 +700,7 @@ class Buffer:
         """
         Removes the first packet of the queue.
         Updates the drop rate of the frame it belonged to.
+        TODO: Add something to control the PDR during the simulation!!!
         """
         
         # If it is called, there must be packets to pop
@@ -762,7 +772,7 @@ class Buffer:
         self.add_new_packets(tti)
         self.update_head_of_queue_delay(tti)
         self.discard_late_packets(tti)    
-        self.update_number_I_packets()
+        self.get_I_packets_info()
 
         
     def count_non_empty_packets(self):
