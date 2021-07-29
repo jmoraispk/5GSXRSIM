@@ -173,11 +173,7 @@ for p = 1 : length(cophase_fact)
                 'ph_', num2str(cophase_fact(p)),'final_flipped'];
 
     if save_precoders
-            n_azi_beams = N1 * O1;
-            n_ele_beams = N2 * O2;
-
 	    % flip to match Quadriga Coupling and match azimuths properly.	
-
             precoders_directions = [flip(az_point_ang1(p, :)); 
                                     el_point_ang1(p, :)];
             precoders_matrix = W2;
@@ -185,8 +181,8 @@ for p = 1 : length(cophase_fact)
             disp('Saving in a file...');
             save_file_name = ['precoders_', gob_name];
             save(save_file_name, 'precoders_matrix', ...
-                                 'precoders_directions', 'n_azi_beams',...
-                                                         'n_ele_beams');
+                                 'precoders_directions', ...
+				 'N1', 'N2', 'O1', 'O2');
             beam_details = squeeze(beam_details);         
             save(['beam_details_', gob_name], 'beam_details');                                         
     end

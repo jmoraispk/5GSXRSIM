@@ -53,7 +53,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = 4000 * 6
+        self.sim_TTIs = 4000 * 8
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -118,7 +118,8 @@ class Simulation_parameters:
         # reports
         self.n_csi_beams = 1
 
-        # Rotation Factor (put to None for not applying)
+        # Rotation Factor (put to None for not applying, namely on a 
+        # beam-steering GoB (i.e. the first GoB, non-3GPP))
         self.rot_factor = rot_factor
 
         # How frequently to update CSI? 

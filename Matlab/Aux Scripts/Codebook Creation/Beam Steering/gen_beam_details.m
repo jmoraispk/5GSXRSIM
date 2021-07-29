@@ -3,7 +3,7 @@ N_v = [4, 8];                            % Number of vertical antenna elements
 N_h = [4, 8];                            % Number of vertical antenna elements
 N = N_v .* N_h;                      % #Total antenna elements
 beam_details = zeros(2,121,6);        % Final precoded beam details 
-                                    % 1.HPBW-AZ,
+                                    % 1. HPBW-AZ,
                                     % 2. HPBW-EL, 
                                     % 3. max direction (AZ), 
                                     % 4. max direction (EL)

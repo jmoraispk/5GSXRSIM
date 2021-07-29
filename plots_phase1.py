@@ -76,7 +76,7 @@ freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
 layer = 0
-trim_ttis = [20, int(4000 * 6)]
+trim_ttis = [20, int(4000 * 2)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -350,7 +350,7 @@ X   0.3   -> Channel Power across prbs (for a given tti)
              bits across, but those might have no utility because they have
              transferred before.
     11.4  -> Scheduled UEs vs signal power (linear)
-X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
+X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
 
          
     13    -> SU-MIMO setting - number of layers scheduled per UE
@@ -409,6 +409,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     
     # idxs_to_plot = [5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.65, 5.15]
     idxs_to_plot = [17.03]
+    
     # Test save_plot
     save_plots = True
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'

@@ -884,8 +884,20 @@ def load_precoders(precoders_paths, vectorize_GoB):
         precoders_dict[(bs, 'matrix')] = precoder_file['precoders_matrix']
         precoders_dict[(bs, 'directions')] = \
             precoder_file['precoders_directions']
-        n_azi_beams = precoder_file['n_azi_beams'][0][0] # 11
-        n_ele_beams = precoder_file['n_ele_beams'][0][0] # 11
+        
+        # precoders_dict[(bs, 'N1')] = precoder_file['N1'][0][0]
+        # precoders_dict[(bs, 'N2')] = precoder_file['N2'][0][0]
+        # precoders_dict[(bs, 'O1')] = precoder_file['O1'][0][0]
+        # precoders_dict[(bs, 'O2')] = precoder_file['O2'][0][0]
+        
+        
+        precoders_dict[(bs, 'N1')] = 4
+        precoders_dict[(bs, 'N2')] = 4
+        precoders_dict[(bs, 'O1')] = 4
+        precoders_dict[(bs, 'O2')] = 4
+        
+        n_azi_beams = precoders_dict[(bs, 'N1')] * precoders_dict[(bs, 'O1')]
+        n_ele_beams = precoders_dict[(bs, 'N2')] * precoders_dict[(bs, 'O2')]
         n_directions = precoders_dict[(bs, 'directions')].shape[1]
         
         # Store angle information along with the precoders
@@ -945,7 +957,8 @@ class Beam_pair():
     def __init__(self):
         # Grid of Beams specific: direction at which the BS beam is pointing
         self.ang = [0, 0]
-        self.beam_idx = [0, 0]
+        self.ang_idx = [0, 0]
+        self.beam_idx = -1
 
         # The correct polarisation combination must be saved, because this
         # determines the coefficients to be used when using that beam pair.
@@ -1020,7 +1033,7 @@ def interleave(arrays, axis=0, out=None):
 
 def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs, 
                          codebook_subset_directions, ch_resp, bs, n_csi_beams,
-                         save_power_per_CSI_beam, vectorize):
+                         save_power_per_CSI_beam, vectorize, N1, N2, O1, O2):
     """
     Given a precoder dictionary, and a channel response, and a bs index, 
     returns index pair for the best precoder for that channel (highest absolute
@@ -1128,6 +1141,10 @@ def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
     
     best_beam_relative_idxs.append(best_idx)
     beam_pair.beam_idx = q_idxs[best_idx]
+    
+    az_idx = int(beam_pair.beam_idx / (N1 * O1))
+    el_idx = int(beam_pair.beam_idx - az_idx * (N1 * O1))
+    beam_pair.ang_idx = np.array([az_idx, el_idx])
     beam_pair.ang = codebook_subset_directions[:,best_idx]
     
     beam_pair.bs_weights = best_bs_weights
@@ -1163,10 +1180,15 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
     # mean across frequency
     mean_coeffs = []
     
+    N1 = precoders_dict[(bs, 'N1')]
+    N2 = precoders_dict[(bs, 'N2')]
+    O1 = precoders_dict[(bs, 'O1')]
+    O2 = precoders_dict[(bs, 'O2')]
+    
     # Note: Currently we using the same codebook_subset for both layers.
     subset_GoB = not (rot_factor is None)
     if subset_GoB:
-        q_idxs = orthogonal_precoder_indices1(N1=4, N2=4, O1=4, O2=4, 
+        q_idxs = orthogonal_precoder_indices1(N1, N2, O1, O2, 
                                               RI=n_layers, q=rot_factor)
     else:
         q_idxs = np.arange(precoders_dict[(bs, 'n_directions')])
@@ -1186,7 +1208,8 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
                                  codebook_subset_directions, mean_coeffs[l], 
                                  bs, n_csi_beams, 
-                                 save_power_per_CSI_beam, vectorize)
+                                 save_power_per_CSI_beam, vectorize,
+                                 N1, N2, O1, O2)
         
         # Best Beam Pairs is a list with the best n_csi_beams pairs for a layer
         
@@ -1534,19 +1557,8 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim):
     If the beam is at least the so much appart, it is compatible. Less than
     that, and it is not.
     """
-    # TODO: update for the new GoB (currently only works for beam_distance=1)
     
-    # Don't compute distances if the limit distance if off
-    if beam_dist_lim <= 0:
-        return True
-    
-    beam_distance = bp1.beam_idx - bp2.beam_idx
-    
-    if bp1.beam_idx - bp2.beam_idx <= 1:
-        pass
-
-    #beam_distance = np.linalg.norm(abs(np.array(bp1.beam_idx) - 
-                                       #np.array(bp2.beam_idx)))
+    beam_distance = np.linalg.norm(np.abs(bp1.ang_idx - bp2.ang_idx))
     
     return beam_distance >= beam_dist_lim
 
