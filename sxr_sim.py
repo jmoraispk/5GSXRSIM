@@ -16,7 +16,7 @@ import utils as ut
 import application_traffic as at
 import simulation_parameters as sim_par
 
-parent_folder = r"C:\Users\kizhakkekundils\Documents\THESIS\SXRSIMv3\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration" + '\\'
 
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
@@ -47,7 +47,7 @@ bandwidths = [50] # MHz
 
 # latencies = [10, 20, 30, 40, 50] # ms
 latencies = [10]
-rot_factors = [1]
+rot_factors = [None]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
@@ -118,7 +118,7 @@ for param in sim_params:
     output_str = f'{seed_str}_SPEED-{sp.speed_idx}_FREQ-{freq_idx}_' + \
                  f'CSIPER-{csi_periodicity}_APPBIT-{application_bitrate}_' + \
                  f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}_' + \
-                 f'ROTFACTOR-{rot_factor}'
+                 f'ROTFACTOR-{rot_factor}_modifiedfinal'
     output_str = output_stats_folder + output_str
     
     # Continue the execution

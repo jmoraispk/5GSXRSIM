@@ -1,8 +1,0 @@
-\\ntlsam10\umts\SandraKizhakkekundil\PsExec\psexec -accepteula -i 2 -d \\app-sam12 -u tsn\svc-ponscluster-kt -p wG360lJ91Z5j cmd /s /k start cd C:\Users\svc-ponscluster-kt start cd /d X:\
-
-
-
-net use X: \\ntlsam10\umts
-
-
-\\ntlsam10\umts\SandraKizhakkekundil\PsExec\psexec -accepteula -i 2 -d \\app-sam12 -u tsn\svc-ponscluster-kt -p wG360lJ91Z5j cmd /k "cd C:\Users\svc-ponscluster-kt && python test.py && cd /d X: && pause" 

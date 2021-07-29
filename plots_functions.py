@@ -860,7 +860,7 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                 pass
                 folder = sim_data_trimmed[0][0].precoders_folder + '\\'
                 # file = 'beam_details_4_4_-60_60_12_0_-60_60_12_0_pol_1.mat'
-                file = 'beam_details_4_4_4_4_pol_3_RI_1_ph_1_without_azi_flip.mat'
+                file = 'beam_details_4_4_4_4_pol_3_RI_1_ph_1.mat'
                 print(f'Loading beam details file: {file}')
                 
                 # [121][6]:
@@ -1887,14 +1887,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                           'not enough TTIs were simulated.')
                 
                 # A tangent needed for some projecting beams
-                tan_aux = np.tan(np.deg2rad(sim_data_computed[f][36]))
-    
-                # Load final info
-                directions = f_sp.gob_directions
-                n_directions = f_sp.gob_n_beams
-                
-                    
-                    
+                tan_aux = np.tan(np.deg2rad(sim_data_computed[f][36]))                    
             
             # Start Matplot subplot
             #fig, ax = plt.subplots(projection='3d', figsize=(6,5))
