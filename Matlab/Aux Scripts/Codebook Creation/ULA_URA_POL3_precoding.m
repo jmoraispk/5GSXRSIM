@@ -9,10 +9,10 @@ RI = 1;                           % Number of transmission layers.
 fc = 1e9;                         % Center frequency.
 elect_ele_space = [1/2, 1/2];     % Inter element spacing: ant array.
 cophase_fact = [1, -1, 1i, -1i];  % Cophasing factor used for dual pol(3).
-% cophase_fact = 1;
+cophase_fact = 1;
 
-save_precoders = 0;        % If you need to save precoders with max angles.
-Need_plot = 1;             % polar plots (az & el cuts)
+save_precoders = 1;        % If you need to save precoders with max angles.
+Need_plot = 0;             % polar plots (az & el cuts)
 el_cut = 1;                % 1: el cut polar plot, 0: az cut.
 Quad_3d_plot = 0;
 debug_gain = 1;
@@ -73,7 +73,7 @@ for p = 1 : length(cophase_fact)
         subplot(2, 2, p);
     end
     
-    for i = 1  : 64 : 256
+    for i = 1 : 256
 %     for i = 1 : N1 * O1 * N2 * O2
         
         % Creating quadriga antenna array (ULA/URA with single/dual pol).
@@ -170,12 +170,12 @@ for p = 1 : length(cophase_fact)
                 num2str(O2), '_', ...
                 'pol_', num2str(pol_indicator), '_', ...
                 'RI_', num2str(RI), '_', ...
-                'ph_', num2str(cophase_fact(p)),'final'];
+                'ph_', num2str(cophase_fact(p)),'final_flipped'];
 
     if save_precoders
             n_azi_beams = N1 * O1;
             n_ele_beams = N2 * O2;
-            precoders_directions = [(az_point_ang1(p, :)); 
+            precoders_directions = [flip(az_point_ang1(p, :)); 
                                     el_point_ang1(p, :)];
             precoders_matrix = W2;
             
