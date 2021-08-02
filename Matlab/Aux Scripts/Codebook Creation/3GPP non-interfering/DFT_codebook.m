@@ -1,8 +1,8 @@
 function [W] = DFT_codebook(N1, N2, O1, O2, pol, RI, cophase_fact)
-    N1 = 4;             
-    N2 = 4;
-    O1 = 4; % O1 is always 4.
-    O2 = 4; % O2 is always 1 or 4.
+%     N1 = 4;             
+%     N2 = 4;
+%     O1 = 4; % O1 is always 4.
+%     O2 = 4; % O2 is always 1 or 4.
     % pol = 3;
     % RI = 1;
 
@@ -80,27 +80,56 @@ function [W] = DFT_codebook(N1, N2, O1, O2, pol, RI, cophase_fact)
 
             else
                 if (pol == 3) && (RI == 2)
+                    
+                    order_precod = ones(size(N1*N2));
+                    m = 1;
+                    for p = 1 : N1
+                        for q = 0 : N2 - 1
+                            order_precod(m) = p + q * N1;
+                            m = m + 1;
+                        end
+                    end
+                    W3 = zeros(size(W2D_rank1_pol1));
+                    for j = 1 : (N1 * N2)
+                        W3(j, :) = W2D_rank1_pol1(order_precod(j), :);
+                    end
+                    % W_temp is the precoder for rank 1 dual pol txn, from
+                    % next step we create rank 2 dual pol using the W_temp
+                    % rank 1 codebook. Please note, the reordering of the
+                    % codebook to Quadriga order (pol1(1st ele), pol2(1st
+                    % ele), pol1(2nd ele)...) happens in the main code of
+                    % ULA_URA_POL3. Here the first half of codebook belongs
+                    % to pol1 and then next half belongs to pol2.
+                    W_temp = [W3 ; cophase_fact .* W3];
+                    
+                    W = [W_temp, W_temp];
+                    
+                    % W is the final 2 rank ( yet to be reordered) precoder
+                    % matrix.
+                    W( ( (N1*N2) + 1) : end, (k + 1) : end  ) =...
+                        -1 .* W(   ( (N1*N2) + 1) : end, ...
+                                                         (k + 1) : end   );
                     % For rank 1 or first layer of transmission, 1 precoder is
                     % selected for both polarizations from the first 256, for next
                     % rank, another precoder is selected from the next 256 columns.
                     %W = [2 * N1 * N2, 2 * k] 
                     % CHECK THIS FIRST QUADRANT! the rest is prob right...
-                    first_quadrant = ...
-                        W2D_block(1 : (N1 * N2), 1 : (k/2));
-                    
-                    % 1 : (N1 * N2) on rows means 1st pol
-                    % (N1 * N2) + 1 : 2 * N1 * N2 on rows means 2nd pol
-                    % 1 : k/2 on columns means 1st rank
-                    % k/2 + 1 : k on columns means 1st rank
-                    
-                    % First rank, 2nd pol
-                    W((N1 * N2) + 1 : 2 * N1 * N2, 1 : (k/2) ) = ...
-                        cophase_fact * first_quadrant;
-                    % Second rank, 1st pol
-                    W(1:(N1 * N2) + 1, k/2 +1 : k) = first_quadrant;
-                    % Second rank, 2nd pol
-                    W((N1 * N2) + 1 : 2 * N1 * N2, k/2 +1 : k) = ...
-                        -cophase_fact * first_quadrant;
+%                     first_quadrant = ...
+%                         W2D_block(1 : (N1 * N2), 1 : (k/2));
+%                     
+%                     % 1 : (N1 * N2) on rows means 1st pol
+%                     % (N1 * N2) + 1 : 2 * N1 * N2 on rows means 2nd pol
+%                     % 1 : k/2 on columns means 1st rank
+%                     % k/2 + 1 : k on columns means 1st rank
+%                     
+%                     % First rank, 2nd pol
+%                     W((N1 * N2) + 1 : 2 * N1 * N2, 1 : (k/2) ) = ...
+%                         cophase_fact * first_quadrant;
+%                     % Second rank, 1st pol
+%                     W(1:(N1 * N2) + 1, k/2 +1 : k) = first_quadrant;
+%                     % Second rank, 2nd pol
+%                     W((N1 * N2) + 1 : 2 * N1 * N2, k/2 +1 : k) = ...
+%                         -cophase_fact * first_quadrant;
 
                 end           
             end
