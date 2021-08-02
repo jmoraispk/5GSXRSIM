@@ -392,8 +392,8 @@ function [precoders_array] = gen_grid_of_beams(arr_size, ...
         end
         N1 = round(sqrt(n_total));
         N2 = round(sqrt(n_total));
-        O1 = 1
-	O2 = 1
+        O1 = 1;
+        O2 = 1;
 
         save(save_file_name, 'precoders_matrix', 'precoders_directions',...
                              'N1', 'N2', 'O1', 'O2');

@@ -170,11 +170,11 @@ for p = 1 : length(cophase_fact)
                 num2str(O2), '_', ...
                 'pol_', num2str(pol_indicator), '_', ...
                 'RI_', num2str(RI), '_', ...
-                'ph_', num2str(cophase_fact(p)),'final_flipped'];
+                'ph_', num2str(cophase_fact(p)),'_nonflipped'];
 
     if save_precoders
 	    % flip to match Quadriga Coupling and match azimuths properly.	
-            precoders_directions = [flip(az_point_ang1(p, :)); 
+            precoders_directions = [(az_point_ang1(p, :)); 
                                     el_point_ang1(p, :)];
             precoders_matrix = W2;
             
