@@ -377,14 +377,15 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
             #       require both layers and if it does, don't select just one
             #       of them.
             # if the variable has had it's layer trimmed, don't trim again..
-            for var_to_trim in vars_to_trim:
-                trim_idx = all_loadable_var_names.index(var_to_trim)
-                if trim_idx in vars_with_layers and \
-                   var_to_trim not in vars_trimmed_already and \
-                   not (sim_data_trimmed[f][trim_idx] is None):
-                    sim_data_trimmed[f][trim_idx] = \
-                        sim_data_trimmed[f][trim_idx][:,:,layer]
-                    vars_trimmed_already.append(var_to_trim)
+            if plot_idx < 19:
+                for var_to_trim in vars_to_trim:
+                    trim_idx = all_loadable_var_names.index(var_to_trim)
+                    if trim_idx in vars_with_layers and \
+                       var_to_trim not in vars_trimmed_already and \
+                       not (sim_data_trimmed[f][trim_idx] is None):
+                        sim_data_trimmed[f][trim_idx] = \
+                            sim_data_trimmed[f][trim_idx][:,:,layer]
+                        vars_trimmed_already.append(var_to_trim)
             
             # Check trim dependencies, to make sure the variable has been 
             # trimmed properly. Otherwise, we can't continue with computation
@@ -2083,5 +2084,13 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
             animation.write_videofile(filename, fps=FPS, audio=False, 
                                       preset='ultrafast')
             
-            
+        # GoB plots: plot a projection of all beams in the GoB
+        if plot_idx == 19.1:
+            plot_for_ues(ues, [sim_data_trimmed[f][2][:,:,:,0], 
+                               sim_data_trimmed[f][2][:,:,:,1]], 
+                         use_legend=True, legend_inside=True, 
+                         legend_loc="lower right",
+                         same_axs=True, plot_type_left='scatter',
+                         savefig=save_fig, filename=file_name, 
+                         saveformat=save_format)    
             
