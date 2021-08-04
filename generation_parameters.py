@@ -184,7 +184,7 @@ class Generation_parameters:
         
         # Load specific tracks. Note: if tracks aren't created, this needs to
         # be set to False to create the vars.mat
-        self.load_tracks_from_file = True
+        self.load_tracks_from_file = False
         
         # Indices of users seats: these indices depend on the number of seats!
         # Phy user disposition 
