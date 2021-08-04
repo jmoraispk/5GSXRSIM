@@ -562,13 +562,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                             #       'Total packets:',total_packets)
                                 
                             frame_idx = per * GoP + frm
-<<<<<<< Updated upstream
                             
-                            sim_data_computed[f][v][frame_idx][ue] = \
-                                dropped_packets / total_packets * 100
-            
-            
-=======
                             try:
                                 sim_data_computed[f][15][frame_idx][ue] = \
                                     dropped_packets / total_packets * 100
@@ -576,7 +570,6 @@ def compute_sim_data(plot_idx, ues, ttis,
                                 print('Error!!!!')
                                 print('pause...')
                         
->>>>>>> Stashed changes
             # COMPUTE INDEX 16: Average Packet Latency across all frames
             if var_to_compute == 'avg_pck_lat_per_frame' and \
                sim_data_computed[f][v] is None:
