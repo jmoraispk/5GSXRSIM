@@ -255,7 +255,8 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     10.4: [12,13,14,15], 10.45: [12,13,14,15], 
                     10.5: [16], 10.55: [16], 10.6: [17], 10.65: [17], 
                     10.7: [14,15,16,17,18,19,20,21,22,23], 
-                    10.8: [22,27], 10.9: [23,27], 10.11: [22,23,27],
+                    10.8: [22,27], 10.9: [23,27], 
+                    10.11: [22,23,27],                    
                     11: [24], 11.1: [], 11.2: [], 11.3: [25], 11.4: [],
                     13: [],
                     14.1: [], 14.2: [],
@@ -508,7 +509,8 @@ def compute_sim_data(plot_idx, ues, ttis,
                 sim_data_computed[f][12] = np.arange(n_frames)
                 
                 # Generate which of those are I frames:
-                sim_data_computed[f][13] = np.zeros([n_frames, n_ues])
+                sim_data_computed[f][13] = np.zeros([n_frames, n_ues], 
+                                                     dtype=int)
                 sim_data_computed[f][13][0,:] = 1
                 for frame_idx in range(n_frames):
                     if frame_idx % GoP == 0:
@@ -516,10 +518,12 @@ def compute_sim_data(plot_idx, ues, ttis,
             
             # COMPUTE INDEX 14: Average Packet Latency 
             if var_to_compute in ['avg_packet_lat',
-                                  'avg_pck_lat_per_frame'] and \
-               sim_data_computed[f][v] is None:
+                                  'avg_pck_lat_per_frame',
+                                  'avg_pck_lat_per_frame_in_gop',
+                                  'avg_pck_drop_rate_per_frame_in_gop'] and \
+               sim_data_computed[f][14] is None:
                    
-                sim_data_computed[f][v] = np.zeros([n_frames, n_ues])
+                sim_data_computed[f][14] = np.zeros([n_frames, n_ues])
                 
                 for ue in ues:
                     for per in range(n_periods):
@@ -528,15 +532,17 @@ def compute_sim_data(plot_idx, ues, ttis,
                             # IDX 1 are the buffers
                             f_info = \
                                 sim_data_trimmed[f][1][ue].frame_infos[per][fi]
-                            sim_data_computed[f][v][fi][ue] = \
+                            sim_data_computed[f][14][fi][ue] = \
                                 (f_info.avg_lat.microseconds / 1e3)
                                 
             # COMPUTE INDEX 15: Average Packet Drop Rate
             if var_to_compute in ['avg_packet_drop_rate',
-                                  'avg_pck_drop_rate_per_frame'] and \
-               sim_data_computed[f][v] is None:
+                                  'avg_pck_drop_rate_per_frame',
+                                  'avg_pck_lat_per_frame_in_gop',
+                                  'avg_pck_drop_rate_per_frame_in_gop'] and \
+               sim_data_computed[f][15] is None:
                    
-                sim_data_computed[f][v] = np.zeros([n_frames, n_ues])
+                sim_data_computed[f][15] = np.zeros([n_frames, n_ues])
                 
                 # Compute packet success percentages, average latencies and 
                 # drop rates
@@ -550,17 +556,27 @@ def compute_sim_data(plot_idx, ues, ttis,
                             total_packets = \
                                 packets_sent + dropped_packets
                             
+                            # TODO: Check why total packets equals 0!!!
+                            # Only happens for low SINR scenarios for the last
+                            # few frames of the simulation!
+                            # print('UE:', ue, 'Period:', per, 'GoP-Frame', frm,\
+                            #       'Total packets:',total_packets)
+                            
                             frame_idx = per * GoP + frm
                             
-                            sim_data_computed[f][v][frame_idx][ue] = \
-                                dropped_packets / total_packets * 100
-                        
+                            try:
+                                sim_data_computed[f][15][frame_idx][ue] = \
+                                    dropped_packets / total_packets * 100
+                            except ZeroDivisionError:
+                                print('Error...')
+                                
+                                
             # COMPUTE INDEX 16: Average Packet Latency across all frames
             if var_to_compute == 'avg_pck_lat_per_frame' and \
                sim_data_computed[f][v] is None:
                 
                 # IDX 14 is the avg_packet_latency
-                aux = np.zeros(usual_shape)
+                aux = np.zeros([n_frames, n_ues])
                 aux[:] = sim_data_computed[f][14][:] 
                 
                 # I frames have more packets than P frames, so we need to 
@@ -586,7 +602,7 @@ def compute_sim_data(plot_idx, ues, ttis,
             if var_to_compute == 'avg_pck_drop_rate_per_frame' and \
                sim_data_computed[f][v] is None:
                 # IDX 15 is the avg_packet_drop_rate
-                aux= np.zeros(usual_shape)
+                aux = np.zeros([n_frames, n_ues])
                 aux[:] = sim_data_computed[f][15][:] 
                 
                 # Scale up I frames: (IDX 13 is the I frame indices )
@@ -1600,7 +1616,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         # prints all detailed measurements on frame information
         if plot_idx == 10.7:
             
-            print(f'Analysis of folder {stats_folder}.')
+            # TODO: print(f'Analysis of folder {stats_folder}.')
             
             # Latency stats
             avg_latency = round(np.mean(sim_data_computed[f][16]),2)
