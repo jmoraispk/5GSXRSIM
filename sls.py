@@ -1560,7 +1560,7 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim):
 def is_compatible_with_schedule(new_entry, schedule, beam_dist_lim):
     """
     Iterates over the schedule entries and returns if the beam is compatible
-    or not.
+    or not. 
     """
     
     is_compatible = True
