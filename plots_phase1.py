@@ -46,7 +46,9 @@ To add a new plot index:
    and add it to the end of VARS_TO_COMPUTE. From now on, sim_data_computed
    will have the results of that variable at the index it has on 
    VARS_TO_COMPUTE.
-3- ... add the computation method...... somewhere..
+3- (if new data needs to be computed) add the computation method in 
+   compute_sim_data()
+4- add the plot method in plot_sim_data()
 """
 
 # When doing data analysis, we can avoid repeating many steps. However, 
@@ -375,6 +377,9 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     17.12 -> GIF across time: Just beams used (with correct HPBW)
                                (needs to be computed in Matlab and loaded))
     17.2  -> ...
+    
+    18.1 -> (print) Avg. SINR across time per UE
+    
     """
     
     """ 
@@ -409,7 +414,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     # idxs_to_plot = all_plots_available
     
     
-    # idxs_to_plot = [1, 2]
+    idxs_to_plot = [18.1]
     # idxs_to_plot = [10.15, 10.25]
     # , 3.5, 3.65]
     # idxs_to_plot = [5.2]
@@ -417,7 +422,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     
     
     # Test save_plot
-    save_plots = True
+    save_plots = False
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
     base_plots_folder = 'Plots\\' 
     

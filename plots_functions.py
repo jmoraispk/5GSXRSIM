@@ -221,6 +221,7 @@ def get_vars_to_load(idx, vars_to_load_names):
                  16: [7], 16.1: [7], 16.2: [],
                  17: [], 17.01: [7,15], 17.02: [7,15], 17.03: [7,15], 
                  17.11: [7,15], 17.12: [7,15], 17.13: [7,15],
+                 18.1: [2]
                  }
     
     # Always add 'sp' variable and return list of var names.
@@ -269,7 +270,8 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     16: [29,30], 16.1: [29,30],  16.2: [32],
                     17: [33,34], 17.01: [33,34,35,36], 17.02: [33,34,35,36], 
                     17.03: [33,34,35,36], 17.11: [35,36], 17.12: [35,36],
-                    17.13: [35,36]
+                    17.13: [35,36],
+                    18.1: [37]
                     }
             
     return [vars_to_compute_names[i] for i in compute_dict[idx]]
@@ -874,11 +876,20 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                             sim_data_computed[f][v][tti,ue,:] = \
                                 sim_data_computed[f][v][tti-1,ue,:]
 
-            # COMPUTE INDEX XX: Avg. SINR across the trace
+            # COMPUTE INDEX 37: Avg. SINR across time, per UE
             if var_to_compute == 'avg_sinr' and \
                sim_data_computed[f][v] is None:
+                sim_data_computed[f][v] = np.zeros([n_ues])
+                
+                for ue in range(n_ues):
+                    sim_data_computed[f][v][ue] = \
+                        np.mean(sim_data_trimmed[f][2][:,ue])
+                        
+            
+            # COMPUTE INDEX XX: 
+            if var_to_compute == 'xxxxxxx' and \
+               sim_data_computed[f][v] is None:
                 pass
-                                           
     
     # If there are indications of multitrace, check whether there are 
     # multitrace vars to compute, e.g. like the average SINR across all traces.
@@ -2060,5 +2071,6 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
             animation.write_videofile(filename, fps=FPS, audio=False, 
                                       preset='ultrafast')
             
-            
+        if plot_idx == 18.1:
+            print(sim_data_computed[f][37])
             
