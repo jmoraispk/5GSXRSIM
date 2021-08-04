@@ -27,7 +27,7 @@ speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-folders_to_simulate = ["Sim_SEED4"]
+folders_to_simulate = ["Sim_SEED5"]
 
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
@@ -69,11 +69,11 @@ Ideas:
 
 """
 # application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
-application_bitrates = [25]
+application_bitrates = [50]
 # bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
 bandwidths = [100] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
-latencies = [50]
+latencies = [100]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
@@ -117,7 +117,7 @@ for param in sim_params:
     
     folder_idx = folders_to_simulate.index(sim_folder)
 
-    print('------ Setting up simulation parameters  ------')
+    # TODO print('------ Setting up simulation parameters  ------')
     # start timer
     t_0 = time.time()
     
@@ -163,9 +163,10 @@ for param in sim_params:
     # Compute offsets to space out user I frames.
     
     if sp.uniformly_space_UE_I_frames:
+        # I-frame order: UE 0-1-2-3
         I_frame_offsets = np.linspace(0, sp.GoP / sp.FPS, sp.n_phy + 1)[:-1]
-        I_frame_offsets = np.linspace(0.15, 0.0, 4)
-        # np.flipud(I_frame_offsets)
+        # I-frame order: UE 3-2-1-0
+        # I_frame_offsets = np.linspace(0.15, 0.0, 4)
     else:
         I_frame_offsets = [0] * sp.n_phy
       
@@ -332,7 +333,7 @@ for param in sim_params:
     # TODO: print('--------- Starting simulation ---------') 
     
     # Loop for every TTI
-    for tti in range(0, sp.sim_TTIs):
+    for tti in range(0, sp.sim_TTIs): 
         
         # Note: tti is the index of the TTI. The time value of the TTI is 
         #       given by tti_timestamp. This is done such that we don't have 
@@ -343,9 +344,9 @@ for param in sim_params:
                 print(f"(!!CSI!!) TTI: {tti}")
             else:
                 print(f"TTI: {tti}")
-            
-        # TODO: if tti % 1000 == 0:
-        #     print(f"TTI: {tti}")
+        # TODO: TTIs    
+        if tti % 4000 == 0 or tti == sp.sim_TTIs:
+            print(f"TTI: {tti}")
         
         # If necessary, load new set of coefficients
         if tti > last_coeff_tti:
@@ -425,6 +426,8 @@ for param in sim_params:
             # if UL TTI, use cam_buffers
             ue_idxs = np.arange(sp.n_phy, sp.n_ue)
             continue  # at the moment, only DL is implemented
+            # TODO: ADD functionality for UL (and perhaps only look at UL)
+            
         elif slot_type == 'DL':
             # if DL TTI, use users' buffers
             ue_idxs = np.arange(sp.n_phy)
@@ -437,12 +440,15 @@ for param in sim_params:
         else:
             raise Exception('Invalid slot type.')
         
+            
         # 0- c) Update Queues: Add packets, update delays, drop late packets
-        sls.update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti)        
-        
-        if sp.debug:
+        sls.update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti) 
+
+        # TODO: Check if counting I-frames is correct 
+        if sp.debug_zheng:
             for ue in ue_idxs:
                 print(ue, buffers[ue].num_I_packets)
+        
         # active UEs are the UEs with non-empty buffers. We are putting those
         # to True, always, because we don't have a robust interference 
         # estimation. This is why the I frames need to be synchronized!
@@ -556,7 +562,6 @@ for param in sim_params:
             # -------------------------------
             
             # 4- Compute UE priorities (Using Scheduler)
-            
             curr_priorities = \
                 sls.compute_priorities(tti, ue_priority, all_delays, buffers, 
                                        schedulable_UEs_dl, sp.scheduler, 
@@ -615,6 +620,10 @@ for param in sim_params:
                            beams_used, sig_pow_per_prb, mcs_used, 
                            sp.save_per_prb_variables, experienced_signal_power)
         
+        # TODO
+        # for ue in range(sp.n_ue):
+        #     print('UE:', ue)
+        #     buffers[ue].print_buffer()
         if sp.debug:
             print(f'----------Done measuring tti {tti} ---------------------')
             for ue in range(sp.n_ue):
@@ -636,7 +645,6 @@ for param in sim_params:
         
         # ####################################################################
         
-    
     # TODO: print('End of tti loop.')    
     # One final queue update, in order to account for all the packets that were
     # sent last tti
@@ -646,8 +654,8 @@ for param in sim_params:
             buffers[ue].update_head_of_queue_delay(t)
     
     # TODO: print statements
-    print(f'------ Done simulating for {output_str}... ------')
-    # print(f'Time enlapsed: {round(time.time() - t_0)} secs.')
+    print(f'------ Done simulating for {output_str} ------')
+    print(f'Time enlapsed: {round(time.time() - t_0)} secs.')
     
     
     
@@ -726,5 +734,3 @@ for param in sim_params:
         ut.save_var_pickle(power_per_beam, sp.stats_path, globals_dict)
         
 print('End of sxr_sim.')
-
-

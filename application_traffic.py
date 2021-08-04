@@ -495,8 +495,12 @@ class Buffer:
                              for i in range(self.parent_packet_seq.GoP)]]
         
         # TODO: Number of packets containing I-frames in current buffer 
-        self.num_I_packets = 0
-                
+        # Change: Add attribute to indicate whether I-frame is present in the 
+        # current buffer plus the delay of the earliest I-frame, otherwise 
+        # earliest P-frame equals HOL-delay! - Add true false 
+        self.I_packets = 0
+        # self.earliest_I_packet = 0.0 # delay in ms!!!        
+
     
     def get_relative_time(self, t):
         """
@@ -610,7 +614,7 @@ class Buffer:
             # Don't do anything if the input is smaller than the last packet
             # added, since the queue is updated from that already.
             self.head_of_queue_lat = tti - self.cursor_a
-        
+
         
     def get_I_packets_info(self):
         """
@@ -633,25 +637,45 @@ class Buffer:
         -> For now with 480Mbps and 1.5kB packets this gives max. 10 packets 
         (-> 3000kB - 5 packets; 7500kB - 2 packets)
         """         
-        self.num_I_packets = 0
+
+        self.I_packets = False
         
         # Loop over (all/the first x) packets in buffer and check the frametype
         # of the parent frame for every packet
         # only check for packets in the buffer that have bits left to send!
+
+        # if self.parent_packet_seq.packet_type[self.cursor_a_idx] == 'I' and \
+        #     self.bits_left[self.cursor_a_idx] != 0:  
+        #         self.num_I_packets = 1    
+                
         if self.cursor_a_idx < self.cursor_b_idx:
             for i in range (self.cursor_a_idx, self.cursor_b_idx + 1):
                 if i < self.buffer_size and self.bits_left[i] != 0 and \
                     self.parent_packet_seq.packet_type[i] == 'I': # 
-                        self.num_I_packets += 1
+                        self.I_packets = True
+                        return
         else:           
             for i in range(self.cursor_b_idx, self.buffer_size):
                 if self.bits_left[i] != 0 and \
-                   self.parent_packet_seq.packet_type[i] == 'I':
-                    self.num_I_packets += 1
+                    self.parent_packet_seq.packet_type[i] == 'I':
+                    self.I_packets = True
+                    return
             for i in range(0, self.cursor_a_idx):
                 if self.bits_left[i] != 0 and \
                     self.parent_packet_seq.packet_type[i] == 'I':
-                    self.num_I_packets += 1
+                    self.I_packets = True
+                    return
+
+        """
+        Like in MAC scheduling paper: 
+            for i in range (cursor a, cursor b)
+                if bitsleft(i) != 0 and packet_type == 'I'
+                    get packet timestamp 
+                    I_packets = True
+                    return
+                
+        parent_packet_seq.timestamps[i] - self.head_of_queue_lat 
+        """
 
     
     def increment_dropped_packet_stats(self, packet_idx):

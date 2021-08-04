@@ -49,14 +49,13 @@ def pf_scheduler(avg_thrput, curr_expected_bitrate):
     
     # Only to cope with the initialisation possibility and avoid crashes
     if avg_thrput == 0:
-        # return 1e20
-        return 1e8
-        
+        return 1e20
+    
     return curr_expected_bitrate / avg_thrput
 
 
 def MLWDF_scheduler(avg_thrput, curr_expected_bitrate, 
-                    curr_delay, delay_threshold, delta=0.1):
+                    curr_delay, delay_threshold, delta):
     """
     Parameters
     ----------
@@ -78,7 +77,7 @@ def MLWDF_scheduler(avg_thrput, curr_expected_bitrate,
     # Is it natural log or log10?
     a = -np.log(delta) / delay_threshold
     
-    priority = a * curr_delay * np.log10(pf_scheduler(avg_thrput, 
+    priority = a * curr_delay * (pf_scheduler(avg_thrput, 
                                              curr_expected_bitrate))
     
     return priority
@@ -107,54 +106,55 @@ def frametype_scheduler(avg_thrput, curr_expected_bitrate,
     Returns the priority for a given user computed essentially with the 
     M-LWDF Scheduler plus taking into account whether packets belong to an I 
     or a P-frame, with I-frames having higher priority 
-    
-    TODO: Check how to have frame-type have more weight and influence instead 
-          of only increasing the PF-parameter
+
+    TODO: Check how to balance the frametype and delay parameter as well as the
+          PF-weight to increase performance (i.e. less I-frame drops)     
+
     """
     
     # Is it natural log or log10?
     a = -np.log(delta) / delay_threshold
     
     # TODO
-    mlwdf_priority = a * curr_delay * np.log10(pf_scheduler(avg_thrput, 
-                                             curr_expected_bitrate))
-                                    # np.log10
- 
+    delay_priority = a * curr_delay * np.log10(pf_scheduler(avg_thrput, 
+                                               curr_expected_bitrate))
+    
+    # TODO
+    # From paper: a + b * (T_curr - T_arr) = a + b * curr_delay
+            
     # Weight parameter depending on number of I-frame packets at head of buffer 
-    frame_weight = 0
-    # frame_weight_b = 0
-    
-    if buffer.num_I_packets == 0:
-        frame_weight = 1
-    # else: frame_weight = 2
-    
-    elif buffer.num_I_packets == 1:   
-        frame_weight = 1.2
-    elif buffer.num_I_packets == 2:   
-        frame_weight = 1.4
-    elif buffer.num_I_packets == 3:   
-        frame_weight = 1.6 
-    elif buffer.num_I_packets == 4:   
-        frame_weight = 1.8
-    elif buffer.num_I_packets == 5:   
-        frame_weight = 2.0
-    elif buffer.num_I_packets == 6:   
-        frame_weight = 2.2
-    elif buffer.num_I_packets == 7:   
-        frame_weight = 2.4         
-    elif buffer.num_I_packets == 8:   
-        frame_weight = 2.6         
-    elif buffer.num_I_packets == 9:   
-        frame_weight = 2.8     
-    elif buffer.num_I_packets > 9:   
-        frame_weight = 3.0     
-    
-    return frame_weight * mlwdf_priority
+    frame_weight = 0.0
+        
+    if buffer.I_packets == False:
+        frame_weight = 2.0        
+    # Try out different multipliers
+    else: frame_weight = 4.0
+        
+    # elif buffer.num_I_packets == 1:   
+    #     frame_weight = 1.1
+    # elif buffer.num_I_packets == 2:   
+    #     frame_weight = 1.2
+    # elif buffer.num_I_packets == 3:   
+    #     frame_weight = 1.3 
+    # elif buffer.num_I_packets == 4:   
+    #     frame_weight = 1.4
+    # elif buffer.num_I_packets == 5:   
+    #     frame_weight = 1.5
+    # elif buffer.num_I_packets == 6:   
+    #     frame_weight = 1.6
+    # elif buffer.num_I_packets == 7:   
+    #     frame_weight = 1.7         
+    # elif buffer.num_I_packets == 8:   
+    #     frame_weight = 1.8         
+    # elif buffer.num_I_packets == 9:   
+    #     frame_weight = 1.9     
+    # elif buffer.num_I_packets > 9:   
+    #     frame_weight = 2.0     
 
-    # return (frame_weight_a + frame_weight_b * a * curr_delay) * \
-    #         pf_scheduler(avg_thrput, curr_expected_bitrate)
-    
+    return (frame_weight + frame_weight * curr_delay * 1000) * \
+            np.log10(pf_scheduler(avg_thrput, curr_expected_bitrate))
 
+    # return frame_weight * delay_priority 
 
 
 def exp_pf_scheduler(avg_thrput, curr_expected_bitrate,
@@ -1713,8 +1713,9 @@ def update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti):
         #   a) Add new packets (update entry cursor)
         #   b) Update head of queue delay
         #   c) Discard packets that won't make it in the latency budget
+        # TODO: Add functionality to control PDR during simulation
         buffers[ue].update_queue_time(tti_timestamp)
-        buffers[ue].update_number_I_packets()
+
         if not buffers[ue].is_empty:
             # These UEs have something to send this TTI.
             active_UEs[tti].append(ue)
@@ -1875,8 +1876,11 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
                       scheduler_param_c,
                       all_delays, 
                       buffers[ue])
-        # print(f"UE {ue} has priority {ue_priority[tti][ue]}")
-        
+        # TODO: 
+        # if tti > 100 and tti < 150:
+        #     print(f'UE:{ue}') 
+        # print(f'I-packets:{buffers[ue].num_I_packets}')
+        # print(f"UE {ue} has priority {ue_priority[tti][ue]}")    
     curr_priorities = sorted([(ue, ue_priority[tti][ue])
                               for ue in schedulable_UEs_dl],
                              key=lambda x: x[1], reverse=True)

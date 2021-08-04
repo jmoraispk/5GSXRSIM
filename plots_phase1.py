@@ -64,7 +64,9 @@ always_compute = True
 
 
 #-------------------------
-stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats' + '\\'
+
+stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Meeting\20-100-20\I-frame spacing 0-1-2-3' + '\\'
+
 seeds = [1]
 speeds = [1]
 csi_periodicities = [5]
@@ -178,9 +180,12 @@ for comb in combinations:
     # stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
     #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
     #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
-       
-    stats_dir_end = r'Sim_SEED4_FREQ-0_CSIPER-5_APPBIT-25_BW-100_LAT-50_LEN-16s_Frametype' + '\\'
-    # stats_dir_end = r'Sim_SEED3_FREQ-0_CSIPER-5_APPBIT-25_BW-100_LAT-50_LEN-16s_M-LWDF' + '\\'
+
+    stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-20_BW-100_LAT-20_LEN-16s_PF' + '\\'
+    # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-20_BW-100_LAT-50_LEN-16s_Frametype' + '\\'
+
+    # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-50_BW-100_LAT-20_LEN-16s_M-LWDF_no-int' + '\\'
+
     
     print(f'\nDoing for: {stats_dir_end}')
     
@@ -243,7 +248,15 @@ for file_set in file_sets:
         with open("last_stats_folder.txt", 'r') as fh:
             file_set = [fh.readline()]
             
-
+            
+    """
+    TODO: Plot_idxs which are not working:
+    - 10.8; 10.9; 10.11 -> Compute dir #27
+    
+    """        
+            
+            
+    idxs_to_plot = [10.15,10.25]  
     """
     plot_idx meanings:
 
@@ -420,7 +433,6 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
    
     """
     Zheng
-    
     TODO: METRICS
         Compare for different Schedulers (PF vs Delay vs Delay/Frametype): 
         - Avg PLR/latency of Frames 
@@ -436,6 +448,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     Current Observations: 
         - SINR/Channel power for UE 0 shows man FF characteristics, while UE 1-3
           don't show channel fluctuations on a TTI/ms scale (Plot 0.1, 3.4, ...)
+
         - Average latency for frames is very low -> 2.0 ms while latency budget
           is set to 15 ms, but average drop rate is still 10 on average with 
           high STD of 4% (Plot 10.7)
@@ -445,6 +458,9 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
    
     # Latency and PLR
     idxs_to_plot = [10.7]  
+    # idxs_to_plot = [10.7]
+    # idxs_to_plot = [10.3]
+
     # Power [Mbps]
     # idxs_to_plot = [0.1]
     # Throughput + SINR[dB]&BLER%

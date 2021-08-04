@@ -55,6 +55,10 @@ class Simulation_parameters:
         
         # TTIs to simulate
         self.sim_TTIs = 4000 * 16
+
+        # Has to be 'int', if multiplying with float -> int/float type error 
+        # Or rather just change the range in the TTI loop!
+        self.sim_TTIs = int(4000 * 4)
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -165,7 +169,10 @@ class Simulation_parameters:
         # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
         self.scheduler = 'Frametype' 
         # self.scheduler = 'M-LWDF'
-        
+        # self.scheduler = 'PF'
+        self.debug_zheng = 0
+
+
         # Scheduler parameters
         self.scheduler_param_c = 10
         self.scheduler_param_delta = 0.05
@@ -306,8 +313,13 @@ class Simulation_parameters:
         
         # Space the I frames across the GoP for the existant UEs
         # Set here instead of in sxr_sim
-        self.uniformly_space_UE_I_frames = True
+        self.uniformly_space_UE_I_frames = False
+        # Note: until the TODO in the end of simulation parameters is solved, 
+        #       this should be set to False. Otherwise we fall into the 
+        #       interference unpredictability problem again.
+
         # TODO: read the 'todo' at the end of the simulation parameters ...
+
         
         # Group of Pictures ( Made of: 1 I frame and (GoP-1) P frames )
         self.GoP = 6                     # [6, 9 or 12]
