@@ -353,7 +353,7 @@ X   0.3   -> Channel Power across prbs (for a given tti)
              bits across, but those might have no utility because they have
              transferred before.
     11.4  -> Scheduled UEs vs signal power (linear)
-X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
+X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
 
          
     13    -> SU-MIMO setting - number of layers scheduled per UE
@@ -409,21 +409,17 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
 
     all_idxs_available = all_plots_available + all_non_plots_available
 
-    idxs_to_plot = [0.1, 1, 2, 3.45, 3.65, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
+    idxs_to_plot = [0.1, 1, 2, 3.45, 4.2, 5.4, 7.4, 10.45]
 
     # idxs_to_plot = all_plots_available
     
-    
-    idxs_to_plot = [18.1]
-    # idxs_to_plot = [10.15, 10.25]
-    # , 3.5, 3.65]
-    # idxs_to_plot = [5.2]
-    # estimate interference should be different from 0!
-    
+    # idxs_to_plot = [5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.65, 5.15]
+    idxs_to_plot = [17.03]
     
     # Test save_plot
     save_plots = False
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
+    
     base_plots_folder = 'Plots\\' 
     
     for i in idxs_to_plot:

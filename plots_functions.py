@@ -361,6 +361,9 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
         f_sp = sim_data_trimmed[f][0]
         GoP = f_sp.GoP
         
+        
+        vars_trimmed_already = []
+        
         # Count number of periods and frames
         n_periods = round(ttis[-1] *  f_sp.TTI_dur_in_secs * (GoP - 1))
         n_frames = n_periods * GoP
@@ -370,9 +373,21 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
             v = all_computable_var_names.index(var_to_compute)
             
             # These variables need layer trimming, if we want a single-layer plot: 
-            if v in vars_with_layers and \
-               not (sim_data_trimmed[f][v] is None):
-                sim_data_trimmed[f][v] = sim_data_trimmed[f][v][:,:,layer]
+                
+            # TODO: for double layer plots, don't trim the layer right in the
+            #       beginning. Instead, check whether the plot index will 
+            #       require both layers and if it does, don't select just one
+            #       of them.
+            # if the variable has had it's layer trimmed, don't trim again..
+            if plot_idx < 19:
+                for var_to_trim in vars_to_trim:
+                    trim_idx = all_loadable_var_names.index(var_to_trim)
+                    if trim_idx in vars_with_layers and \
+                       var_to_trim not in vars_trimmed_already and \
+                       not (sim_data_trimmed[f][trim_idx] is None):
+                        sim_data_trimmed[f][trim_idx] = \
+                            sim_data_trimmed[f][trim_idx][:,:,layer]
+                        vars_trimmed_already.append(var_to_trim)
             
             # Check trim dependencies, to make sure the variable has been 
             # trimmed properly. Otherwise, we can't continue with computation
@@ -842,12 +857,14 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                 
                 sim_data_computed[f][34] = ori_line
 
-            # COMPUTE INDEX 35: Avg. SINR across the trace
+            # COMPUTE INDEX 35: Beam details (correct HPBWs, ...)
             if var_to_compute == 'individual_beam_gob_details' and \
                sim_data_computed[f][v] is None:
                 pass
                 folder = sim_data_trimmed[0][0].precoders_folder + '\\'
-                file = 'beam_details_4_4_4_4_pol_3_RI_1_ph_1_new.mat'
+                # file = 'beam_details_4_4_-60_60_12_0_-60_60_12_0_pol_1.mat'
+                file = 'beam_details_4_4_4_4_pol_3_RI_1_ph_1.mat'
+                print(f'Loading beam details file: {file}')
                 
                 # [121][6]:
                 # 121 beams x (HPBW-AZ, HPBW-EL, 
@@ -861,7 +878,8 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                                     'beam details need to be generated '
                                     'separately?')
 
-            # COMPUTE INDEX 36: Avg. SINR across the trace
+            # COMPUTE INDEX 36: When the UEs are not scheduled, keep the same
+            #                   beam, for visualization purposes. 
             if var_to_compute == 'beams_processed' and \
                sim_data_computed[f][v] is None:
                 # if not scheduled, keep the same beam (it will only change
@@ -1264,7 +1282,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                                 [sim_data_trimmed[f][4]], 
                                 x_label_time, 
                                 y_labels=['MCS index', 
-                                          'Bit rate [Mbps]'],        
+                                          'Bit rate [Mbps]'],
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
         
@@ -1881,14 +1899,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                           'not enough TTIs were simulated.')
                 
                 # A tangent needed for some projecting beams
-                tan_aux = np.tan(np.deg2rad(sim_data_computed[f][36]))
-    
-                # Load final info
-                azi_vals = f_sp.gob_azi_vals.tolist()
-                el_vals = f_sp.gob_el_vals.tolist()
-                len_el_vals = len(el_vals)
-                    
-                    
+                tan_aux = np.tan(np.deg2rad(sim_data_computed[f][36]))                    
             
             # Start Matplot subplot
             #fig, ax = plt.subplots(projection='3d', figsize=(6,5))
@@ -1981,13 +1992,26 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                         
                         beam_azi = sim_data_computed[f][36][idx_uncomp, ue, 0]
                         beam_el = sim_data_computed[f][36][idx_uncomp, ue, 1]
-                                            
-                        beam_azi_idx = azi_vals.index(beam_azi)
-                        beam_el_idx = el_vals.index(beam_el)
-                        beam_idx = beam_azi_idx * len_el_vals + beam_el_idx 
-                        # and to get back to azi and el beam indices: 
-                        # beam_azi_idx = np.floor(best_beam_idx/11).astype(int)
-                        # beam_el_idx = best_beam_idx % 11                    
+                        curr_dir = [beam_azi, beam_el]
+                        
+                        # TODO: *screaming while pulling hair* 
+                        #       WHY IS THIS NOT WORKING?!?!?!
+                        
+                        # beam_idx = [i for i in range(directions.shape[1])
+                        #             if np.array_equal(directions[:, i], 
+                        #                               np.array(curr_dir))]
+                        
+                        # a = [i for i in range(directions.shape[1])
+                        #      if i == 150]
+                        
+                        dir_idxs_azi = \
+                            np.where(f_sp.gob_directions[0,:] == beam_azi)
+                        dir_idxs_el = \
+                            np.where(f_sp.gob_directions[1,:] == beam_el)
+                        
+                        
+                        beam_idx = np.intersect1d(dir_idxs_azi, dir_idxs_el)[0]
+                        
                         # in [degree]
                         if plot_idx in [17.02, 17.12]:
                             azi_HPBW = el_HPBW = 25
@@ -2073,4 +2097,14 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
             
         if plot_idx == 18.1:
             print(sim_data_computed[f][37])
+            
+        # GoB plots: plot a projection of all beams in the GoB
+        if plot_idx == 19.1:
+            plot_for_ues(ues, [sim_data_trimmed[f][2][:,:,:,0], 
+                               sim_data_trimmed[f][2][:,:,:,1]], 
+                         use_legend=True, legend_inside=True, 
+                         legend_loc="lower right",
+                         same_axs=True, plot_type_left='scatter',
+                         savefig=save_fig, filename=file_name, 
+                         saveformat=save_format)    
             
