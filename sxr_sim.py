@@ -17,8 +17,8 @@ import utils as ut
 import application_traffic as at
 import simulation_parameters as sim_par
 
-# parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks" + '\\'
-parent_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\João\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
 seed = 1
@@ -26,8 +26,8 @@ speed = 3
 
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
-# folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-folders_to_simulate = ["Sim_2021-07-08_14h58m53s_SEED1"]
+folders_to_simulate = ["SEED1_SPEED1_point_centre"]
+# folders_to_simulate = ["Sim_2021-07-08_14h58m53s_SEED1"]
 
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
@@ -48,10 +48,11 @@ bandwidths = [50] # MHz
 
 # latencies = [10, 20, 30, 40, 50] # ms
 latencies = [10]
+rot_factors = [1]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
-                                    users, bandwidths, latencies))
+                                    users, bandwidths, latencies, rot_factors))
 # itertools.product does: 
 #   [[1st element of 1st list, ..., 1st of last list], 
 #    [1st element of 1st list, ..., 2nd element of last list], 
@@ -71,7 +72,8 @@ for param in sim_params:
     users = param[4]
     bw = param[5]
     lat_budget = param[6]
-        
+    rot_factor = param[7]    
+
     if users != None:
         if users == 1:
             user_list = [0]
@@ -100,7 +102,7 @@ for param in sim_params:
     # Initialise the simulation parameters
     sp = sim_par.Simulation_parameters(sim_folder, freq_idx, csi_periodicity,
                                        application_bitrate, user_list, bw, 
-                                       lat_budget)
+                                       lat_budget, rot_factor)
     # NOTE: 
         # a) users will subset the generated users;
         # b) bw will use the frequency samples of the generated bandwidht
@@ -116,7 +118,8 @@ for param in sim_params:
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'{seed_str}_SPEED-{sp.speed_idx}_FREQ-{freq_idx}_' + \
                  f'CSIPER-{csi_periodicity}_APPBIT-{application_bitrate}_' + \
-                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}_2'
+                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}_' + \
+                 f'ROTFACTOR-{rot_factor}'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
@@ -130,7 +133,6 @@ for param in sim_params:
     # cam_buffers = [] # we assume cameras are wired.
     packet_sequences_DL = [0] * sp.n_phy
     # Compute offsets to space out user I frames.
-    sp.uniformly_space_UE_I_frames = True # TODO: make sure we want this True
     if sp.uniformly_space_UE_I_frames:
         I_frame_offsets = np.linspace(0, sp.GoP / sp.FPS, sp.n_phy + 1)[:-1]
     else:
@@ -202,7 +204,7 @@ for param in sim_params:
     for bs in range(sp.n_bs):
         for ue in range(sp.n_ue):
             for l in range(sp.n_layers):
-                curr_beam_pairs[(bs, ue, l)] = sls.Beam_pairs_list()
+                curr_beam_pairs[(bs, ue, l)] = sls.Beam_pair()
     
     # initialisations
     curr_time_div = -1
@@ -280,7 +282,8 @@ for param in sim_params:
         power_per_beam = []
     
     channel = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    experienced_signal_power = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+    experienced_signal_power = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, 
+                                                   sp.n_layers])
     n_transport_blocks = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
     
     
@@ -434,8 +437,9 @@ for param in sim_params:
         sls.update_all_precoders(tti, tti_with_csi, active_UEs, sp.n_bs, 
                                  curr_beam_pairs, last_csi_tti, 
                                  precoders_dict, coeffs, last_coeffs, 
-                                 sp.n_layers, sp.n_csi_beams, power_per_beam,
-                                 sp.save_power_per_CSI_beam, sp.vectorize_GoB)
+                                 sp.n_layers, sp.n_csi_beams, sp.rot_factor,
+                                 power_per_beam, sp.save_power_per_CSI_beam, 
+                                 sp.vectorize_GoB)
         
         # From here onwards, we know what precoders are best for each UE, 
         # per layer. This has been verified with LoS simulations, print below
@@ -532,11 +536,12 @@ for param in sim_params:
             # -------------------------------
             
             # 5- Select MU-MIMO setting, based on UE priorities
-            
+            # Create the actual schedule
             sls.mu_mimo_choice(tti, curr_priorities, curr_schedule, 
                                serving_BS_dl, su_mimo_setting, curr_beam_pairs, 
                                sp.min_beam_distance, scheduled_UEs, 
-                               scheduled_layers, sp.debug)
+                               sp.scheduling_method, scheduled_layers, 
+                               sp.debug)
             
             # -------------------------------
             

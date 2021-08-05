@@ -39,10 +39,11 @@ function [] = antenna_setup(l, f_values, rx_ant, tx_ant, ...
                 % Fix problem with the coefficients: this way Phased and 
                 % Quadriga will be the absolutely the same.
                 % THIS needs to be right after the antenna creation!
-                fix_quadriga_coeffs_problem(l.rx_array(f_idx, k), ...
-                                            cam_ant_config(f_idx, :), ...
-                                            diff_orthogonal_polarisation);
-                
+%                 if ~strcmp(rx_ant(f_idx, k), 'omni')
+%                     fix_quadriga_coeffs_problem(l.rx_array(f_idx, k), ...
+%                                                 cam_ant_config(f_idx, :), ...
+%                                                 diff_orthogonal_polarisation);
+%                 end
                 % Rotate elements such that they're facing Upwards!
                 l.rx_array(f_idx, k).rotate_pattern(-90, 'y');
             else % it's an headset antenna
@@ -59,9 +60,11 @@ function [] = antenna_setup(l, f_values, rx_ant, tx_ant, ...
                 % Fix problem with the coefficients: this way Phased and 
                 % Quadriga will be the absolutely the same.
                 % THIS needs to be right after the antenna creation!
-                fix_quadriga_coeffs_problem(l.rx_array(f_idx, k), ...
-                                            user_ant_config(f_idx,:), ...
-                                            diff_orthogonal_polarisation);
+%                 if ~strcmp(rx_ant(f_idx, k), 'omni')
+%                     fix_quadriga_coeffs_problem(l.rx_array(f_idx, k), ...
+%                                                 user_ant_config(f_idx,:), ...
+%                                                 diff_orthogonal_polarisation);
+%                 end
                 
                 % Rotate the elements so they are horizontal
                 l.rx_array(f_idx, k).rotate_pattern(rx_rot_offset, 'x');
@@ -94,10 +97,11 @@ function [] = antenna_setup(l, f_values, rx_ant, tx_ant, ...
             % Fix problem with the coefficients: this way Phased and 
             % Quadriga will be the absolutely the same.
             % THIS needs to be right after the antenna creation!
-            fix_quadriga_coeffs_problem(l.tx_array(f_idx, k), ...
-                                        bs_ant_config(f_idx, :), ...
-                                        diff_orthogonal_polarisation);
-
+%             if ~strcmp(tx_ant(f_idx, k), 'omni')
+%                 fix_quadriga_coeffs_problem(l.tx_array(f_idx, k), ...
+%                                             bs_ant_config(f_idx, :), ...
+%                                             diff_orthogonal_polarisation);
+%             end
 %             if k == 1
 %                 % Rotate elements Down, to 
 %                 l.tx_array(f_idx, k).rotate_pattern(90, 'y');
@@ -107,9 +111,10 @@ function [] = antenna_setup(l, f_values, rx_ant, tx_ant, ...
             % Rotate the elements towards the centre of the room, the 
             % spatial centre! (will be someone on top of the
             % table)
-            
-            point_antenna_to_target(l.tx_track(k), l.tx_array(f_idx, k), ...
+            if ~strcmp(tx_ant(f_idx, k), 'omni')
+                point_antenna_to_target(l.tx_track(k), l.tx_array(f_idx, k), ...
                                         [room_centre_xy, tx_height/2])
+            end
         end
     end
 end

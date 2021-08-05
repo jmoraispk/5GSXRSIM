@@ -61,9 +61,8 @@ if ~exist( 'in','var' )
     
 else
     % The list of properties that need to be copied
-    prop = {'name','version','Pcoeff','Pdelay','Ppar','Pinitial_position',...
-            'Ptx_position','Prx_position','center_frequency'};
-          % 'Ptx_position','Prx_position','center_frequency', 'no_tx', 'no_rx'};
+    prop = {'name','version','Pcoeff','Pdelay','Ppar','Pinitial_position','Ptx_position','Prx_position','center_frequency'};
+    
     % Empty outout
     out = [];
     

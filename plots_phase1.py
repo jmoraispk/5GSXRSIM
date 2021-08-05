@@ -46,7 +46,9 @@ To add a new plot index:
    and add it to the end of VARS_TO_COMPUTE. From now on, sim_data_computed
    will have the results of that variable at the index it has on 
    VARS_TO_COMPUTE.
-3- ... add the computation method...... somewhere..
+3- (if new data needs to be computed) add the computation method in 
+   compute_sim_data()
+4- add the plot method in plot_sim_data()
 """
 
 # When doing data analysis, we can avoid repeating many steps. However, 
@@ -64,7 +66,7 @@ always_compute = True
 
 
 #-------------------------
-stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\João\SXRSIMv3\Stats' + '\\'
+stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Stats' + '\\'
 seeds = [1]
 speeds = [1]
 csi_periodicities = [5]
@@ -75,6 +77,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
+layer = 0
 trim_ttis = [20, int(4000 * 1)]
 TTI_dur_in_secs = 0.25e-3
 
@@ -160,6 +163,9 @@ VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
                      'avg_sinr_multitrace',               # 38
                      '']
 
+# (Loaded) Vars with information per layer
+vars_with_layers = [2,3,5,6,7,8,9,10,12,13]
+
 # file_sets has the sets of files to load at any given time.
 # e.g. if we want to make a plot for each seed, we just want to load one seed
 #      at a time. But if we want to make a plot that is the average of 3 seeds
@@ -174,20 +180,12 @@ for comb in combinations:
                     f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
                     f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
     
-    stats_dir_end = r'Sim_SPEED-4_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_2' + '\\'
-    
-    # stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-20_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_v1' + '\\'
+    stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_ROTFACTOR-1' + '\\'
     
     print(f'\nDoing for: {stats_dir_end}')
     
     stats_dir = stats_folder + stats_dir_end
     
-    # Can't recal what this is for...
-    # if use_in_loop:
-    #     extra_str = f'_f{comb[1]}_{trim_ttis}s'
-    # else:
-    #     extra_str = ''
-        
     results_filename = results_folder + 'results' # + extra_str
     
     if not ut.isdir(results_folder):
@@ -355,7 +353,7 @@ X   0.3   -> Channel Power across prbs (for a given tti)
              bits across, but those might have no utility because they have
              transferred before.
     11.4  -> Scheduled UEs vs signal power (linear)
-X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
+X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
 
          
     13    -> SU-MIMO setting - number of layers scheduled per UE
@@ -379,6 +377,9 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     17.12 -> GIF across time: Just beams used (with correct HPBW)
                                (needs to be computed in Matlab and loaded))
     17.2  -> ...
+    
+    18.1 -> (print) Avg. SINR across time per UE
+    
     """
     
     """ 
@@ -408,22 +409,17 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
 
     all_idxs_available = all_plots_available + all_non_plots_available
 
-    idxs_to_plot = [0.1, 1, 2, 3.45, 3.65, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
+    idxs_to_plot = [0.1, 1, 2, 3.45, 4.2, 5.4, 7.4, 10.45]
 
     # idxs_to_plot = all_plots_available
     
-    
-    idxs_to_plot = [1, 2]
-    idxs_to_plot = [10.15, 10.25]
-    # , 3.5, 3.65]
-    idxs_to_plot = [11.4]
-    ues = [0]
-    # estimate interference should be different from 0!
-    
+    # idxs_to_plot = [5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.65, 5.15]
+    idxs_to_plot = [17.03]
     
     # Test save_plot
-    save_plots = True
+    save_plots = False
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
+    
     base_plots_folder = 'Plots\\' 
     
     for i in idxs_to_plot:
@@ -456,14 +452,14 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
         if multi_trace:
             raise Exception('not ready yet...')
         
-        plt_func.compute_sim_data(i, ues, ttis, VARS_NAME_LOAD, 
+        plt_func.compute_sim_data(i, layer, ues, ttis, VARS_NAME_LOAD, 
                                   VARS_NAME_COMPUTE, which_vars_to_compute, 
-                                  which_vars_to_load, 
-                                  sim_data_trimmed, sim_data_computed,
-                                  file_set)
+                                  which_vars_to_load, sim_data_trimmed, 
+                                  sim_data_computed, file_set, 
+                                  vars_with_layers)
         
         # Plots:
-        plt_func.plot_sim_data(i, file_set, ues, ttis, x_vals, 
+        plt_func.plot_sim_data(i, file_set, layer, ues, ttis, x_vals, 
                                sim_data_trimmed, sim_data_computed,
                                results_filename, base_plots_folder, 
                                save_plots, save_format=saveformat)

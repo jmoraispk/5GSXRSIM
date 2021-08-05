@@ -58,15 +58,18 @@ end
 
 
 
-
-
-%%%%%%%%%%%% had to change this %%%%%%%%%%%%
-% CHANGE 1: COMMENTED THE 3 LINES BELOW
+%%%%%%%%%%%% had to change below this %%%%%%%%%%%%
+% CHANGE 1: COMMENTED THE LINES BELOW
 
 % Parse files in config-folder
-%quadriga_path = regexp(path, ':?([^:]*quadriga_src):', 'tokens');
-%config_folder = fullfile(quadriga_path{1}{1}, 'config');
-%files_tmp = dir(fullfile(config_folder, '*.conf'));
+% quadriga_path = path;
+% if isempty( regexp( quadriga_path,';' ) )   % Linux separates path entries by ":"
+%     quadriga_path = regexp(quadriga_path, ':?([^:]*quadriga_src)', 'tokens'); % Linux
+% else % Windows separated path entries by ";"
+%     quadriga_path = regexp(quadriga_path, ':?([^;]*quadriga_src)', 'tokens'); % Windows
+% end
+% config_folder = fullfile(quadriga_path{1}{1}, 'config');
+% files_tmp = dir(fullfile(config_folder, '*.conf'));
 
 
 % CHANGE 2: ADDED THE LINES BELOW, FROM THE PREVIOUS VERSION
@@ -83,13 +86,7 @@ else
     config_folder = [information.path,filesep,'config',filesep];
 end
 files_tmp = dir([config_folder,'*.conf']);
-%%%%%%%%%%%% had to change this %%%%%%%%%%%%
-
-
-
-
-
-
+%%%%%%%%%%%% had to change above this %%%%%%%%%%%%
 
 
 

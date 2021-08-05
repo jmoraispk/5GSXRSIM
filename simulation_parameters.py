@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Jul  4 13:33:50 2020
-
 @author: janeiroja
-
-
 Parameters concerning System-Level simulation (Application traffic, and more..)
 """
 
@@ -19,10 +16,11 @@ import utils as ut
 
 class Simulation_parameters:
     def __init__(self, folder_to_load, freq_idx, csi_periodicity, 
-                 application_bitrate, user_list, bw, lat_budget):
+                 application_bitrate, user_list, bw, lat_budget, rot_factor):
 
         # 1- Init General Variables (General parameters and Vari)
-        self.set_simulation_param(freq_idx, csi_periodicity, user_list)
+        self.set_simulation_param(freq_idx, csi_periodicity, user_list, 
+                                  rot_factor)
         
         # 2- Init IO parameters (which folders to write to, and so on)
         self.set_io_param(folder_to_load)
@@ -36,7 +34,8 @@ class Simulation_parameters:
         # 5- Compute the variables required to generate traffic
         self.compute_application_traffic_vars()
 
-    def set_simulation_param(self, freq_idx, csi_periodicity, user_list):
+    def set_simulation_param(self, freq_idx, csi_periodicity, user_list, 
+                             rot_factor):
         # ################# Mode 1: General Parameters  #######################
         # Note: everything will be zero-indexed from now on, because now we
         #       are in Python land
@@ -54,7 +53,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = 4000 * 1
+        self.sim_TTIs = 4000 * 2
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -77,21 +76,31 @@ class Simulation_parameters:
         self.sim_n_phy = self.sim_n_ue
         self.sim_n_bs = len(self.specify_bss)
         
-        self.bf_method = 'gob' # 'reciprocity'
-        IMPLEMENTED_LAYERS_IMPLICIT_BF = 2
-        IMPLEMENTED_LAYERS_EXPLICIT_BF = 1
+        # SU: Schedule one user at the time, as many layers as defined in n_layers
+        # MU: Scheduled all users (remember the interference problem) at each
+        #     tti, if their layers are compatible...
+        self.scheduling_method = 'MU'
         
-        if self.bf_method == 'gob':
-            self.n_layers = IMPLEMENTED_LAYERS_EXPLICIT_BF 
-        elif self.bf_method == 'reciprocity':
-            self.n_layers = IMPLEMENTED_LAYERS_IMPLICIT_BF 
-        else:
-            raise Exception('BF method not recognized.')
+        self.bf_method = 'gob' # 'reciprocity'
+        IMPLEMENTED_LAYERS_IMPLICIT_BF = 0
+        IMPLEMENTED_LAYERS_EXPLICIT_BF = 2
         
         # Maximum 2 layers per UE
         self.n_layers = 1
         
-        # Maximum 8 layers for all UEs
+        if self.bf_method == 'gob':
+            if self.n_layers > IMPLEMENTED_LAYERS_EXPLICIT_BF:
+                raise Exception(f'GoB supports only '
+                                f'{IMPLEMENTED_LAYERS_EXPLICIT_BF} layers')
+        elif self.bf_method == 'reciprocity':
+           if self.n_layers > IMPLEMENTED_LAYERS_IMPLICIT_BF:
+                raise Exception(f'GoB supports only '
+                                f'{IMPLEMENTED_LAYERS_IMPLICIT_BF} layers')
+        else:
+            raise Exception('BF method not recognized.')
+        
+        
+        # Maximum total layers, summed over all UEs
         self.max_mu_mimo_layers = 99 # Doesn't do anything yet anyway
         
         
@@ -108,7 +117,11 @@ class Simulation_parameters:
         # In case we want to test some intelligent way of handling multiple
         # reports
         self.n_csi_beams = 1
-        
+
+        # Rotation Factor (put to None for not applying, namely on a 
+        # beam-steering GoB (i.e. the first GoB, non-3GPP))
+        self.rot_factor = rot_factor
+
         # How frequently to update CSI? 
         # CSI: Precoders and Interference measurements
         self.csi_period = csi_periodicity
@@ -248,11 +261,9 @@ class Simulation_parameters:
         # {prefix}_part_{partID}_instance_{instanceID}_num_{numerology}
         self.output_preffix = 'ch'
         
-        
         # Define a table of information bits needed for the SLS simulator
         self.info_bits_table_path = (self.curr_path + 
                                      '\\miesm_table.csv')
-        
         
         # Stats folder
         self.stats_dir = self.curr_path + '\\Stats\\'
@@ -265,12 +276,10 @@ class Simulation_parameters:
         
         self.folder_to_load = self.folder_to_load + '\\'
 
-        
         self.coeff_folder = self.folder_to_load + "Channel_parts\\"
         
         # with open(curr_path + 'last_sim_folder.txt') as fp:
         #     self.coeff_folder = fp.read() + self.channel_folder_name
-        
         
         self.coeff_file_prefix = self.coeff_folder + 'fr_part_'
         self.coeff_file_suffix = '_num' + str(self.simulation_numerology)
@@ -283,7 +292,7 @@ class Simulation_parameters:
         
         # A precoder for each antenna, for each frequency [freq][bs_idx]
         self.precoders_files = \
-            [["1-omni-element"], 
+            [["precoders_4_4_4_4_pol_3_RI_1_ph_1"], 
              ["1-omni-element"]]
         
         # the case above has a single precoder for each frequency
@@ -396,6 +405,8 @@ class Simulation_parameters:
         #     ut.stop_execution()
         
         ut.parse_input(self.scheduler, ['PF', 'M-LWDF', 'EXP/PF'])
+
+        ut.parse_input(self.scheduling_method, ['SU', 'MU'])
         
                 
     def compute_vars_simulation(self, bw):
@@ -721,5 +732,3 @@ class Simulation_parameters:
         
         
         
-        
-

@@ -217,24 +217,24 @@ class Generation_parameters:
         # When creating one speaker list automatically, these two parameters
         # are needed to set what speakers and for how long each speaks.
         self.only_vir_speak = True
-        self.speaking_time = 2
+        self.speaking_time = 4
         
         # Antenna types, one input per frequency
         # [a single 'omni' or 'patch' or 'dipole' or 'array']        
-        self.user_ant_type = np.array(["omni",
-                                       "omni"], dtype=np.object)
+        self.user_ant_type = np.array(["array",
+                                       "array"], dtype=np.object)
         self.cam_ant_type = np.array(["array",
                                       "array"], dtype=np.object)  
-        self.bs_ant_type = np.array(["omni",
-                                     "omni"], dtype=np.object)
+        self.bs_ant_type = np.array(["array",
+                                     "array"], dtype=np.object)
         
         
         # If the antenan type in an array, this information is used:
         # Antenna structure and element spacing
-        self.bs_ant_config = np.array([[1, 1], [1, 1]], dtype=np.double)
+        self.bs_ant_config = np.array([[4, 4], [8, 8]], dtype=np.double)
         self.bs_ant_element_spacing = 0.5
         # User's Headset
-        self.user_ant_config = np.array([[1, 1], [1, 1]], dtype=np.double)
+        self.user_ant_config = np.array([[2, 2], [4, 4]], dtype=np.double)
         self.user_ant_element_spacing = 0.5
         # Cameras
         self.cam_ant_config = np.array([[2, 2], [4, 4]], dtype=np.double)
@@ -289,8 +289,9 @@ class Generation_parameters:
         self.matlab_folder = self.curr_path + '\\Matlab\\'
         
         self.tracks_filename = self.matlab_folder + \
-            f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
-            #r'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat'
+            r'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat'
+            #f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
+            
             
               
         self.conf_folder = self.matlab_folder + 'QuaDRiGa\\quadriga_src\\config\\'
@@ -399,7 +400,7 @@ class Generation_parameters:
         self.parallelisation_level = 'UE'  # 'None', 'FR', 'BS', 'UE'
         
         # Maximum number of time divisions
-        self.time_divisions = 1
+        self.time_divisions = 2
         # Note: The total number of instances is derived from the 2 vars above
         
         # Number of instances to execute per batch (Python needs a core also)
