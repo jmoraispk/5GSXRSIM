@@ -289,8 +289,8 @@ class Generation_parameters:
         self.matlab_folder = self.curr_path + '\\Matlab\\'
         
         self.tracks_filename = self.matlab_folder + \
-            r'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat'
-            #f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
+            f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
+            # r'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat'
             
             
               
