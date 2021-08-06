@@ -15,6 +15,7 @@ import utils as ut
 import plots_functions as plt_func
 
 
+import test4 as t4
 """
 There are just 3 ways of expanding this script:
     1- To add a new variable to be loaded (needs trimming as well)
@@ -78,7 +79,9 @@ freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
 layer = 0
-trim_ttis = [20, int(4000 * 1)]
+trim_ttis = [20, int(4000 * 1)] 
+# TODO: check with sim ttis to see where this trim is possible
+
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -164,7 +167,7 @@ VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
                      '']
 
 # (Loaded) Vars with information per layer
-vars_with_layers = [2,3,5,6,7,8,9,10,12,13]
+vars_with_layers = [2,3,5,6,7,9,10,12,13]
 
 # file_sets has the sets of files to load at any given time.
 # e.g. if we want to make a plot for each seed, we just want to load one seed
@@ -413,11 +416,11 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
 
     # idxs_to_plot = all_plots_available
     
-    # idxs_to_plot = [5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.65, 5.15]
-    idxs_to_plot = [17.03]
+    # TODO: solve these PROBLEMS
+    idxs_to_plot = [7.2]
     
     # Test save_plot
-    save_plots = False
+    save_plots = True
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
     
     base_plots_folder = 'Plots\\' 
@@ -459,7 +462,7 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
                                   vars_with_layers)
         
         # Plots:
-        plt_func.plot_sim_data(i, file_set, layer, ues, ttis, x_vals, 
+        t4.plot_sim_data2(i, file_set, layer, ues, ttis, x_vals, 
                                sim_data_trimmed, sim_data_computed,
                                results_filename, base_plots_folder, 
                                save_plots, save_format=saveformat)
