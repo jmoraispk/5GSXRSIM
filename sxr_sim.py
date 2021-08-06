@@ -189,7 +189,12 @@ for param in sim_params:
     # Note: there are only precoders in the DL. 
     #        UL is computed implicitly with MR, see find_best_beam in sls.py
 
-    # Dictionary indexed by a tupple of bs and a given angle
+    # Keys:
+    #    'matrix': N_ant x N_beams
+    #    'directions': 2 x N_beams
+    #    'N1', 'N2', 'O1', 'O2'
+    #    'size': [n_azi, n_el]
+    #    'n_directions': = n_azi * n_el = N_beams
     precoders_dict = sls.load_precoders(sp.precoders_paths, sp.vectorize_GoB)
     
     # In the precoders_folder there should be files with the
@@ -284,7 +289,8 @@ for param in sim_params:
     channel = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     experienced_signal_power = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, 
                                                    sp.n_layers])
-    n_transport_blocks = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    n_transport_blocks = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue,
+                                             sp.n_layers])
     
     
     # The schedule is a list of Schedule_entries.
