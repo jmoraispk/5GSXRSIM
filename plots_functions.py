@@ -18,8 +18,9 @@ try:
     from moviepy.video.io.bindings import mplfig_to_npimage
 except ModuleNotFoundError:
     # Error handling
-    print('Could not find moviepy module. Did you pip it into the current env?')
-    print('Making GIFs and Videos will not work.')
+    print('Could not find moviepy module. '
+          'Did you pip it into the current env?'
+          'Making GIFs and Videos will not work.')
 
 # Note: there's probably a better way that avoids using the import below,
 # see app_trafic_plots done in v2.
@@ -140,7 +141,8 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
     if double_plot and len(ylim_right) == 1 and n_ues > 1:
         ylim_right *= n_ues
     
-    # TODO: Set all of these other parameters in case of double plots
+    # TODO: Set all of these other parameters properly to have fully 
+    #       automated double plots
         
     if not no_ticks_left:
         no_ticks_left = [4 for i in ue_list]
@@ -476,96 +478,9 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
     # Return Axis (for plot editing purposes)
     return axs
 
-def t_student_mapping(N, one_sided=True, confidence=0.95):
-    # N samples
-    if ut.parse_input_type(N, ['int']):
-        Exception('N is the number of samples. '
-                  'Needs to be an integer.')
-    
-    if not one_sided or confidence != 0.95:
-        Exception('Not implemented.')
-        # Ctrl + F for 'Table of selected' values in:
-        # https://en.wikipedia.org/wiki/Student%27s_t-distribution
-    
-    r = N - 1
-        
-    t_95_map = {1:	6.314,
-                2:	2.920,
-                3:	2.353,
-                4:	2.132,
-                5:	2.015,
-                6:	1.943,
-                7:	1.895,
-                8:	1.860,
-                9:	1.833,
-                10: 1.812,
-                11: 1.796,
-                12: 1.782,
-                13: 1.771,
-                14: 1.761,
-                15: 1.753,
-                16: 1.746,
-                17: 1.740,
-                18: 1.734,
-                19: 1.729,
-                20: 1.725,
-                21: 1.721,
-                22: 1.717,
-                23: 1.714,
-                24: 1.711,
-                25: 1.708,
-                26: 1.706,
-                27: 1.703,
-                28: 1.701,
-                29: 1.699,
-                30: 1.697,
-                40: 1.684,
-                50: 1.676,
-                60: 1.671,
-                80: 1.664,
-                100: 1.660,
-                120: 1.658,
-                200: 1.645}
-        
-    if r <= 0:
-        Exception('Please...')
-    if r <= 30 or r in [40, 50, 60, 80, 100, 120, 200]:
-        t_95 = t_95_map[r]
-    else: # we'll do some interpolation...
-        if r < 40:
-            x1 = 30
-            x2 = 40
-        elif r < 50:
-            x1 = 40
-            x2 = 50
-        elif r < 60:
-            x1 = 50
-            x2 = 60
-        elif r < 80:
-            x1 = 60
-            x2 = 80
-        elif r < 100:
-            x1 = 80
-            x2 = 100
-        elif r < 120:
-            x1 = 100
-            x2 = 120
-        elif r < 200:
-            x1 = 120
-            x2 = 200
-        
-        if r > 200:
-            # 200 is used as infinite, the value converges to a limit
-            t_95 = t_95_map[200]
-        else:
-            slope = (t_95_map[x2] - t_95_map[x1]) / (x2 - x1)
-            delta = r - x1
-            t_95 = t_95_map[x1] + slope * delta 
-        
-    return round(t_95, 4)
-
 
 ##############################################################################
+
 
 def init_2D_data(n1, n2):
     data = ut.make_py_list(2, [n1, n2])
@@ -644,7 +559,7 @@ def get_vars_to_load(idx, vars_to_load_names):
     # 'count_ues_bitrate':    'scheduled_UEs' -> [15]
     
     load_dict = {0.1: [16], 0.2: [17],
-                 1: [4], 1.1: [4], 1.2: [0,4],
+                 1: [4], 1.1: [4], 1.2: [4],
                  2: [2,3], 2.1: [2,4,5,6], 2.15: [2,4,5,6], 2.2: [2,3,4,8], 
                  2.3: [2,3], 2.4: [2,3,5,6],
                  3: [11], 3.1: [11], 3.2: [10], 3.3: [10,12], 3.35: [10,12], 
@@ -770,14 +685,13 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
                 raise Exception("Can't trim var not loaded.")
             
             if sim_data_loaded[f][v_idx] == []:
-                print(f"Var '{v}' not computed during simulation.")
+                print(f"Var '{v}' not saved in simulation.")
                 continue
             
-            # print(v)
-            # TODO: take the numpy arrays from here and save it in the sim.py
             sim_data_trimmed[f][v_idx] = \
                 np.array(sim_data_loaded[f][v_idx])[trim_ttis[0]:trim_ttis[1]]
-            
+                
+            # np.array(sim_data_loaded[f][v_idx])[trim_ttis[0]:trim_ttis[1]]
             # # Select the downlink ttis only
             #sim_data[f][v_idx] = np.delete(sim_data[v_idx, f], ul_ttis, axis=0)
     
@@ -787,8 +701,7 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
     
     pass
 
-
-def compute_sim_data(plot_idx, layer, ues, ttis, 
+def compute_sim_data(plot_idx, l, ues, ttis, 
                      all_loadable_var_names, all_computable_var_names, 
                      vars_to_compute, vars_to_trim,
                      sim_data_trimmed, sim_data_computed, file_set,
@@ -809,7 +722,7 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
         GoP = f_sp.GoP
         
         
-        vars_trimmed_already = []
+        # vars_trimmed_already = []
         
         # Count number of periods and frames
         n_periods = round(ttis[-1] *  f_sp.TTI_dur_in_secs * (GoP - 1))
@@ -819,33 +732,17 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
             # Index of where to put our freshly computed variable
             v = all_computable_var_names.index(var_to_compute)
             
-            # These variables need layer trimming, if we want a single-layer plot: 
-                
-            # TODO: for double layer plots, don't trim the layer right in the
-            #       beginning. Instead, check whether the plot index will 
-            #       require both layers and if it does, don't select just one
-            #       of them.
-            # if the variable has had it's layer trimmed, don't trim again..
-            if plot_idx < 19:
-                for var_to_trim in vars_to_trim:
-                    trim_idx = all_loadable_var_names.index(var_to_trim)
-                    if trim_idx in vars_with_layers and \
-                       var_to_trim not in vars_trimmed_already and \
-                       not (sim_data_trimmed[f][trim_idx] is None):
-                        sim_data_trimmed[f][trim_idx] = \
-                            sim_data_trimmed[f][trim_idx][:,:,layer]
-                        vars_trimmed_already.append(var_to_trim)
-            
             # Check trim dependencies, to make sure the variable has been 
             # trimmed properly. Otherwise, we can't continue with computation
+            
             problems_with_trim_vars = False
             # find which variable failed the test to provide further info
             for v_trim in vars_to_trim:
                 v_trim_idx = all_loadable_var_names.index(v_trim)
                 if sim_data_trimmed[f][v_trim_idx] is None or \
-                   sim_data_trimmed[f][v_trim_idx] == []:
+                    sim_data_trimmed[f][v_trim_idx] == []:
                     print(f"Can't compute var '{var_to_compute}' because "
-                          f"{v_trim} wasn't trimmed successfully")
+                          f"{v_trim} wasn't trimmed or loaded successfully.")
                     problems_with_trim_vars = True
                     break
                 
@@ -856,15 +753,15 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
             if var_to_compute == 'sinr_diff' and \
                sim_data_computed[f][v] is None:
                 # 'realised_SINR' is IDX 2 and 'estimated_SINR' is IDX 3
-                sim_data_computed[f][v] = (sim_data_trimmed[f][2] - 
-                                           sim_data_trimmed[f][3])
+                sim_data_computed[f][v] = (sim_data_trimmed[f][2][:,:,l] - 
+                                           sim_data_trimmed[f][3][:,:,l])
             
             # COMPUTE INDEX 1: Running average bitrate 
             if var_to_compute == 'running_avg_bitrate' and \
                sim_data_computed[f][v] is None:
                 # IDX 4 is for realised bit rate
-                sim_data_computed[f][v] = np.cumsum(sim_data_trimmed[f][4], 
-                                                    axis=0)
+                sim_data_computed[f][v] = \
+                    np.cumsum(sim_data_trimmed[f][4][:,:,l], axis=0)
                 sim_data_computed[f][v] = (sim_data_computed[f][v] / 
                                            np.arange(n_ttis).reshape(n_ttis,1))
                 
@@ -879,7 +776,7 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
 
                 for ue in ues:
                     sim_data_computed[f][v][rolling_int-1:,ue] = \
-                       ut.moving_average(sim_data_trimmed[f][4][:,ue], 
+                       ut.moving_average(sim_data_trimmed[f][4][:,:,l][:,ue], 
                                          rolling_int)
             
             # COMPUTE INDEX 3: Instantaneous BLER 
@@ -888,8 +785,8 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                sim_data_computed[f][v] is None:
                 # IDX 5 is blocks_with_errors
                 # IDX 6 is n_transport_blocks
-                sim_data_computed[f][v] = (sim_data_trimmed[f][5] / 
-                                           sim_data_trimmed[f][6] * 100)
+                sim_data_computed[f][v] = (sim_data_trimmed[f][5][:,:,l] / 
+                                           sim_data_trimmed[f][6][:,:,l] * 100)
                 sim_data_computed[f][v] = np.nan_to_num(sim_data_computed[f][v])
                 
             # COMPUTE INDEX 4: Running average BLER
@@ -906,43 +803,43 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                sim_data_computed[f][v] is None:
                 # IDX 10 is the experienced signal power in Watt
                 sim_data_computed[f][v] = (10 * 
-                                           np.log10(sim_data_trimmed[f][10]))
+                                           np.log10(sim_data_trimmed[f][10][:,:,l]))
             
             # COMPUTE INDEX 6: Signal Power per PRB in dBW
             if var_to_compute == 'signal_power_prb_db' and \
                sim_data_computed[f][v] is None:
                 # IDX 11 is the experienced signal power in Watt
                 sim_data_computed[f][v] = (10 * 
-                                           np.log10(sim_data_trimmed[f][11]))
+                                           np.log10(sim_data_trimmed[f][11][:,:,l]))
                
             # COMPUTE INDEX 7: Real Interference in dBW
             if var_to_compute == 'real_interference_db' and \
                sim_data_computed[f][v] is None:
                 # IDX 12 is the experienced interference power in Watt
                 sim_data_computed[f][v] = (10 * 
-                                           np.log10(sim_data_trimmed[f][12]))
+                                           np.log10(sim_data_trimmed[f][12][:,:,l]))
             
             # COMPUTE INDEX 8: Estimated Interference in dBW
             if var_to_compute == 'est_interference_db' and \
                sim_data_computed[f][v] is None:
                 # IDX 13 is the estimated interference power in Watt
                 sim_data_computed[f][v] = (10 * 
-                                           np.log10(sim_data_trimmed[f][13]))
+                                           np.log10(sim_data_trimmed[f][13][:,:,l]))
             
             # COMPUTE INDEX 9: Beam Formula Simple
             if var_to_compute == 'beam_formula_simple' and \
                sim_data_computed[f][v] is None:
                 # IDX 7 is the beams_used
-                sim_data_computed[f][v] = (sim_data_trimmed[f][7][:,:,0] + 
-                                           sim_data_trimmed[f][7][:,:,1] * 10)
+                sim_data_computed[f][v] = (sim_data_trimmed[f][7][:,:,l,0] + 
+                                           sim_data_trimmed[f][7][:,:,l,1] * 10)
             
             
             # COMPUTE INDEX 10: Beam Sum
             if var_to_compute == 'beam_sum' and \
                sim_data_computed[f][v] is None:
                 # IDX 7 is the beams_used
-                sim_data_computed[f][v] = (sim_data_trimmed[f][7][:,:,0] + 
-                                           sim_data_trimmed[f][7][:,:,1])
+                sim_data_computed[f][v] = (sim_data_trimmed[f][7][:,:,l,0] + 
+                                           sim_data_trimmed[f][7][:,:,l,1])
             
             # COMPUTE INDEX 11: Vector of Frequencies
             if var_to_compute == 'freq_vec' and \
@@ -1018,9 +915,9 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                             total_packets = \
                                 packets_sent + dropped_packets
                             
-                            # TODO: Check why total packets equals 0!!!
-                            # print('UE:', ue, 'Period:', per, 'GoP-Frame', frm,\
-                            #       'Total packets:',total_packets)
+                            print('UE:', ue, 'Period:', per, \
+                                  'GoP-Frame', frm,\
+                                  'Total packets:',total_packets)
                                 
                             frame_idx = per * GoP + frm
                             
@@ -1029,7 +926,7 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                                     dropped_packets / total_packets * 100
                             except ZeroDivisionError:
                                 print('Error!!!!')
-                                print('pause...')
+                                print('Solve this error if it occurs again.')
                         
             # COMPUTE INDEX 16: Average Packet Latency across all frames
             if var_to_compute == 'avg_pck_lat_per_frame' and \
@@ -1149,8 +1046,8 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
             if var_to_compute == 'count_ues_bitrate' and \
                sim_data_computed[f][v] is None:
                 # IDX 4 is the realised_bitrate
-                ues_with_bitrate = np.nan_to_num(sim_data_trimmed[f][4] / 
-                                                 sim_data_trimmed[f][4])
+                ues_with_bitrate = np.nan_to_num(sim_data_trimmed[f][4][:,:,l] / 
+                                                 sim_data_trimmed[f][4][:,:,l])
                 sim_data_computed[f][v] = np.sum(ues_with_bitrate, 1)
         
             # COMPUTE INDEX 26: Beam Formula Processed
@@ -1158,8 +1055,8 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                sim_data_computed[f][v] is None:
                 # INCLUDES COMPUTATION FOR beam_formula_simple, compute index 9
                 # IDX 7 is the beams_used
-                sim_data_computed[f][9] = (sim_data_trimmed[f][7][:,:,0] + 
-                                           sim_data_trimmed[f][7][:,:,1] * 10)
+                sim_data_computed[f][9] = (sim_data_trimmed[f][7][:,:,l,0] + 
+                                           sim_data_trimmed[f][7][:,:,l,1] * 10)
                 
                 # Copy the old beam_formula
                 sim_data_computed[f][v] = sim_data_computed[f][9]
@@ -1199,7 +1096,7 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                 
                 for i in range(n_beams):
                     sim_data_computed[f][v][i,:,:] = \
-                        sim_data_trimmed[f][18][:,:,i]
+                        sim_data_trimmed[f][18][:,:,l,i]
                 
             # COMPUTE INDEX 29 & 30: x and y projections of best beams
             if var_to_compute in ['x_projection_best_beam',
@@ -1213,10 +1110,10 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                 
                 # x uses elevation
                 sim_data_computed[f][29] = \
-                    h * np.tan(np.deg2rad(sim_data_trimmed[f][7][:,:,1]))
+                    h * np.tan(np.deg2rad(sim_data_trimmed[f][7][:,:,l,1]))
                 # y uses azimuth (that's how the BS is oriented)
                 sim_data_computed[f][30] = \
-                    h * np.tan(np.deg2rad(sim_data_trimmed[f][7][:,:,0]))
+                    h * np.tan(np.deg2rad(sim_data_trimmed[f][7][:,:,l,0]))
                 
             # COMPUTE INDEX 31: Beam Switch
             if var_to_compute == 'beam_switch' and \
@@ -1224,8 +1121,8 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                 # often beam_powers is not available... use another method.
                 # max_beam_idx = np.argmax(beam_powers[:,0,:], 1)
                 # IDX 7 is beams_used
-                max_beam_idx = (sim_data_trimmed[f][7][:,:,0] + 
-                                sim_data_trimmed[f][7][:,:,1] * 10000)
+                max_beam_idx = (sim_data_trimmed[f][7][:,:,l,0] + 
+                                sim_data_trimmed[f][7][:,:,l,1] * 10000)
                 # like beam formula simple, but more robust
                 
                 sim_data_computed[f][v] = np.zeros(usual_shape)
@@ -1339,7 +1236,7 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                 # if not scheduled, keep the same beam (it will only change
                 # color in the plots)
                 # IDX 7 is beams_used
-                sim_data_computed[f][v] = sim_data_trimmed[f][7]
+                sim_data_computed[f][v] = sim_data_trimmed[f][7][:,:,l]
                 
                 # IDX 15 is scheduled_ues
                 for tti in range(1, n_ttis):
@@ -1355,7 +1252,7 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                 
                 for ue in range(n_ues):
                     sim_data_computed[f][v][ue] = \
-                        np.mean(sim_data_trimmed[f][2][:,ue])
+                        np.mean(sim_data_trimmed[f][2][:,:,l][:,ue])
                         
             
             # COMPUTE INDEX XX: 
@@ -1375,7 +1272,7 @@ def compute_sim_data(plot_idx, layer, ues, ttis,
                 pass
 
 
-def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals, 
+def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals, 
                   sim_data_trimmed, sim_data_computed, results_filename, 
                   base_folder, save_fig, save_format='svg'):
     
@@ -1425,7 +1322,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         
         # Instantaneous Realised Bitrate
         if plot_idx == 1:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][4]], 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][4][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Realised bit rate [Mbps]'], 
                          savefig=save_fig, filename=file_name, 
@@ -1435,7 +1332,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # Inst. vs Running avg bitrate 
         if plot_idx == 1.1:
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][4], sim_data_computed[f][1]], 
+                         [sim_data_trimmed[f][4][:,:,l], sim_data_computed[f][1]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Realised bit rate [Mbps]'], 
                          savefig=save_fig, filename=file_name, 
@@ -1445,12 +1342,12 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # Inst. vs Rolling avg bitrate 
         if plot_idx == 1.2:
             # Make constant line
-            marker_line = np.ones(sim_data_trimmed[f][4].shape) * 80
+            marker_line = np.ones(sim_data_trimmed[f][4][:,:,l].shape) * 80
         
             if n_ues == 1 and f_sp.avg_bitrate_dl < 400:
                 # (Single-user case - normal bitrate)
                 plot_for_ues(ues, x_vals,
-                             [sim_data_trimmed[f][2], sim_data_computed[f][2]], 
+                             [sim_data_trimmed[f][2][:,:,l], sim_data_computed[f][2]], 
                              x_axis_label=x_label_time, 
                              y_axis_label=['Bit rate [Mbps]'], 
                              title='', linewidths=[0.8, 2], 
@@ -1464,7 +1361,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
             if n_ues == 1 and f_sp.avg_bitrate_dl > 400:
                 # (Single-user case - full buffer)
                 plot_for_ues(ues, x_vals, 
-                             [sim_data_trimmed[f][4], sim_data_computed[f][2]], 
+                             [sim_data_trimmed[f][4][:,:,l], sim_data_computed[f][2]], 
                              x_axis_label=x_label_time, 
                              y_axis_label=['Bit rate [Mbps]'], 
                              title='', linewidths=[0.8, 2], 
@@ -1478,7 +1375,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
             
             if n_ues > 1:
                 # (Multi-user case)
-                plot_for_ues(ues, x_vals, [sim_data_trimmed[f][4], 
+                plot_for_ues(ues, x_vals, [sim_data_trimmed[f][4][:,:,l], 
                                            sim_data_computed[f][2], 
                                            marker_line], 
                              x_axis_label=x_label_time, 
@@ -1496,7 +1393,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # SINR (Multi-user case)
         if plot_idx == 2:
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][3], sim_data_trimmed[f][2]], 
+                         [sim_data_trimmed[f][2][:,:,l], sim_data_trimmed[f][2][:,:,l]], 
                          x_axis_label=x_label_time, y_axis_label=['SINR [dB]'], 
                          y_labels_left=['Estimated', 'Experienced'], 
                          use_legend=True, ncols=2, size=1.3,filename=file_name, 
@@ -1505,7 +1402,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # SINR vs BLER: only when there are active transmissions (single_user)
         if plot_idx == 2.1:
             plot_for_ues([1], x_vals, 
-                         [sim_data_trimmed[f][2]],
+                         [sim_data_trimmed[f][2][:,:,l]],
                          [sim_data_computed[f][3]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Experienced SINR [dB]', 
@@ -1513,7 +1410,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                          linewidths=[1,0.4,0.15], 
                          ylim_left=[(15,22)], no_ticks_left=[5],
                          y_axis_fonts=[17,17], fill=True, 
-                         fill_var=sim_data_trimmed[f][4], 
+                         fill_var=sim_data_trimmed[f][4][:,:,l], 
                          use_legend=True,
                          legend_loc=(1.02,.955), 
                          legend_inside=False,
@@ -1525,7 +1422,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # SINR vs BLER: with active transmissions (multi-user)
         if plot_idx == 2.15:
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][2]],
+                         [sim_data_trimmed[f][2][:,:,l]],
                          [sim_data_computed[f][3]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Experienced SINR [dB]', 
@@ -1533,7 +1430,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                          linewidths=[1,0.4,0.15], 
                          ylim_left=[(15,22)] * n_ues, 
                          no_ticks_left=[5] * n_ues,
-                         fill=True, fill_var=sim_data_trimmed[f][4], 
+                         fill=True, fill_var=sim_data_trimmed[f][4][:,:,l], 
                          fill_label='Active\ntransmissions',
                          filename=file_name, 
                          savefig=save_fig)
@@ -1544,14 +1441,14 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
             # TODO: fix legend when the only legend is the fill label.
             print('why does the legend of the fill label not appear?')
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][2]], 
-                         [sim_data_trimmed[f][3]], 
+                         [sim_data_trimmed[f][2][:,:,l]], 
+                         [sim_data_trimmed[f][3][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Experienced SINR [dB]', 
                                        '$\Delta_{OLLA}$'],
                          linewidths=[1,1,0.15], 
                          y_axis_fonts=[13,16], fill=True, 
-                         fill_var=sim_data_trimmed[f][4], 
+                         fill_var=sim_data_trimmed[f][4][:,:,l], 
                          use_legend=True,
                          legend_loc=(1.02,.955), 
                          legend_inside=False,
@@ -1580,8 +1477,8 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
             
         # Signal power variation across PRBs
         if plot_idx == 3:
-            if not f_sp.save_per_prb_variables:
-                print("Cannot plot if not computed during SIM!")
+            if not f_sp.save_per_prb_sig_pow:
+                print('Per PRB signal power not saved during SIM!')
                 continue
             
             # antenna index: 
@@ -1593,7 +1490,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                 plt_type = 'scatter'
                 
             plot_for_ues(ues, sim_data_computed[f][11], 
-                         [sim_data_trimmed[f][11][tti_idx,:,:].T], 
+                         [sim_data_trimmed[f][11][tti_idx,:,l,:].T], 
                          x_axis_label='Frequency [Hz]', 
                          y_axis_label=['Power [W]'], 
                          savefig=save_fig, plot_type_left=plt_type)
@@ -1601,8 +1498,8 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         
         # Signal power variation across PRBs in dB
         if plot_idx == 3.1:
-            if not f_sp.save_per_prb_variables:
-                print('Per PRB variables not saved during SIM!')
+            if not f_sp.save_per_prb_sig_pow:
+                print('Per PRB signal power not saved during SIM!')
                 continue
             
             # antenna index: 
@@ -1618,7 +1515,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # Signal power 
         if plot_idx == 3.2:
             # Plot signal power variation across time
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][10]], 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][10][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Power [W]'], 
                          savefig=save_fig, filename=file_name, 
@@ -1627,7 +1524,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # Signal power vs interference (Watt) [single axis]
         if plot_idx == 3.3:        
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][10], sim_data_trimmed[f][12]], 
+                         [sim_data_trimmed[f][10][:,:,l], sim_data_trimmed[f][12][:,:,l]], 
                          x_axis_label=x_label_time, y_axis_label=['[W]'], 
                          y_labels_left=['Signal', 'Interference'],
                          use_legend=True, legend_loc='lower center', ncols=2,
@@ -1636,8 +1533,8 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
 
         # Signal power vs interference (Watt) [double axis]
         if plot_idx == 3.35:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][10]], 
-                                [sim_data_trimmed[f][12]], 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][10][:,:,l]], 
+                                [sim_data_trimmed[f][12][:,:,l]], 
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['Signal Power [W]', 
                                               'Interference Power [w]'],
@@ -1690,7 +1587,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # Estimated vs Realised interference
         if plot_idx == 3.6:
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][13], sim_data_trimmed[f][12]], 
+                         [sim_data_trimmed[f][13][:,:,l], sim_data_trimmed[f][12][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Interference Power [W]'],  
                          y_labels_left=['Estimated', 'Realised'],
@@ -1711,7 +1608,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                             
         # MCS same axs
         if plot_idx == 4.1:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9]], 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['MCS index'], ylim_left=(0.5, 15.5), 
                          use_legend=True, legend_inside=True, 
@@ -1722,7 +1619,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
             
         # MCS diff axs
         if plot_idx == 4.2:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9]], 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['MCS index'],
                          linewidths=[.4,.4,.4,.4], 
@@ -1737,8 +1634,8 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
     
         # MCS and instantaneous bitrate per UE
         if plot_idx == 4.3:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9]], 
-                                [sim_data_trimmed[f][4]], 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9][:,:,l]], 
+                                [sim_data_trimmed[f][4][:,:,l]], 
                                 x_label_time, 
                                 y_axis_label=['MCS index', 
                                               'Bit rate [Mbps]'],
@@ -1762,8 +1659,8 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
             
         # Beams filtered: doublePlot per UE for azi and elevation values.
         if plot_idx == 5.2:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][7][:,:,0]], 
-                                [sim_data_trimmed[f][7][:,:,1]],
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][7][:,:,l,0]], 
+                                [sim_data_trimmed[f][7][:,:,l,1]],
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['Azimuth [º]', 'Elevation[º]'],
                                 savefig=save_fig, filename=file_name, 
@@ -1780,7 +1677,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # Beam sum vs SINR
         if plot_idx == 5.4:
             plot_for_ues(ues, x_vals, [sim_data_computed[f][10]], 
-                                [sim_data_trimmed[f][2]], 
+                                [sim_data_trimmed[f][2][:,:,l]], 
                                 x_axis_label=x_label_time,
                                 y_axis_label=['Azi. + El. [º]', 'SINR [dB]'],
                                 savefig=save_fig, filename=file_name, 
@@ -1849,7 +1746,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
             
         # BLER: instantaneous BLER and realised bitrate
         if plot_idx == 7.4:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][4]],
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][4][:,:,l]],
                                 [sim_data_computed[f][3]],
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['Inst. bitrate [Mbps]', 
@@ -1861,7 +1758,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # BLER: Instantaneous vs realised SINR
         if plot_idx == 7.5:
             plot_for_ues(ues, x_vals, [sim_data_computed[f][3]], 
-                                [sim_data_trimmed[f][2]], 
+                                [sim_data_trimmed[f][2][:,:,l]], 
                                 x_axis_label=x_label_time,
                                 y_axis_label=['BLER [%]', 'SINR [dB]'],
                                 savefig=save_fig, filename=file_name, 
@@ -1876,7 +1773,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                                 y_axis_label=['BLER [%]', '$\Delta_{OLLA}$'],
                                 linewidths=[0.2,1,0.15], 
                                 y_axis_fonts=[13,16], fill=True, 
-                                fill_var=sim_data_trimmed[f][2], 
+                                fill_var=sim_data_trimmed[f][2][:,:,l], 
                                 use_legend=True,
                                 legend_loc=(1.02,.955), 
                                 legend_inside=False,
@@ -1893,7 +1790,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['BLER [%]', '$\Delta_{OLLA}$'],
                                 linewidths=[0.2,1,0.15], fill=True, 
-                                fill_var=sim_data_trimmed[f][2],
+                                fill_var=sim_data_trimmed[f][2][:,:,l],
                                 fill_label='Active\ntransmissions',
                                 width=7.8, height=4.8, size=1.2,
                                 savefig=save_fig, filename=file_name, 
@@ -1901,7 +1798,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         
         # OLLA: MCS vs olla
         if plot_idx == 9.3:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9]], 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][9][:,:,l]], 
                          [sim_data_trimmed[f][8]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['CQI IDX', '$\Delta_{OLLA}$'], 
@@ -1928,7 +1825,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                          [sim_data_computed[f][14]],
                          x_axis_label='Frame index', 
                          y_axis_label=['Avg. latency [ms]'], 
-                         ylim_left=[0.7,0.6],
+                         linewidths=[0.7,0.6],
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
         
@@ -2104,7 +2001,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         # prints all detailed measurements on frame information
         if plot_idx == 10.7:
             
-            # TODO: print(f'Analysis of folder {stats_folder}.')
+            print(f'Analysis of folder {f_sp.stats_folder}.')
             
             # Latency stats
             avg_latency = round(np.mean(sim_data_computed[f][16]),2)
@@ -2197,7 +2094,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                 print(f'Saved: {file_name}')
         
         if plot_idx == 11.4: 
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][10]], 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][10][:,:,l]], 
                                 [sim_data_trimmed[f][15]], 
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['Signal Power [W]', 
@@ -2284,9 +2181,7 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                              savefig=save_fig, filename=file_name, 
                              saveformat=save_format)
                     
-            
-            
-        
+                
         # GoB plots: plot a projection of the beams used for each ue (same ax)
         if plot_idx == 16:
             a = 2
@@ -2311,13 +2206,15 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
         
         # GoB plots: plot a projection of all beams in the GoB [single layer]
         if plot_idx == 16.2:
-            if f_sp.n_layers > 1:
-                n_beams = f_sp.gob_directions.shape[-1]
-                if layer == 1:    
+            n_beams = f_sp.gob_directions.shape[-1]
+            if f_sp.n_layers > 1:    
+                if l == 1:    
                     idxs = [i for i in range(int(n_beams/2))]
                 else:   
                     idxs = [i for i in range(int(n_beams/2), n_beams)]            
-            
+            else:
+                idxs = [i for i in range(n_beams)]
+                
             # pick which layer to plot the GoB
             plot_for_ues([0], sim_data_computed[f][32][idxs,0], 
                          [sim_data_computed[f][32][idxs,1]], 
@@ -2504,10 +2401,10 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
                         
                         beam_azi = sim_data_computed[f][36][idx_uncomp, ue, 0]
                         beam_el = sim_data_computed[f][36][idx_uncomp, ue, 1]
-                        curr_dir = [beam_azi, beam_el]
                         
                         # TODO: *screaming while pulling hair* 
                         #       WHY IS THIS NOT WORKING?!?!?!
+                        # curr_dir = [beam_azi, beam_el]
                         # beam_idx = [i for i in range(directions.shape[1])
                         #             if np.array_equal(directions[:, i], 
                         #                               np.array(curr_dir))]
@@ -2610,8 +2507,8 @@ def plot_sim_data(plot_idx, file_set, layer, ues, ttis, x_vals,
            
         # GoB plots: plot a projection of all beams in the GoB
         if plot_idx == 19.1:
-            plot_for_ues(ues, [sim_data_trimmed[f][2][:,:,:,0], 
-                               sim_data_trimmed[f][2][:,:,:,1]], 
+            plot_for_ues(ues, [sim_data_trimmed[f][2][:,:,l][:,:,:,0], 
+                               sim_data_trimmed[f][2][:,:,l][:,:,:,1]], 
                          use_legend=True, legend_inside=True, 
                          legend_loc="lower right",
                          same_axs=True, plot_type_left='scatter',
