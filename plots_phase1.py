@@ -107,46 +107,48 @@ VARS_NAME_LOAD = [
     '']
 
 # Variable names that can be computed from the loaded and trimmed variables
+# 1L means it is specific to the layer we specified, it does not have the 
+# information of both layers
 VARS_NAME_COMPUTE = [
-    'sinr_diff',                         # 0  [tti] x .. ?????? . [ue] x [layer]
-    'running_avg_bitrate',               # 1
-    'rolling_avg_bitrate',               # 2
-    'instantaneous_bler',                # 3
-    'running_avg_bler',                  # 4
-    'signal_power_db',                   # 5
-    'signal_power_prb_db',               # 6
-    'real_interference_db',              # 7
-    'est_interference_db',               # 8
-    'beam_formula_simple',               # 9  [tti] x [ue] ######CHECK
-    'beam_sum',                          # 10 [tti] x [ue]
-    'freq_vec',                          # 11
-    'frames',                            # 12
-    'I_frames',                          # 13
-    'avg_packet_lat',                    # 14
-    'avg_packet_drop_rate',              # 15
-    'avg_pck_lat_per_frame',             # 16
-    'avg_pck_drop_rate_per_frame',       # 17
-    'avg_pck_lat_per_I_frame',           # 18
-    'avg_pck_lat_per_P_frame',           # 19
-    'avg_pck_drop_rate_per_I_frame',     # 20
-    'avg_pck_drop_rate_per_P_frame',     # 21
-    'avg_pck_lat_per_frame_in_gop',      # 22
-    'avg_pck_drop_rate_per_frame_in_gop',# 23
-    'count_ues_scheduled',               # 24
-    'count_ues_bitrate',                 # 25
-    'beam_formula_processed',            # 26
-    'gop_idxs',                          # 27
-    'power_per_gob_beam',                # 28
-    'x_projection_best_beam',            # 29
-    'y_projection_best_beam',            # 30
-    'beam_switch',                       # 31
-    'xy_projection_all_gob',             # 32
-    'user_pos_for_plot',                 # 33
+    'sinr_diff',                         # 0  [tti] x [ue] x [layer]
+    'running_avg_bitrate',               # 1  [tti] x [ue] x [layer]
+    'rolling_avg_bitrate',               # 2  [tti] x [ue] x [layer]
+    'instantaneous_bler',                # 3  [tti] x [ue] x [layer]
+    'running_avg_bler',                  # 4  [tti] x [ue] x [layer]
+    'signal_power_db',                   # 5  [tti] x [ue] x [layer]
+    'signal_power_prb_db',               # 6  [tti] x [ue] x [layer]
+    'real_interference_db',              # 7  [tti] x [ue] x [layer]
+    'est_interference_db',               # 8  [tti] x [ue] x [layer]
+    'beam_formula_simple',               # 9  [tti] x [ue] x [layer]
+    'beam_sum',                          # 10 [tti] x [ue] x [layer]
+    'freq_vec',                          # 11 [prb]
+    'frames',                            # 12 [frame]
+    'I_frames',                          # 13 [frame] x [ue]
+    'avg_packet_lat',                    # 14 [frame] x [ue]
+    'avg_packet_drop_rate',              # 15 [frame] x [ue]
+    'avg_pck_lat_per_frame',             # 16 [ue]
+    'avg_pck_drop_rate_per_frame',       # 17 [ue]
+    'avg_pck_lat_per_I_frame',           # 18 [ue]
+    'avg_pck_lat_per_P_frame',           # 19 [ue]
+    'avg_pck_drop_rate_per_I_frame',     # 20 [ue]
+    'avg_pck_drop_rate_per_P_frame',     # 21 [ue]
+    'avg_pck_lat_per_frame_in_gop',      # 22 [frame in gob] x [ue]
+    'avg_pck_drop_rate_per_frame_in_gop',# 23 [frame in gob] x [ue]
+    'count_ues_scheduled',               # 24 [tti]
+    'count_ues_bitrate',                 # 25 [tti]
+    'beam_formula_processed',            # 26 [tti] x [ue] x [layer]
+    'gop_idxs',                          # 27 [frame in gob]
+    'power_per_gob_beam',                # 28 [tti] x [ue] x [layer] x [beam]
+    'x_projection_best_beam',            # 29 [tti] x [ue] x [layer]
+    'y_projection_best_beam',            # 30 [tti] x [ue] x [layer]
+    'beam_switch',                       # 31 [tti] x [ue] x [layer]
+    'xy_projection_all_gob',             # 32 [beam] x 2
+    'user_pos_for_plot',                 # 33 
     'user_ori_for_plot',                 # 34
     'individual_beam_gob_details',       # 35
     'beams_processed',                   # 36
-    'avg_sinr',                          # 37
-    'avg_sinr_multitrace',               # 38
+    'avg_sinr',                          # 37 [ue] x [layer]
+    'avg_sinr_multitrace',               # 38 [ue] x [layer]
     '']
 
 # (Loaded) Vars with information per layer
@@ -166,7 +168,7 @@ for comb in combinations:
                     f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
                     f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
     
-    stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_ROTFACTOR-1_NEW' + '\\'
+    stats_dir_end = r'SEED3_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-1_LAYERS-1' + '\\'
     
     print(f'\nDoing for: {stats_dir_end}')
     
@@ -368,17 +370,23 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     18.1 -> (print) Avg. SINR across time per UE
     
     19.1XX -> Plot layer 1 vs layer 2, per UE:
-        19.12 ->  'realised_SINR',            #  2 
-        19.13 ->  'estimated_SINR',           #  3 
-        19.15 ->  'blocks_with_errors',       #  5 
-        19.16 ->  'n_transport_blocks',       #  6 
-        19.17 ->  'beams_used',               #  7
-        19.19 ->  'mcs_used',                 #  9
-        19.110 -> 'experienced_signal_power', # 10
-        19.112 -> 'real_dl_interference',     # 12
-        19.113 -> 'est_dl_interference',      # 13    
+X        19.12 ->  'realised_SINR',            #  2 
+X        19.13 ->  'estimated_SINR',           #  3 
+X        19.15 ->  'blocks_with_errors',       #  5 
+X        19.16 ->  'n_transport_blocks',       #  6 
+X        19.17 ->  'beams_used',               #  7
+X        19.19 ->  'mcs_used',                 #  9
+X        19.110 -> 'experienced_signal_power', # 10
+X        19.112 -> 'real_dl_interference',     # 12
+X        19.113 -> 'est_dl_interference',      # 13    
     
     19.2 -> ...
+    
+    20.0XX -> multi-layer plots for loaded variables        (0XX) and
+              multi-layer plots with computed variables too (1XX) 
+X        20.012 ->  'realised_SINR'             #  2
+        ....
+X        20.137 ->  'avg_sinr'                  #  37
     """
     
     """ 
@@ -392,9 +400,9 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     """
     
     
-    # videos, gifs, results printing, etc..
-    all_non_plots_available = [10.5, 10.55, 10.6, 10.65, 17, 17.01, 17.02,
-                               17.03, 17.11, 17.12, 17.13]
+    # videos, gifs, results savig, etc..
+    all_non_plots_available = [10.55, 10.65, 17, 17.01, 17.02, 17.03, 17.11, 
+                               17.12, 17.13]
     
     # All that can be saved as figures.
     all_plots_available = [0.1, 1, 1.1, 1.2, 2, 2.1, 2.15, 2.2, 2.3, 2.4, 3, 
@@ -402,16 +410,15 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
                            4.2, 4.3, 5.1, 5.15, 5.2, 5.3, 5.4, 5.5, 5.6, 5.65, 
                            7.1, 7.2, 7.3, 7.35, 7.4, 7.5, 9.1, 9.2, 9.3, 9.4,
                            10.1, 10.15, 10.2, 10.25, 10.3, 10.31, 10.4, 10.45, 
-                           10.7, 10.8, 10.9, 10.11, 11, 11.1, 11.2, 11.3, 
-                           13, 14.1, 14.2, 15, 16, 16.1, 16.2]
+                           10.5, 10.6, 10.7, 10.8, 10.9, 10.11, 11, 11.1, 11.2,
+                           11.3, 13, 14.1, 14.2, 15, 16, 16.1, 16.2]
 
     all_idxs_available = all_plots_available + all_non_plots_available
 
     idxs_to_plot = [0.1, 1, 2, 3.45, 4.2, 5.4, 7.4, 10.45]
 
     # idxs_to_plot = all_plots_available
-    idxs_to_plot = all_plots_available
-    # idxs_to_plot = [2.2]
+    idxs_to_plot = [i for i in all_plots_available if i >= 0]
     # idxs_to_plot = [1.2]
     # Test save_plot
     save_plots = False
@@ -479,12 +486,33 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
         
         # Plots:
         plt_func.plot_sim_data(i, file_set, layer, ues, ttis, x_vals, 
-                               sim_data_trimmed, sim_data_computed,
-                               results_filename, base_plots_folder, 
-                               save_plots, save_format=saveformat)
+                                sim_data_trimmed, sim_data_computed,
+                                results_filename, base_plots_folder, 
+                                save_plots, save_format=saveformat)
     
-    
-#%% Note: get's unstable with >20 plots. < 10 is the safest.
+
+
+#%% Trick to verify the shape of every variable:
+# 1- comment out the plot_sim_data function above
+# 2- run the cell above with idxs_to_plot = all_plots_available
+# 3- Run this cell afterwards.
+for i in range(len(VARS_NAME_LOAD)):
+    if sim_data_trimmed[0][i] is not None:
+        print(f'{i:>2}: ', end='')
+        try:
+            print(f'{VARS_NAME_LOAD[i]: <25} has shape ' 
+                  f'{sim_data_trimmed[0][i].shape}')
+        except AttributeError:
+            print(f"{VARS_NAME_LOAD[i]: <25} does "
+                   "not have the attribute 'shape'")
+
+for i in range(len(VARS_NAME_COMPUTE)):
+    if sim_data_computed[0][i] is not None:
+        print(f'{i:>2}: {VARS_NAME_COMPUTE[i]: <35} has shape '
+              f'{sim_data_computed[0][i].shape}')
+
+#%% To print an automatic report (all plots in a single PDF)
+#   Note: it gets unstable for > 20 plots. < 10 is the safest.
 auto_report = False
 if auto_report:
     base = ut.get_cwd() + '\\'    
