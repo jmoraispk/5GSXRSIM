@@ -49,14 +49,15 @@ always_compute = True
 
 #-------------------------
 stats_folder = r'C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Stats' + '\\'
-seeds = [1]
-speeds = [1]
+seeds = [3]
+speeds = [3]
 csi_periodicities = [5]
 app_bitrates= [100]
 users = [None]
 bandwidths = [50] # MHz
 latencies = [10]
 freq_idxs = [0]
+n_layers = [2] 
 results_folder = r'Results\Batch X - testing' + '\\'
 
 layer = 0
@@ -78,7 +79,8 @@ multi_trace = 0
 
 combinations = list(itertools.product(speeds, freq_idxs, 
                                       csi_periodicities, app_bitrates,
-                                      users, bandwidths, latencies, seeds))
+                                      users, bandwidths, latencies, n_layers,
+                                      seeds))
 
 
 # the variables to be loaded at each position of sim_data_(loaded/trimmed)
@@ -138,15 +140,15 @@ VARS_NAME_COMPUTE = [
     'count_ues_bitrate',                 # 25 [tti]
     'beam_formula_processed',            # 26 [tti] x [ue] x [layer]
     'gop_idxs',                          # 27 [frame in gob]
-    'power_per_gob_beam',                # 28 [tti] x [ue] x [layer] x [beam]
+    'power_per_gob_beam',                # 28 [beam] x [tti] x [ue] x [layer]
     'x_projection_best_beam',            # 29 [tti] x [ue] x [layer]
     'y_projection_best_beam',            # 30 [tti] x [ue] x [layer]
     'beam_switch',                       # 31 [tti] x [ue] x [layer]
     'xy_projection_all_gob',             # 32 [beam] x 2
-    'user_pos_for_plot',                 # 33 
-    'user_ori_for_plot',                 # 34
-    'individual_beam_gob_details',       # 35
-    'beams_processed',                   # 36
+    'user_pos_for_plot',                 # 33 [ue] x 3 x [tti_compressed]
+    'user_ori_for_plot',                 # 34 [ue] x 3 x [tti_compressed] x 2
+    'individual_beam_gob_details',       # 35 [beam] x 6
+    'beams_processed',                   # 36 [tti] x [ue] x [layer] x 2
     'avg_sinr',                          # 37 [ue] x [layer]
     'avg_sinr_multitrace',               # 38 [ue] x [layer]
     '']
@@ -160,15 +162,20 @@ vars_with_layers = [2,3,4,5,6,7,9,10,12,13]
 #      we need to load those 3 seeds to compute the average.
 file_sets = []
 
+# for now, we put everything in the same set.
+single_set = []
+
 # Create the file set combinations from the variables given previously
 
 for comb in combinations:
 
-    stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
-                    f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
-                    f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
+    # stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
+    #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
+    #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
     
-    stats_dir_end = r'SEED3_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-1_LAYERS-1' + '\\'
+    stats_dir_end = f'SEED{comb[-1]}_FREQ-{comb[1]}_' + \
+                    f'CSIPER-{comb[2]}_USERS-{comb[4]}_ROTFACTOR-1_LAYERS-{comb[7]}' + '\\'
+    # stats_dir_end = r'SEED3_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-1_LAYERS-1' + '\\'
     
     print(f'\nDoing for: {stats_dir_end}')
     
@@ -179,12 +186,12 @@ for comb in combinations:
     if not ut.isdir(results_folder):
         ut.makedirs(results_folder)    
     
-    file_sets.append(stats_dir)
+    single_set.append(stats_dir)
 
 # File Sets is supposed to be a list of sets of files, 
 # or a list of lists of files. How the sets are created depends on our
 # multi-trace configurations. For single trace, there is only one set of files.
-file_sets = [file_sets]
+file_sets = [single_set]
 
 ##############################################################################    
     
@@ -352,9 +359,10 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     
     15    -> Power of each GoB beam
     
-    16    -> Projection of the all chosen beam for each ue [same plot]
-    16.1  -> Projection of the all chosen beam for each ue [diff plot]
-    16.2  -> Projection of the all beams in GoBs
+    16    -> Projection of all chosen beam for each ue [same plot]
+    16.1  -> Projection of all chosen beam for each ue [diff plot]
+    16.2  -> Projection of all beams in GoB
+X    16.3  -> Projection of all beams in GoB for the simulated rotation factor.
 
     # NOTE: the view on the GIF can be changed (top, side and 3D)
     17    -> GIF across time: TRACKS [same plot]
@@ -369,24 +377,24 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     
     18.1 -> (print) Avg. SINR across time per UE
     
-    19.1XX -> Plot layer 1 vs layer 2, per UE:
-X        19.12 ->  'realised_SINR',            #  2 
-X        19.13 ->  'estimated_SINR',           #  3 
-X        19.15 ->  'blocks_with_errors',       #  5 
-X        19.16 ->  'n_transport_blocks',       #  6 
-X        19.17 ->  'beams_used',               #  7
-X        19.19 ->  'mcs_used',                 #  9
+    19.1XX -> Multi-layer plots: Plot layer 1 vs layer 2, per UE.
+         19.102 ->  'realised_SINR',            #  2 
+X        19.103 ->  'estimated_SINR',           #  3 
+X        19.105 ->  'blocks_with_errors',       #  5 
+X        19.106 ->  'n_transport_blocks',       #  6 
+X        19.107 ->  'beams_used',               #  7
+X        19.109 ->  'mcs_used',                 #  9
 X        19.110 -> 'experienced_signal_power', # 10
 X        19.112 -> 'real_dl_interference',     # 12
 X        19.113 -> 'est_dl_interference',      # 13    
     
     19.2 -> ...
     
-    20.0XX -> multi-layer plots for loaded variables        (0XX) and
+    20.0XX -> multi-trace plots for loaded variables        (0XX) and
               multi-layer plots with computed variables too (1XX) 
-X        20.012 ->  'realised_SINR'             #  2
+        20.002 ->  'realised_SINR'             #  2
         ....
-X        20.137 ->  'avg_sinr'                  #  37
+X        20.137 ->  'avg_sinr_multitrace'                  #  37
     """
     
     """ 
@@ -419,7 +427,7 @@ X        20.137 ->  'avg_sinr'                  #  37
 
     # idxs_to_plot = all_plots_available
     idxs_to_plot = [i for i in all_plots_available if i >= 0]
-    # idxs_to_plot = [1.2]
+    idxs_to_plot = [20.002]
     # Test save_plot
     save_plots = False
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
@@ -464,19 +472,6 @@ X        20.137 ->  'avg_sinr'                  #  37
         plt_func.trim_sim_data(sim_data_loaded, sim_data_trimmed, 
                                VARS_NAME_LOAD, which_vars_to_load, 
                                file_set, trim_ttis)
-        
-        # TODO: multitrace:
-        # Compute additional data: 
-            # - some variables might be computed already (check if empty)
-            # - first, compute the auxiliar variables that might be needed
-            # - second, compute what the actual index needs 
-            #   e.g. some average of one of the variables across traces require
-            #        said variables to be computed already (unless they are 
-            #        trimmed vars.) 
-        
-        
-        if multi_trace:
-            raise Exception('not ready yet...')
         
         plt_func.compute_sim_data(i, layer, ues, ttis, VARS_NAME_LOAD, 
                                   VARS_NAME_COMPUTE, which_vars_to_compute, 
