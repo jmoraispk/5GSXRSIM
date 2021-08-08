@@ -15,41 +15,22 @@ import utils as ut
 import plots_functions as plt_func
 
 
-import test4 as t4
 """
-There are just 3 ways of expanding this script:
-    1- To add a new variable to be loaded (needs trimming as well)
-    2- To add a new variable to be computed.
-    3- To add a new plot based on the existing variables.
-
-See the example below of a complete case that illustrates the 3 expansions:
-
-    Objective: 1- extract a new variable from the simulation, say measure_x
-               2- compute the average of measure_x of the last second
-               3- plot the avg_meas_x across time, for every UE.
-             
-------------------------------------------------------------------------------- 
-             
-To add a new statistic to be collected:
-1- .... add to the end of VARS_TO_LOAD the name of that variable.
-
-
-( see whether the description of each index is better here or somewhere else, 
- and fetched with a function.)
-
-
 To add a new plot index:
-1- add what variables need to be loaded in get_vars_to_load(). See the 
-   meaning of each code in the VARS_TO_LOAD variable in this file.
-2- add what variables need to be computed in get_vars_to_compute()
-   Note: if there is a variable that can be used for many different plots,
-   it needs to be added here. Give it a new name, like "avg_across_traces",
-   and add it to the end of VARS_TO_COMPUTE. From now on, sim_data_computed
-   will have the results of that variable at the index it has on 
-   VARS_TO_COMPUTE.
-3- (if new data needs to be computed) add the computation method in 
-   compute_sim_data()
-4- add the plot method in plot_sim_data()
+1- If it needs a new variable to be loaded from simulation:
+      add what variables need to be loaded in get_vars_to_load(). See the 
+      meaning of each code in the VARS_TO_LOAD variable in this file.
+2- Add what variables need to be computed in get_vars_to_compute()
+      If a new variable needs to be computed, add the index 
+      len(VARS_NAME_COMPUTE) to the list VARS_NAME_COMPUTE and name your 
+      variable. Then, include that index in get_vars_to_compute().
+3- If in step 2 a new computation index was added, now add the computation 
+      method in compute_sim_data().
+4- Add the plot method in plot_sim_data(): 
+      data is either in sim_data_trimmed[f][idx] or sim_data_computed[f][idx],
+      where f is the file index (for single-trace plots it is always 0, 
+      but for multi-trace plots it refers to the file in that index on the
+      file list)
 """
 
 # When doing data analysis, we can avoid repeating many steps. However, 
@@ -79,8 +60,7 @@ freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
 layer = 0
-trim_ttis = [20, int(4000 * 1)] 
-# TODO: check with sim ttis to see where this trim is possible
+trim_ttis = [20, int(4000 * 1)]
 
 TTI_dur_in_secs = 0.25e-3
 
@@ -103,71 +83,74 @@ combinations = list(itertools.product(speeds, freq_idxs,
 
 # the variables to be loaded at each position of sim_data_(loaded/trimmed)
 # NOTE: ALWAYS ADD VARIABLES AT THE END!!
-VARS_NAME_LOAD = ['sp',                       #  0 
-                  'buffers',                  #  1 
-                  'realised_SINR',            #  2 
-                  'estimated_SINR',           #  3 
-                  'realised_bitrate_total',   #  4 
-                  'blocks_with_errors',       #  5 
-                  'n_transport_blocks',       #  6 
-                  'beams_used',               #  7
-                  'olla',                     #  8
-                  'mcs_used',                 #  9
-                  'experienced_signal_power', # 10
-                  'sig_pow_per_prb',          # 11
-                  'real_dl_interference',     # 12
-                  'est_dl_interference',      # 13
-                  'su_mimo_setting',          # 14
-                  'scheduled_UEs',            # 15
-                  'channel',                  # 16
-                  'channel_per_prb',          # 17
-                  'power_per_beam',           # 18
-                  '']
+VARS_NAME_LOAD = [
+    'sp',                       #  0 
+    'buffers',                  #  1 
+    'realised_SINR',            #  2 [tti] x [ue] x [layer]
+    'estimated_SINR',           #  3 [tti] x [ue] x [layer]
+    'realised_bitrate',         #  4 [tti] x [ue] x [layer]
+    'blocks_with_errors',       #  5 [tti] x [ue] x [layer]
+    'n_transport_blocks',       #  6 [tti] x [ue] x [layer]
+    'beams_used',               #  7 [tti] x [ue] x [layer] x 2
+    'olla',                     #  8 [tti] x [ue]
+    'mcs_used',                 #  9 [tti] x [ue] x [layer]
+    'experienced_signal_power', # 10 [tti] x [ue] x [layer]
+    'sig_pow_per_prb',          # 11 [tti] x [ue] x [layer] x [prb]
+    'real_dl_interference',     # 12 [tti] x [ue] x [layer]
+    'est_dl_interference',      # 13 [tti] x [ue] x [layer]
+    'est_scheduled_layers',     # 14 [tti] x [ue]
+    'scheduled_UEs',            # 15 [tti] x [ue]
+    'channel',                  # 16 [tti] x [ue]
+    'channel_per_prb',          # 17 [tti] x [ue] x [prb]
+    'power_per_beam',           # 18 [tti] x [ue] x [layer] x [beam]
+    'real_scheduled_layers',    # 19 [tti] x [ue]
+    '']
 
 # Variable names that can be computed from the loaded and trimmed variables
-VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
-                     'running_avg_bitrate',               # 1
-                     'rolling_avg_bitrate',               # 2
-                     'instantaneous_bler',                # 3
-                     'running_avg_bler',                  # 4
-                     'signal_power_db',                   # 5
-                     'signal_power_prb_db',               # 6
-                     'real_interference_db',              # 7
-                     'est_interference_db',               # 8
-                     'beam_formula_simple',               # 9
-                     'beam_sum',                          # 10
-                     'freq_vec',                          # 11
-                     'frames',                            # 12
-                     'I_frames',                          # 13
-                     'avg_packet_lat',                    # 14
-                     'avg_packet_drop_rate',              # 15
-                     'avg_pck_lat_per_frame',             # 16
-                     'avg_pck_drop_rate_per_frame',       # 17
-                     'avg_pck_lat_per_I_frame',           # 18
-                     'avg_pck_lat_per_P_frame',           # 19
-                     'avg_pck_drop_rate_per_I_frame',     # 20
-                     'avg_pck_drop_rate_per_P_frame',     # 21
-                     'avg_pck_lat_per_frame_in_gop',      # 22
-                     'avg_pck_drop_rate_per_frame_in_gop',# 23
-                     'count_ues_scheduled',               # 24
-                     'count_ues_bitrate',                 # 25
-                     'beam_formula_processed',            # 26
-                     'gop_idxs',                          # 27
-                     'power_per_gob_beam',                # 28
-                     'x_projection_best_beam',            # 29
-                     'y_projection_best_beam',            # 30
-                     'beam_switch',                       # 31
-                     'xy_projection_all_gob',             # 32
-                     'user_pos_for_plot',                 # 33
-                     'user_ori_for_plot',                 # 34
-                     'individual_beam_gob_details',       # 35
-                     'beams_processed',                   # 36
-                     'avg_sinr',                          # 37
-                     'avg_sinr_multitrace',               # 38
-                     '']
+VARS_NAME_COMPUTE = [
+    'sinr_diff',                         # 0  [tti] x .. ?????? . [ue] x [layer]
+    'running_avg_bitrate',               # 1
+    'rolling_avg_bitrate',               # 2
+    'instantaneous_bler',                # 3
+    'running_avg_bler',                  # 4
+    'signal_power_db',                   # 5
+    'signal_power_prb_db',               # 6
+    'real_interference_db',              # 7
+    'est_interference_db',               # 8
+    'beam_formula_simple',               # 9  [tti] x [ue] ######CHECK
+    'beam_sum',                          # 10 [tti] x [ue]
+    'freq_vec',                          # 11
+    'frames',                            # 12
+    'I_frames',                          # 13
+    'avg_packet_lat',                    # 14
+    'avg_packet_drop_rate',              # 15
+    'avg_pck_lat_per_frame',             # 16
+    'avg_pck_drop_rate_per_frame',       # 17
+    'avg_pck_lat_per_I_frame',           # 18
+    'avg_pck_lat_per_P_frame',           # 19
+    'avg_pck_drop_rate_per_I_frame',     # 20
+    'avg_pck_drop_rate_per_P_frame',     # 21
+    'avg_pck_lat_per_frame_in_gop',      # 22
+    'avg_pck_drop_rate_per_frame_in_gop',# 23
+    'count_ues_scheduled',               # 24
+    'count_ues_bitrate',                 # 25
+    'beam_formula_processed',            # 26
+    'gop_idxs',                          # 27
+    'power_per_gob_beam',                # 28
+    'x_projection_best_beam',            # 29
+    'y_projection_best_beam',            # 30
+    'beam_switch',                       # 31
+    'xy_projection_all_gob',             # 32
+    'user_pos_for_plot',                 # 33
+    'user_ori_for_plot',                 # 34
+    'individual_beam_gob_details',       # 35
+    'beams_processed',                   # 36
+    'avg_sinr',                          # 37
+    'avg_sinr_multitrace',               # 38
+    '']
 
 # (Loaded) Vars with information per layer
-vars_with_layers = [2,3,5,6,7,9,10,12,13]
+vars_with_layers = [2,3,4,5,6,7,9,10,12,13]
 
 # file_sets has the sets of files to load at any given time.
 # e.g. if we want to make a plot for each seed, we just want to load one seed
@@ -183,7 +166,7 @@ for comb in combinations:
                     f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
                     f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
     
-    stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_ROTFACTOR-1' + '\\'
+    stats_dir_end = r'SEED1_SPEED-1_FREQ-0_CSIPER-5_APPBIT-100_USERS-None_BW-50_LATBUDGET-10_ROTFACTOR-1_NEW' + '\\'
     
     print(f'\nDoing for: {stats_dir_end}')
     
@@ -218,6 +201,11 @@ for file_set in file_sets:
         file_set_temp = ['']
         ttis_temp = np.array([0,0])
     
+    # See if the file to use is the last one simulated
+    if file_set == ['']: 
+        with open("last_stats_folder.txt", 'r') as fh:
+            file_set = [fh.readline()]
+            
     # INIT SIM DATA: all sim_data are [trace_idx][variable_idx]
     # This function is where most of the efficiency lies: we set variables to 
     # None when they need to be computed again. And we decide when that's 
@@ -232,19 +220,15 @@ for file_set in file_sets:
     file_set_temp = file_set
     ttis_temp = ttis
     
-    # Only sim_data_trimmed is plotted. Some variables of sim_data_loaded 
-    # don't need to be trimmed but are copied for convenience (sp and buffers)
-    
-    # See if the file to use is the last one simulated
-    if file_set == ['']: 
-        with open("last_stats_folder.txt", 'r') as fh:
-            file_set = [fh.readline()]
-            
+    # Note: our variables with plotable data are:
+    #       --> sim_data_trimmed
+    #       --> sim_data_computed
 
+        
     """
     plot_idx meanings:
 
-    "X marks the spot" where implementation is still needed
+    "X marks the spot" where implementation is still needed.
     
     same vs diff plot - all UEs in same plot, or one subplot for each UE
     
@@ -383,11 +367,22 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     
     18.1 -> (print) Avg. SINR across time per UE
     
+    19.1XX -> Plot layer 1 vs layer 2, per UE:
+        19.12 ->  'realised_SINR',            #  2 
+        19.13 ->  'estimated_SINR',           #  3 
+        19.15 ->  'blocks_with_errors',       #  5 
+        19.16 ->  'n_transport_blocks',       #  6 
+        19.17 ->  'beams_used',               #  7
+        19.19 ->  'mcs_used',                 #  9
+        19.110 -> 'experienced_signal_power', # 10
+        19.112 -> 'real_dl_interference',     # 12
+        19.113 -> 'est_dl_interference',      # 13    
+    
+    19.2 -> ...
     """
     
     """ 
-    Warnings:
-        
+    Notes in case something looks weird in the plots:
         - Empty plots: 
             Possibility 1: 10 * log10(0) = -inf -> this does not show in 
                            logarithmic plots. Therefore, try the plot in linear
@@ -415,27 +410,48 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     idxs_to_plot = [0.1, 1, 2, 3.45, 4.2, 5.4, 7.4, 10.45]
 
     # idxs_to_plot = all_plots_available
-    
-    # TODO: solve these PROBLEMS
-    idxs_to_plot = [7.2]
-    
+    idxs_to_plot = all_plots_available
+    # idxs_to_plot = [2.2]
+    # idxs_to_plot = [1.2]
     # Test save_plot
-    save_plots = True
+    save_plots = False
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
     
     base_plots_folder = 'Plots\\' 
+    
+    plot_params_checked_for_file_set = False
     
     for i in idxs_to_plot:
         print(f'Plotting {i}')
         
         # Get which vars need to be loaded and which need to be computed
         which_vars_to_load = plt_func.get_vars_to_load(i, VARS_NAME_LOAD)
+        which_vars_to_trim = [i for i in which_vars_to_load if i != 'sp']
         which_vars_to_compute = \
             plt_func.get_vars_to_compute(i, VARS_NAME_COMPUTE)
         
         # Load data
         plt_func.load_sim_data(file_set, VARS_NAME_LOAD, 
                                which_vars_to_load, sim_data_loaded)
+        
+        if not plot_params_checked_for_file_set:
+            # Make layer and trim indices verifications by accessing the 
+            # Simulation Parameters Object (located at index 0) and checking 
+            # whether the simulation supports the specified layer and trimming
+            plot_params_checked_for_file_set = True
+            
+            for f in range(len(file_set)):
+                sim_layers = sim_data_loaded[f][0].n_layers
+                if layer < 0 or layer >= sim_data_loaded[f][0].n_layers:
+                    raise Exception(f'Layer {layer} not supported. The ' \
+                                    f'simulation was executed for {sim_layers}')
+                
+                sim_TTIs = sim_data_loaded[f][0].sim_TTIs
+                if trim_ttis[0] < 0 or trim_ttis[1] < 0 or \
+                   trim_ttis[0] > sim_TTIs or trim_ttis[1] > sim_TTIs:
+                    raise Exception(f'Trim TTIs {trim_ttis} is not supported. ' \
+                                    f'The simulation was executed from 0 to ' \
+                                    f'{sim_TTIs}.')
         
         # Trim data 
         plt_func.trim_sim_data(sim_data_loaded, sim_data_trimmed, 
@@ -457,12 +473,12 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
         
         plt_func.compute_sim_data(i, layer, ues, ttis, VARS_NAME_LOAD, 
                                   VARS_NAME_COMPUTE, which_vars_to_compute, 
-                                  which_vars_to_load, sim_data_trimmed, 
+                                  which_vars_to_trim, sim_data_trimmed, 
                                   sim_data_computed, file_set, 
                                   vars_with_layers)
         
         # Plots:
-        t4.plot_sim_data2(i, file_set, layer, ues, ttis, x_vals, 
+        plt_func.plot_sim_data(i, file_set, layer, ues, ttis, x_vals, 
                                sim_data_trimmed, sim_data_computed,
                                results_filename, base_plots_folder, 
                                save_plots, save_format=saveformat)
