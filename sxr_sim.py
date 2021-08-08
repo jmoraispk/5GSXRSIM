@@ -17,50 +17,46 @@ import utils as ut
 import application_traffic as at
 import simulation_parameters as sim_par
 
-parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+parent_folder = \
+    r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks"
 
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
-seed = 1
+seed = 3
 speed = 3
 
+folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 
-# folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
-folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-# folders_to_simulate = ["Sim_2021-07-08_14h58m53s_SEED1"]
-
-folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
+folders_to_simulate = [parent_folder + '\\' + f for f in folders_to_simulate]
 
 freq_idxs = [0]
 
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
-# application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
 
 csi_periodicities = [5]
-application_bitrates = [100]
+
 
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
 users = [None]
 
-# bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
-bandwidths = [50] # MHz
-
-# latencies = [10, 20, 30, 40, 50] # ms
-latencies = [10]
 rot_factors = [1]
+n_layers = [1,2]
+
+# Now we usually keep these constant (so we removed them from the file name!):
+application_bitrates = [100] # Mbps
+bandwidths = [50] # MHz
+latencies = [10] # ms
+
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
-                                    users, bandwidths, latencies, rot_factors))
-# itertools.product does: 
-#   [[1st element of 1st list, ..., 1st of last list], 
-#    [1st element of 1st list, ..., 2nd element of last list], 
-#    ... ]
+                                    users, bandwidths, latencies, n_layers,
+                                    rot_factors))
 
+# Feel free to check the parameter combinations before running the simulation
 # for param in sim_params:
-#     print(param)
-   
+#     print(param)   
 # ut.stop_execution()
 
 for param in sim_params:
@@ -72,8 +68,9 @@ for param in sim_params:
     users = param[4]
     bw = param[5]
     lat_budget = param[6]
-    rot_factor = param[7]    
-
+    n_layers = param[7]
+    rot_factor = param[8]    
+    
     if users != None:
         if users == 1:
             user_list = [0]
@@ -102,7 +99,7 @@ for param in sim_params:
     # Initialise the simulation parameters
     sp = sim_par.Simulation_parameters(sim_folder, freq_idx, csi_periodicity,
                                        application_bitrate, user_list, bw, 
-                                       lat_budget, rot_factor)
+                                       lat_budget, n_layers, rot_factor)
     # NOTE: 
         # a) users will subset the generated users;
         # b) bw will use the frequency samples of the generated bandwidht
@@ -116,10 +113,8 @@ for param in sim_params:
     include_timestamp = False 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
-    output_str = f'{seed_str}_SPEED-{sp.speed_idx}_FREQ-{freq_idx}_' + \
-                 f'CSIPER-{csi_periodicity}_APPBIT-{application_bitrate}_' + \
-                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}_' + \
-                 f'ROTFACTOR-{rot_factor}_NEW'
+    output_str = f'{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
+                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
@@ -323,8 +318,7 @@ for param in sim_params:
     
     if sp.save_power_per_CSI_beam:
         power_per_beam = \
-            ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers, 
-                                sp.gob_n_beams])
+            ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers, sp.gob_n_beams])
     else:
         power_per_beam = []
     
@@ -615,10 +609,10 @@ for param in sim_params:
             # 5- Select MU-MIMO setting, based on UE priorities
             # Create the actual schedule
             sls.mu_mimo_choice(tti, curr_priorities, curr_schedule, 
-                               serving_BS_dl, est_scheduled_layers, curr_beam_pairs, 
-                               sp.min_beam_distance, scheduled_UEs, 
-                               sp.scheduling_method, real_scheduled_layers, 
-                               sp.debug)
+                               serving_BS_dl, est_scheduled_layers, 
+                               curr_beam_pairs, sp.min_beam_distance, 
+                               scheduled_UEs, sp.scheduling_method, 
+                               real_scheduled_layers, sp.debug)
             
             # -------------------------------
             
