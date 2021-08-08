@@ -231,9 +231,9 @@ class Simulation_parameters:
             # the past, which leads to a lot of errors!
             # There are workarounds, but take time. So: postponed for later.
         
-        # In case we need per PRB information on the channel and signal 
-        # strength. TODO: check if the channel is also working.
-        self.save_per_prb_variables = False
+        # In case we need per PRB information on the channel and signal power:
+        self.save_per_prb_sig_pow = False
+        self.save_per_prb_channel = False
         
         # In case we need to know how much power is received given a certain
         # choice of GoB
