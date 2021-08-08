@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Sun Aug  8 09:51:23 2021
+
+@author: Morais
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Sun Mar  7 14:34:43 2021
 
 @author: Morais
@@ -711,7 +718,6 @@ def compute_sim_data(plot_idx, l, ues, ttis,
     n_ues = len(ues)
     n_ttis = len(ttis)
     n_files = len(file_set)
-    usual_shape = (n_ttis, n_ues)
     
     
     # Let's handle first the single_trace computations
@@ -719,10 +725,10 @@ def compute_sim_data(plot_idx, l, ues, ttis,
     for f in range(n_files):
         # Current file simulation parameters
         f_sp = sim_data_trimmed[f][0]
+        
+        n_layers = f_sp.n_layers
+        
         GoP = f_sp.GoP
-        
-        
-        # vars_trimmed_already = []
         
         # Count number of periods and frames
         n_periods = round(ttis[-1] *  f_sp.TTI_dur_in_secs * (GoP - 1))
@@ -753,31 +759,34 @@ def compute_sim_data(plot_idx, l, ues, ttis,
             if var_to_compute == 'sinr_diff' and \
                sim_data_computed[f][v] is None:
                 # 'realised_SINR' is IDX 2 and 'estimated_SINR' is IDX 3
-                sim_data_computed[f][v] = (sim_data_trimmed[f][2][:,:,l] - 
-                                           sim_data_trimmed[f][3][:,:,l])
+                sim_data_computed[f][v] = (sim_data_trimmed[f][2] - 
+                                           sim_data_trimmed[f][3])
             
             # COMPUTE INDEX 1: Running average bitrate 
             if var_to_compute == 'running_avg_bitrate' and \
                sim_data_computed[f][v] is None:
                 # IDX 4 is for realised bit rate
                 sim_data_computed[f][v] = \
-                    np.cumsum(sim_data_trimmed[f][4][:,:,l], axis=0)
-                sim_data_computed[f][v] = (sim_data_computed[f][v] / 
-                                           np.arange(n_ttis).reshape(n_ttis,1))
+                    np.cumsum(sim_data_trimmed[f][4], axis=0)
+                for ue in range(n_ues):
+                    sim_data_computed[f][v][:,ue,:] = \
+                        (sim_data_computed[f][v][:,ue,:] / 
+                         np.arange(n_ttis).reshape(n_ttis,1))
                 
             # COMPUTE INDEX 2: Rolling avg bitrate
             if var_to_compute == 'rolling_avg_bitrate' and \
                sim_data_computed[f][v] is None:
                 # IDX 4 is for realised bit rate
-                sim_data_computed[f][v] = np.zeros(usual_shape)
+                sim_data_computed[f][v] = np.zeros((n_ttis, n_ues, n_layers))
                 
                 # TTIs of 1 GoP, interval over which to average the bit rate
                 rolling_int = int(GoP / f_sp.FPS / f_sp.TTI_dur_in_secs)
 
                 for ue in ues:
-                    sim_data_computed[f][v][rolling_int-1:,ue] = \
-                       ut.moving_average(sim_data_trimmed[f][4][:,:,l][:,ue], 
-                                         rolling_int)
+                    for l_i in range(n_layers):
+                        sim_data_computed[f][v][rolling_int-1:,ue,l_i] = \
+                            ut.moving_average(sim_data_trimmed[f][4][:,ue,l_i], 
+                                              rolling_int)
             
             # COMPUTE INDEX 3: Instantaneous BLER 
             if var_to_compute in ['instantaneous_bler',
@@ -785,8 +794,8 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                sim_data_computed[f][v] is None:
                 # IDX 5 is blocks_with_errors
                 # IDX 6 is n_transport_blocks
-                sim_data_computed[f][v] = (sim_data_trimmed[f][5][:,:,l] / 
-                                           sim_data_trimmed[f][6][:,:,l] * 100)
+                sim_data_computed[f][v] = (sim_data_trimmed[f][5] / 
+                                           sim_data_trimmed[f][6] * 100)
                 sim_data_computed[f][v] = np.nan_to_num(sim_data_computed[f][v])
                 
             # COMPUTE INDEX 4: Running average BLER
@@ -803,43 +812,43 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                sim_data_computed[f][v] is None:
                 # IDX 10 is the experienced signal power in Watt
                 sim_data_computed[f][v] = (10 * 
-                                           np.log10(sim_data_trimmed[f][10][:,:,l]))
+                                           np.log10(sim_data_trimmed[f][10]))
             
             # COMPUTE INDEX 6: Signal Power per PRB in dBW
             if var_to_compute == 'signal_power_prb_db' and \
                sim_data_computed[f][v] is None:
                 # IDX 11 is the experienced signal power in Watt
                 sim_data_computed[f][v] = (10 * 
-                                           np.log10(sim_data_trimmed[f][11][:,:,l]))
+                                           np.log10(sim_data_trimmed[f][11]))
                
             # COMPUTE INDEX 7: Real Interference in dBW
             if var_to_compute == 'real_interference_db' and \
                sim_data_computed[f][v] is None:
                 # IDX 12 is the experienced interference power in Watt
                 sim_data_computed[f][v] = (10 * 
-                                           np.log10(sim_data_trimmed[f][12][:,:,l]))
+                                           np.log10(sim_data_trimmed[f][12]))
             
             # COMPUTE INDEX 8: Estimated Interference in dBW
             if var_to_compute == 'est_interference_db' and \
                sim_data_computed[f][v] is None:
                 # IDX 13 is the estimated interference power in Watt
                 sim_data_computed[f][v] = (10 * 
-                                           np.log10(sim_data_trimmed[f][13][:,:,l]))
+                                           np.log10(sim_data_trimmed[f][13]))
             
             # COMPUTE INDEX 9: Beam Formula Simple
             if var_to_compute == 'beam_formula_simple' and \
                sim_data_computed[f][v] is None:
                 # IDX 7 is the beams_used
-                sim_data_computed[f][v] = (sim_data_trimmed[f][7][:,:,l,0] + 
-                                           sim_data_trimmed[f][7][:,:,l,1] * 10)
+                sim_data_computed[f][v] = (sim_data_trimmed[f][7][:,:,:,0] + 
+                                           sim_data_trimmed[f][7][:,:,:,1] * 10)
             
             
             # COMPUTE INDEX 10: Beam Sum
             if var_to_compute == 'beam_sum' and \
                sim_data_computed[f][v] is None:
                 # IDX 7 is the beams_used
-                sim_data_computed[f][v] = (sim_data_trimmed[f][7][:,:,l,0] + 
-                                           sim_data_trimmed[f][7][:,:,l,1])
+                sim_data_computed[f][v] = (sim_data_trimmed[f][7][:,:,:,0] + 
+                                           sim_data_trimmed[f][7][:,:,:,1])
             
             # COMPUTE INDEX 11: Vector of Frequencies
             if var_to_compute == 'freq_vec' and \
@@ -915,9 +924,9 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                             total_packets = \
                                 packets_sent + dropped_packets
                             
-                            print('UE:', ue, 'Period:', per, \
-                                  'GoP-Frame', frm,\
-                                  'Total packets:',total_packets)
+                            # print('UE:', ue, 'Period:', per, \
+                            #       'GoP-Frame', frm,\
+                            #       'Total packets:',total_packets)
                                 
                             frame_idx = per * GoP + frm
                             
@@ -1046,8 +1055,8 @@ def compute_sim_data(plot_idx, l, ues, ttis,
             if var_to_compute == 'count_ues_bitrate' and \
                sim_data_computed[f][v] is None:
                 # IDX 4 is the realised_bitrate
-                ues_with_bitrate = np.nan_to_num(sim_data_trimmed[f][4][:,:,l] / 
-                                                 sim_data_trimmed[f][4][:,:,l])
+                ues_with_bitrate = np.nan_to_num(sim_data_trimmed[f][4] / 
+                                                 sim_data_trimmed[f][4])
                 sim_data_computed[f][v] = np.sum(ues_with_bitrate, 1)
         
             # COMPUTE INDEX 26: Beam Formula Processed
@@ -1055,8 +1064,8 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                sim_data_computed[f][v] is None:
                 # INCLUDES COMPUTATION FOR beam_formula_simple, compute index 9
                 # IDX 7 is the beams_used
-                sim_data_computed[f][9] = (sim_data_trimmed[f][7][:,:,l,0] + 
-                                           sim_data_trimmed[f][7][:,:,l,1] * 10)
+                sim_data_computed[f][9] = (sim_data_trimmed[f][7][:,:,:,0] + 
+                                           sim_data_trimmed[f][7][:,:,:,1] * 10)
                 
                 # Copy the old beam_formula
                 sim_data_computed[f][v] = sim_data_computed[f][9]
@@ -1091,12 +1100,12 @@ def compute_sim_data(plot_idx, l, ues, ttis,
             if var_to_compute == 'power_per_gob_beam' and \
                sim_data_computed[f][v] is None:
                 n_beams = sim_data_trimmed[f][18].shape[-1]
-                new_shape = (n_beams, usual_shape[0], usual_shape[1])
+                new_shape = (n_beams, n_ttis, n_ues)
                 sim_data_computed[f][v] = np.zeros(new_shape)
                 
                 for i in range(n_beams):
-                    sim_data_computed[f][v][i,:,:] = \
-                        sim_data_trimmed[f][18][:,:,l,i]
+                    sim_data_computed[f][v][i,:,:,:] = \
+                        sim_data_trimmed[f][18][:,:,:,i]
                 
             # COMPUTE INDEX 29 & 30: x and y projections of best beams
             if var_to_compute in ['x_projection_best_beam',
@@ -1110,10 +1119,10 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 
                 # x uses elevation
                 sim_data_computed[f][29] = \
-                    h * np.tan(np.deg2rad(sim_data_trimmed[f][7][:,:,l,1]))
+                    h * np.tan(np.deg2rad(sim_data_trimmed[f][7][:,:,:,1]))
                 # y uses azimuth (that's how the BS is oriented)
                 sim_data_computed[f][30] = \
-                    h * np.tan(np.deg2rad(sim_data_trimmed[f][7][:,:,l,0]))
+                    h * np.tan(np.deg2rad(sim_data_trimmed[f][7][:,:,:,0]))
                 
             # COMPUTE INDEX 31: Beam Switch
             if var_to_compute == 'beam_switch' and \
@@ -1121,15 +1130,14 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 # often beam_powers is not available... use another method.
                 # max_beam_idx = np.argmax(beam_powers[:,0,:], 1)
                 # IDX 7 is beams_used
-                max_beam_idx = (sim_data_trimmed[f][7][:,:,l,0] + 
-                                sim_data_trimmed[f][7][:,:,l,1] * 10000)
+                max_beam_idx = (sim_data_trimmed[f][7][:,:,:,0] + 
+                                sim_data_trimmed[f][7][:,:,:,1] * 10000)
                 # like beam formula simple, but more robust
                 
-                sim_data_computed[f][v] = np.zeros(usual_shape)
-                sim_data_computed[f][v][0,:] = np.zeros(usual_shape[1])
+                sim_data_computed[f][v] = np.zeros((n_ttis, n_ues, n_layers))
                 
                 # Put to one when there is a difference between beams used
-                sim_data_computed[f][v][1:,:] = np.diff(max_beam_idx, axis=0)
+                sim_data_computed[f][v][1:,:,:] = np.diff(max_beam_idx, axis=0)
                 sim_data_computed[f][v][sim_data_computed[f][v] != 0] = 1
             
             # COMPUTE INDEX 32: x and y projections of all beams in the GoB
@@ -1236,7 +1244,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 # if not scheduled, keep the same beam (it will only change
                 # color in the plots)
                 # IDX 7 is beams_used
-                sim_data_computed[f][v] = sim_data_trimmed[f][7][:,:,l]
+                sim_data_computed[f][v] = sim_data_trimmed[f][7]
                 
                 # IDX 15 is scheduled_ues
                 for tti in range(1, n_ttis):
@@ -1252,7 +1260,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 
                 for ue in range(n_ues):
                     sim_data_computed[f][v][ue] = \
-                        np.mean(sim_data_trimmed[f][2][:,:,l][:,ue])
+                        np.mean(sim_data_trimmed[f][2][:,ue])
                         
             
             # COMPUTE INDEX XX: 
@@ -2001,7 +2009,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # prints all detailed measurements on frame information
         if plot_idx == 10.7:
             
-            print(f'Analysis of folder {f_sp.stats_folder}.')
+            print(f'Analysis of folder {f_sp.stats_path}.')
             
             # Latency stats
             avg_latency = round(np.mean(sim_data_computed[f][16]),2)
