@@ -589,3 +589,92 @@ def get_all_files_of_format(folder, the_format=''):
     files_with_format = list(filter(filter_func, all_files))
     
     return files_with_format
+
+
+def t_student_mapping(N, one_sided=True, confidence=0.95):
+    # N samples
+    if parse_input_type(N, ['int']):
+        Exception('N is the number of samples. '
+                  'Needs to be an integer.')
+    
+    if not one_sided or confidence != 0.95:
+        Exception('Not implemented.')
+        # Ctrl + F for 'Table of selected' values in:
+        # https://en.wikipedia.org/wiki/Student%27s_t-distribution
+    
+    r = N - 1
+        
+    t_95_map = {1:	6.314,
+                2:	2.920,
+                3:	2.353,
+                4:	2.132,
+                5:	2.015,
+                6:	1.943,
+                7:	1.895,
+                8:	1.860,
+                9:	1.833,
+                10: 1.812,
+                11: 1.796,
+                12: 1.782,
+                13: 1.771,
+                14: 1.761,
+                15: 1.753,
+                16: 1.746,
+                17: 1.740,
+                18: 1.734,
+                19: 1.729,
+                20: 1.725,
+                21: 1.721,
+                22: 1.717,
+                23: 1.714,
+                24: 1.711,
+                25: 1.708,
+                26: 1.706,
+                27: 1.703,
+                28: 1.701,
+                29: 1.699,
+                30: 1.697,
+                40: 1.684,
+                50: 1.676,
+                60: 1.671,
+                80: 1.664,
+                100: 1.660,
+                120: 1.658,
+                200: 1.645}
+        
+    if r <= 0:
+        Exception('Please...')
+    if r <= 30 or r in [40, 50, 60, 80, 100, 120, 200]:
+        t_95 = t_95_map[r]
+    else: # we'll do some interpolation...
+        if r < 40:
+            x1 = 30
+            x2 = 40
+        elif r < 50:
+            x1 = 40
+            x2 = 50
+        elif r < 60:
+            x1 = 50
+            x2 = 60
+        elif r < 80:
+            x1 = 60
+            x2 = 80
+        elif r < 100:
+            x1 = 80
+            x2 = 100
+        elif r < 120:
+            x1 = 100
+            x2 = 120
+        elif r < 200:
+            x1 = 120
+            x2 = 200
+        
+        if r > 200:
+            # 200 is used as infinite, the value converges to a limit
+            t_95 = t_95_map[200]
+        else:
+            slope = (t_95_map[x2] - t_95_map[x1]) / (x2 - x1)
+            delta = r - x1
+            t_95 = t_95_map[x1] + slope * delta 
+        
+    return round(t_95, 4)
