@@ -34,10 +34,9 @@ except ModuleNotFoundError:
 # import matplotlib.ticker as ticker 
 
 def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
-                 x_axis_label='', 
-                 y_axis_label=[''],
-                 title='', linewidths='', tune_opacity=False, opacity=[],
-                 y_labels_left='', y_labels_right='', y_axis_fonts=[],
+                 x_axis_label='', y_axis_label=[''],
+                 title='', linewidths=[], tune_opacity=False, opacity=[],
+                 y_labels_left=[''], y_labels_right=[''], y_axis_fonts=[],
                  xlim=[], ylim_left=[], ylim_right=[],
                  no_ticks_left=[], no_ticks_right=[],
                  tight_x_axis=False, tight_y_axis=False, 
@@ -50,82 +49,186 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
     """
     Parameters
     ----------
-    ##### MANDATORY #####
-    ue_list: UEs is the # of plots.
-    
-    x_vals: numpy.ndarray.
-            x_vals are the values for the x axis of all plots.
-            Should be [x_vals_of_ue, # UEs]. 
-            But, since the x-axis is often the same, it can be 1-D and the same
-            is used for all users.
-    
-    ############################33 CORRECT THESE FOR Y_VALS_LEFT AND RIGHT!!!!!!!!!!
-    y_vals: numpy.ndarray.
-            are the values for the y axis (right and/or left) of all plots
-            Also, multiple data_points that share a common x-vals can be added.
-            Each y-axis information, should be [y_vals_of_ue, # UEs]. 
-            And, the comple y_axis should be a list of y-axis information, for 
-            the amount of data_types we want to plot per plot.
-            y[data_idx][:,ue] = y values of data data_idx for UE ue.
-      
-            The first y_vals dimension should agree with that of x_vals.
-    
-    ##### OPTIONAL #####
+    ###### Mandatory #######
 
-    use_legend: True if some texts should appear as legend
-    legend_indide: True when the legend box is supposed to be inside
-                     the plot
-    legend_loc: the location. Can be text (or a code, see below), 
-                  or tuple with (x,y) coordinates (from 0 to 1)
+    ue_list: list
+        List of UEs for which to compute the plots. 
     
-                    Location        String Location Code
-                    'best'          0
-                    'upper right'   1
-                    'upper left'    2
-                    'lower left'    3
-                    'lower right'   4
-                    'right'         5
-                    'center left'   6
-                    'center right'  7
-                    'lower center'  8
-                    'upper center'  9
-                    'center'        10
-                    
-    ncols: columns of the legend.
+    x_vals: np.array
+        x_vals are the values for the x axis of all plots.
+        Should be [x_vals_of_ue, # UEs]. 
+        But, since the x-axis is often the same for all ues, it can be 
+        1-D and the same data is used for all users.
     
-    size, width and height are used together in the following formula:
-        (fig height, fig width) = (r*height*size, size/r*width)
-    
-    filename
-    savefig option
+    y_vals_left: list of np.array
+        represent the values for the right y axis. It is a list of variables to
+        plot. Each variable should agree on the first dimension with x_vals,
+        and the second dimension should at least as many indices as the biggest
+        index in ue_list.
 
-    same_axs: puts all ues in the same axis. 
-              Cancels the subtitle on top of the subplot.
-              Cancels the opacity and uses linewidths. -------------------> wuut?
+    ###### Optional #######
     
-    plot_type_left/right: plot type of the left/right y-axis
-                          y_vals must have values for that axis, otherwise it
-                          is not used.
-                          Available options: 'line', 'scatter', 'bar'
-      
-    ylims: list of tuples, one for each UE. If there's just one tuple,
-             it is used for all UEs
+    y_vals_right: list of np.array
+        represent the values for the right y axis. Used for double plots.
+        Note that they share the x axis, so they need to agree with x_vals
+        in that dimension. 
+        Each y-axis data, should be [y_vals_of_ue, # UEs]. 
+        We can plot several variables at the same time. Say,
+        you want to plot the estimated and realised sinr on the left axis,
+        then you give the data like [est_sinr, real_sinr]. y_vals_left and 
+        y_vals_right are always lists of data.
+        Default is [].
     
-    n1 & n2: Option a) n1 * n2 must be = # UEs and that will be the
-                         number of rows and columns of the subplots.
-               Option b) (n1 = -1 and n2 != -1) or (n1 != -1 and n2 = -1)
-                         Takes the non-zero argument and creates that many
-                         columns or rows, respectively. Note: # Ues must be 
-                         divisible by the non-zero index.
-    - ...                     
-    
+    x_axis_label: string
+        label for x-axis. Default is ''.
+
+    y_axis_label: list of strings
+        label for y-axis. Default is [''].
+
+    title: string
+        title. duh. Default is ''. 
+
+    linewidths: list of floats, 
+        widths of plot lines. Length should match quantity of data in a plot.
+        If same_axis is True, the length must be n_ue * n_vals, where
+        n_vals = n_vals_left + n_vals_right, and each n_vals_left/right is the 
+        length of y_vals_left/right. Essencially, we need a linewidth for each
+        line on the plot. Default is [], but we then adapt it to be 
+        [1 for i in range(n_vals)], giving each line the same weight/thickness.
+        Default is [].
+
+    tune_opacity: boolean
+        True if we should set an opacity proportional to the quantity of 
+        data on the plot. False if everything should have opacity=1. 
+        Default is False.
         
+    opacity: list of floats
+        Specific opacity (alpha) values for each line of the plot. 
+        Default is [], but we then adapt it to be [1 for i in range(n_vals)].
+
+    y_labels_left, y_labels_right: list of strings
+        Labels for the y axis. Each element of the list is a label for 
+        the variable in that index in y_vals_left/right. 
+        Default is ['']. 
+
+    y_axis_fonts: list of floats
+        One float per axis for the font size of the label in that axis. If the 
+        right axis is used, the list either has 2 elements, one font for each 
+        axis, or the single font given is applied to both axis labels.
+
+    xlim: a pair of floats (a tupple with two floats)
+        x axis limit. Default is ().
+
+    ylim_left, ylim_right: list of pairs of floats
+        y axis limit. Should agree with the number of ues in n_ues. 
+        Default is [].
+        
+    no_ticks_left, no_ticks_right: list of integers
+        Number of ticks in the y axis. It can be one integer and that number of
+        ticks is used for all UEs, or a list of integers and each UE has a
+        corresponding number of ticks. Default is [].
+
+    tight_x_axis, tight_y_axis: boolean
+        Make the limits of x or y axis coincide with the limits of the data. 
+        Might make difficult to see a lot of points close to that limit though.
+        Default is False.
+
+    fill: boolean
+        Default is False.
+
+    fill_var: nd.array
+        Variable, like y_vals_left. It uses:
+            ax.fill_between(x_vals, 0, high_lim, where=fill_var[:,ue] > 0)
+        Essentially, when fill_var is > 0, the screen is painted the color
+        of fill_color. If fill is true, the variable should be inputed through 
+        this argument. Default is no fill (no variable) or just ''.
+    
+    fill_color: string
+        Color to fill. Default is 'grey'.
+
+    fill_label: string
+        Label for the fill. Default is ''.
+
+
+    use_legend: boolean
+        Set to True if any legend is to appear in the plot.
+        Default is False.
+    
+    legend_indide: boolean
+        True when the legend box is supposed to be inside the plot. 
+        Default is False.
+
+    legend_loc: string
+        Specifies the location of the legend. Can be text, a code or a tuple 
+        with (x,y) coordinates (from 0 to 1). See below:
+
+        Location        String Location Code
+        'best'          0
+        'upper right'   1
+        'upper left'    2
+        'lower left'    3
+        'lower right'   4
+        'right'         5
+        'center left'   6
+        'center right'  7
+        'lower center'  8
+        'upper center'  9
+        'center'        10
+
+        Default is 'center'.
+
+    ncols: integer
+        Number of columns in the legend, before starting another
+        column. Default is 1.
+
+    size, width, height: float 
+        Determines size and ratio. They are used like this:
+        (fig width, fig height) = (width * size, height * size)
+        Default is, respectively, 1, 6.4 and 4.8.
+    
+    same_axs: boolean
+        If True, plots everything in the same plot/axis, i.e. all information 
+        for all ues is plotted under the same axis. Default is False.
+        
+    n1, n2: integer
+        Respectively, number of subplots along the vertical (# of rows) and 
+        horizontal (# of columns).
+        If both are different from 0, then n1 * n2 must be = len(ue_list)
+        If one of them is -1, the other is chosen to make the equation above
+        truth, so the non-zero argument must divide len(ue_list)
+        If both are -1, some sensible choice is made, e.g. get both closer to 
+        sqrt(len(ue_list)).
+        Default is -1 for both.   
+
+    plot_type_left, plot_type_right: string
+        Plot type for each axis. Possible values are: 'line', 'scatter' and
+        'bar'. Default is 'line'.
+
+    savefig: boolean
+        To save, or not to save, that is the question. Default is False.
+
+    filename: string
+        Name under which the plot is going to be saved. Should not include
+        the file format. Default is ''.
+    
+    saveformat='pdf'
+        Format of the plotted figure to save. Possible values are 'png', 'pdf',
+        and 'svg'. Default is 'pdf'.
+
+
     Returns
     -------
     Axis.
 
     """
     
+    # TODO: take the extensive description above and verify whether the inputs
+    #       have the correct format. Also, if some data is given and other 
+    #       data is missing, say y_vals_right is given but no linewidths are
+    #       provided, the variable linewidths should be adapted to fit the 
+    #       plot requirement with its default value. 
+
+
     # Set useful variables
     n_ues = len(ue_list)
     n_y_vals_left = len(y_vals_left)
@@ -171,7 +274,7 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
     if n_y_vals_right and y_vals_right[0] is None:
         raise Exception('y_vals only has Nones in each UE...')
 
-    if linewidths == '':
+    if linewidths == []:
         if same_axs:
             linewidths = [1 for ue in ue_list]
         else:
@@ -189,7 +292,7 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
     if len(opacity) != n_opacity:
         raise Exception('Opacity length is not the correct one.')
     
-    if y_labels_left == '':
+    if y_labels_left == ['']:
         if same_axs:
             y_labels_left = [f'UE {ue}' for ue in ue_list]
         else:
@@ -198,7 +301,7 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
                 raise Exception('No labels values provided in y_data_labels '
                       'or fill_labels. What should be in the legend?!')
     if double_plot:
-        if y_labels_left == '':
+        if y_labels_left == ['']:
             if same_axs:
                 y_labels_right = [f'UE {ue}' for ue in ue_list]
             else:
@@ -221,10 +324,9 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
     
     
     # Create figure and axis
-    r = width/height
     if same_axs:
         fig, axs = plt.subplots(tight_layout=True, 
-                                figsize=(r*height*size, size/r*width))
+                                figsize=(width * size, height * size))
     else:
         # Define number of subplots in each row and column
         
@@ -260,8 +362,8 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
         
         # Create the subplots with a certain figure size, n1 rows and n2 cols
         fig, axs = plt.subplots(n1,n2, tight_layout=True, 
-                                figsize=(r*height*size, size/r*width))
-    
+                                figsize=(width*size, height*size))
+        
     if not isinstance(axs, np.ndarray):
         axs = [axs]
     
@@ -269,6 +371,8 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
     # Start the actual Plots
     for ue_idx in range(len(ue_list)):
         
+        ue = ue_list[ue_idx]
+
         # Get ax index
         if same_axs:
             idx = 0
@@ -288,7 +392,7 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
         if x_vals.ndim == 1:
             x_data = x_vals
         else:
-            x_data = x_vals[:,ue_idx]
+            x_data = x_vals[:,ue]
         
         for y_idx in range(n_y_vals_left):
             if same_axs:
@@ -298,13 +402,13 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
                     p_idx = ue_idx # plot idx
             else:
                 p_idx = y_idx
-                ax1_handle.set_title(f'UE {ue_list[ue_idx]}')
+                ax1_handle.set_title(f'UE {ue}')
             
             # Select y_data
             if y_vals_left[y_idx].ndim == 1:
                 y_data = y_vals_left[y_idx]
             else:
-                y_data = y_vals_left[y_idx][:,ue_idx]
+                y_data = y_vals_left[y_idx][:,ue]
             
             
             # Check sizes of x and y: trimming problem?
@@ -355,13 +459,13 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
                     p_idx = ue_idx # plot idx
             else:
                 p_idx = y_idx
-                ax2_handle.set_title(f'UE {ue_list[ue_idx]}')
+                ax2_handle.set_title(f'UE {ue}')
             
             # Select y_data
             if y_vals_right[y_idx].ndim == 1:
                 y_data_right = y_vals_right[y_idx]
             else:
-                y_data_right = y_vals_right[y_idx][:,ue_idx]
+                y_data_right = y_vals_right[y_idx][:,ue]
             
             try:
                 if plot_type_right == 'line':                                            
@@ -450,7 +554,7 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
             low_lim, high_lim = ax1_handle.get_ylim()
             
             ax1_handle.fill_between(x_vals, 0, high_lim, 
-                                    where=fill_var[:,ue_idx] > 0, 
+                                    where=fill_var[:,ue] > 0, 
                                     color=fill_color, 
                                     alpha=linewidths[-1],
                                     label=fill_label)
@@ -589,7 +693,8 @@ def get_vars_to_load(idx, vars_to_load_names):
                  16: [7], 16.1: [7], 16.2: [], 16.25: [],
                  17: [], 17.01: [7,15], 17.02: [7,15], 17.03: [7,15], 
                  17.11: [7,15], 17.12: [7,15], 17.13: [7,15],
-                 18.1: [2]
+                 18.1: [2],
+                 19.102: [2], 20.002: [2]
                  }
     
     # Always add 'sp' variable and return list of var names.
@@ -640,7 +745,10 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     17: [33,34], 17.01: [33,34,35,36], 17.02: [33,34,35,36], 
                     17.03: [33,34,35,36], 17.11: [35,36], 17.12: [35,36],
                     17.13: [35,36],
-                    18.1: [37]
+                    18.1: [37],
+                    19.102: [],
+                    20.002: [],
+                    
                     }
             
     return [vars_to_compute_names[i] for i in compute_dict[idx]]
@@ -1073,21 +1181,24 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 # Process the formula to make it smoother
                 
                 # Keep the formula constant if the next value is 0
+                # TODO: improve this computation...
                 for tti in range(n_ttis):
                     for ue in ues:
-                        if sim_data_computed[f][v][tti, ue] == 0:
-                            sim_data_computed[f][v][tti, ue] = \
-                                sim_data_computed[f][v][tti-1, ue]
+                        for l_i in range(n_layers):
+                            if sim_data_computed[f][v][tti, ue, l_i] == 0:
+                                sim_data_computed[f][v][tti, ue, l_i] = \
+                                    sim_data_computed[f][v][tti-1, ue, l_i]
                     
                 # address first zeros too
                 for ue in ues:
-                    if sim_data_computed[f][v][0, ue] == 0:
-                        # find next non-zero value
-                        # idx = ut.first_nonzero(beam_formula, invalid_val=-1):
-                        idx = (sim_data_computed[f][v][:, ue] != 0).argmax()
-                        for tti in range(0, idx):
-                            sim_data_computed[f][v][tti, ue] = \
-                                sim_data_computed[f][v][idx, ue]
+                    for l_i in range(n_layers):
+                        if sim_data_computed[f][v][0, ue, l_i] == 0:
+                            # find next non-zero value
+                            # idx = ut.first_nonzero(beam_formula, invalid_val=-1):
+                            idx = (sim_data_computed[f][v][:, ue, l_i] != 0).argmax()
+                            for tti in range(0, idx):
+                                sim_data_computed[f][v][tti, ue, l_i] = \
+                                    sim_data_computed[f][v][idx, ue, l_i]
     
             # COMPUTE INDEX 27: GoP indices
             if var_to_compute == 'gop_idxs' and \
@@ -1340,7 +1451,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # Inst. vs Running avg bitrate 
         if plot_idx == 1.1:
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][4][:,:,l], sim_data_computed[f][1]], 
+                         [sim_data_trimmed[f][4][:,:,l], 
+                          sim_data_computed[f][1][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Realised bit rate [Mbps]'], 
                          savefig=save_fig, filename=file_name, 
@@ -1355,7 +1467,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             if n_ues == 1 and f_sp.avg_bitrate_dl < 400:
                 # (Single-user case - normal bitrate)
                 plot_for_ues(ues, x_vals,
-                             [sim_data_trimmed[f][2][:,:,l], sim_data_computed[f][2]], 
+                             [sim_data_trimmed[f][2][:,:,l],
+                             sim_data_computed[f][2][:,:,l]], 
                              x_axis_label=x_label_time, 
                              y_axis_label=['Bit rate [Mbps]'], 
                              title='', linewidths=[0.8, 2], 
@@ -1369,7 +1482,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             if n_ues == 1 and f_sp.avg_bitrate_dl > 400:
                 # (Single-user case - full buffer)
                 plot_for_ues(ues, x_vals, 
-                             [sim_data_trimmed[f][4][:,:,l], sim_data_computed[f][2]], 
+                             [sim_data_trimmed[f][4][:,:,l], 
+                              sim_data_computed[f][2][:,:,l]], 
                              x_axis_label=x_label_time, 
                              y_axis_label=['Bit rate [Mbps]'], 
                              title='', linewidths=[0.8, 2], 
@@ -1383,9 +1497,10 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             
             if n_ues > 1:
                 # (Multi-user case)
-                plot_for_ues(ues, x_vals, [sim_data_trimmed[f][4][:,:,l], 
-                                           sim_data_computed[f][2], 
-                                           marker_line], 
+                plot_for_ues(ues, x_vals, 
+                             [sim_data_trimmed[f][4][:,:,l], 
+                              sim_data_computed[f][2][:,:,l], 
+                              marker_line], 
                              x_axis_label=x_label_time, 
                              y_axis_label=['Bit rate [Mbps]'], 
                              title='', linewidths=[0.3, 1.5, 1], 
@@ -1401,9 +1516,10 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # SINR (Multi-user case)
         if plot_idx == 2:
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][2][:,:,l], sim_data_trimmed[f][2][:,:,l]], 
+                         [sim_data_trimmed[f][2][:,:,l], 
+                          sim_data_trimmed[f][3][:,:,l]], 
                          x_axis_label=x_label_time, y_axis_label=['SINR [dB]'], 
-                         y_labels_left=['Estimated', 'Experienced'], 
+                         y_labels_left=['Experienced','Estimated'], 
                          use_legend=True, ncols=2, size=1.3,filename=file_name, 
                          savefig=save_fig)
     
@@ -1411,7 +1527,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         if plot_idx == 2.1:
             plot_for_ues([1], x_vals, 
                          [sim_data_trimmed[f][2][:,:,l]],
-                         [sim_data_computed[f][3]], 
+                         [sim_data_computed[f][3][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Experienced SINR [dB]', 
                                        'BLER [%]'],
@@ -1431,7 +1547,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         if plot_idx == 2.15:
             plot_for_ues(ues, x_vals, 
                          [sim_data_trimmed[f][2][:,:,l]],
-                         [sim_data_computed[f][3]], 
+                         [sim_data_computed[f][3][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Experienced SINR [dB]', 
                                        'BLER [%]'],
@@ -1467,7 +1583,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
     
         # SINR difference (realised - estimated)
         if plot_idx == 2.3:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][0]], 
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][0][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['SINR diff [dB]'], 
                          savefig=save_fig, filename=file_name, 
@@ -1475,8 +1591,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             
         # SINR difference vs BLER
         if plot_idx == 2.4:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][0]], 
-                                [sim_data_computed[f][3]],
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][0][:,:,l]], 
+                                [sim_data_computed[f][3][:,:,l]],
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['SINR diff [dB]', 'BLER [%]'],
                                 savefig=save_fig, filename=file_name, 
@@ -1514,7 +1630,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             tti_idx = 3
             
             plot_for_ues(ues, sim_data_computed[f][11], 
-                         [sim_data_computed[f][6]], 
+                         [sim_data_computed[f][6][:,:,l]], 
                          x_axis_label='Frequency [Hz]', 
                          y_axis_label=['Power [dB]'], 
                          savefig=save_fig, filename=file_name, 
@@ -1532,7 +1648,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # Signal power vs interference (Watt) [single axis]
         if plot_idx == 3.3:        
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][10][:,:,l], sim_data_trimmed[f][12][:,:,l]], 
+                         [sim_data_trimmed[f][10][:,:,l], 
+                          sim_data_trimmed[f][12][:,:,l]], 
                          x_axis_label=x_label_time, y_axis_label=['[W]'], 
                          y_labels_left=['Signal', 'Interference'],
                          use_legend=True, legend_loc='lower center', ncols=2,
@@ -1541,18 +1658,19 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
 
         # Signal power vs interference (Watt) [double axis]
         if plot_idx == 3.35:
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][10][:,:,l]], 
-                                [sim_data_trimmed[f][12][:,:,l]], 
-                                x_axis_label=x_label_time, 
-                                y_axis_label=['Signal Power [W]', 
-                                              'Interference Power [w]'],
-                                savefig=save_fig, filename=file_name, 
-                                saveformat=save_format) 
+            plot_for_ues(ues, x_vals, 
+                         [sim_data_trimmed[f][10][:,:,l]], 
+                         [sim_data_trimmed[f][12][:,:,l]], 
+                         x_axis_label=x_label_time, 
+                         y_axis_label=['Signal Power [W]', 
+                                       'Interference Power [w]'],
+                         savefig=save_fig, filename=file_name, 
+                         saveformat=save_format) 
 
         # Signal power vs interference (dBw) [single axis]
         if plot_idx == 3.4:
             plot_for_ues(ues, x_vals, 
-                         [sim_data_computed[f][5], sim_data_computed[f][7]], 
+                         [sim_data_computed[f][5][:,:,l], sim_data_computed[f][7][:,:,l]], 
                          x_axis_label=x_label_time, y_axis_label=['[dBw]'], 
                          y_labels_left=['Signal', 'Interference'],
                          use_legend=True, legend_loc='lower center', ncols=2,
@@ -1562,16 +1680,16 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         
         # Signal power vs interference (dBw) [double axis]
         if plot_idx == 3.45:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][5]], 
-                                [sim_data_computed[f][7]], x_label_time, 
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][5][:,:,l]], 
+                                [sim_data_computed[f][7][:,:,l]], x_label_time, 
                                 ['Sig. Power [dBw]', 'Int. Power [dBw]'],
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
                 
         # Signal power vs interference (dBm) [single]
         if plot_idx == 3.5:
-            plot_for_ues(ues, x_vals,[sim_data_computed[f][5] + 30, 
-                                      sim_data_computed[f][7] + 30], 
+            plot_for_ues(ues, x_vals,[sim_data_computed[f][5][:,:,l] + 30, 
+                                      sim_data_computed[f][7][:,:,l] + 30], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Power [dBm]'],
                          y_labels_left=['Signal', 'Interference'],
@@ -1583,8 +1701,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # Signal power vs interference (dBm) [Double]
         if plot_idx == 3.55:
             plot_for_ues(ues, x_vals, 
-                                [sim_data_computed[f][5] + 30], 
-                                [sim_data_computed[f][7] + 30], 
+                                [sim_data_computed[f][5][:,:,l] + 30], 
+                                [sim_data_computed[f][7][:,:,l] + 30], 
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['Signal Power [dBm]', 
                                               'Interference Power [dBm]'],
@@ -1595,7 +1713,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # Estimated vs Realised interference
         if plot_idx == 3.6:
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][13][:,:,l], sim_data_trimmed[f][12][:,:,l]], 
+                         [sim_data_trimmed[f][13][:,:,l], 
+                          sim_data_trimmed[f][12][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Interference Power [W]'],  
                          y_labels_left=['Estimated', 'Realised'],
@@ -1606,7 +1725,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # Estimated vs Realised interference [dB]
         if plot_idx == 3.65:
             plot_for_ues(ues, x_vals, 
-                         [sim_data_computed[f][8], sim_data_computed[f][7]], 
+                         [sim_data_computed[f][8][:,:,l], sim_data_computed[f][7][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Interference Power [dB]'],
                          y_labels_left=['Estimated', 'Realised'],
@@ -1653,14 +1772,14 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # Beams: best beam per user (filtered: prevents going back to zero when
         #        the UE is no scheduled. One plot per UE    
         if plot_idx == 5.1:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][9]], 
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][9][:,:,l]], 
                          title='Formula: azi + ele x 10',
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
         
         # Beam formula processed (filtered and smoother) !
         if plot_idx == 5.15:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][26]], 
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][26][:,:,l]], 
                          title='Formula: azi + ele x 10',
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
@@ -1676,7 +1795,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
     
         # Beam sum: used to notice beam switching easily
         if plot_idx == 5.3:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][10]],
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][10][:,:,l]],
                          x_axis_label=x_label_time, 
                          y_axis_label=['Azimuth + Elevation [º]'],
                          savefig=save_fig, filename=file_name, 
@@ -1684,7 +1803,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         
         # Beam sum vs SINR
         if plot_idx == 5.4:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][10]], 
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][10][:,:,l]], 
                                 [sim_data_trimmed[f][2][:,:,l]], 
                                 x_axis_label=x_label_time,
                                 y_axis_label=['Azi. + El. [º]', 'SINR [dB]'],
@@ -1693,8 +1812,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         
         # Beam sum vs BLER\
         if plot_idx == 5.5:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][10]], 
-                                [sim_data_computed[f][3]], 
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][10][:,:,l]], 
+                                [sim_data_computed[f][3][:,:,l]], 
                                 x_axis_label=x_label_time,
                                 y_axis_label=['Azi. + El. [º]', 'BLER [%]'],
                                 savefig=save_fig, filename=file_name, 
@@ -1702,7 +1821,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         
         # Beam Switch: single plot
         if plot_idx == 5.6:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][31]],
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][31][:,:,l]],
                          use_legend=True, legend_inside=True, 
                          legend_loc="lower right", same_axs=True,
                          savefig=save_fig, filename=file_name, 
@@ -1710,20 +1829,20 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         
         # Beam Switch: multiple plots
         if plot_idx == 5.65:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][31]],
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][31][:,:,l]],
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
         
         # BLER: Instantaneous
         if plot_idx == 7.1:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][3]],
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][3][:,:,l]],
                          x_axis_label=x_label_time, 
                          y_axis_label=['Blocks with errors [%]'],
                          savefig=save_fig)
         
         # BLER: Running Average
         if plot_idx == 7.2:       
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][4]], 
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][4][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Running Avg. BLER [%]'],
                          width=6.4, height=4.8, size=1.3,
@@ -1734,7 +1853,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # BLER: Instantaneous + Running Average
         if plot_idx == 7.3:
             plot_for_ues(ues, x_vals,
-                         [sim_data_computed[f][3], sim_data_computed[f][4]],
+                         [sim_data_computed[f][3][:,:,l], sim_data_computed[f][4][:,:,l]],
                          x_axis_label=x_label_time, 
                          y_axis_label=['Running average of BLER [%]'],
                          savefig=save_fig, filename=file_name, 
@@ -1742,8 +1861,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
 
         # BLER: Instantaneous + Running Average [double axis]
         if plot_idx == 7.35:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][3]], 
-                                [sim_data_computed[f][4]],
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][3][:,:,l]], 
+                                [sim_data_computed[f][4][:,:,l]],
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['Inst. BLER [%]', 
                                               'Run. Avg. BLER [%]'],
@@ -1755,7 +1874,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # BLER: instantaneous BLER and realised bitrate
         if plot_idx == 7.4:
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][4][:,:,l]],
-                                [sim_data_computed[f][3]],
+                                [sim_data_computed[f][3][:,:,l]],
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['Inst. bitrate [Mbps]', 
                                               'BLER [%]'],
@@ -1765,7 +1884,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             
         # BLER: Instantaneous vs realised SINR
         if plot_idx == 7.5:
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][3]], 
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][3][:,:,l]], 
                                 [sim_data_trimmed[f][2][:,:,l]], 
                                 x_axis_label=x_label_time,
                                 y_axis_label=['BLER [%]', 'SINR [dB]'],
@@ -1775,7 +1894,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # OLLA (single-user) with Bitrate for grey areas
         if plot_idx == 9.1:
             # ONE UE ONLY:
-            plot_for_ues([2], x_vals, [sim_data_computed[f][3]],
+            plot_for_ues([2], x_vals, [sim_data_computed[f][3][:,:,l]],
                                 [sim_data_trimmed[f][8]], 
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['BLER [%]', '$\Delta_{OLLA}$'],
@@ -1793,7 +1912,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # OLLA (multi-user) with active transmission (bitrate > 0)
         if plot_idx == 9.2:
             # MULTIPLE UEs
-            plot_for_ues(ues, x_vals, [sim_data_computed[f][3]],
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][3][:,:,l]],
                                 [sim_data_trimmed[f][8]], 
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['BLER [%]', '$\Delta_{OLLA}$'],
@@ -1816,7 +1935,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
          
         # OLLA: inst. bler vs olla        
         if plot_idx == 9.4:
-            plot_for_ues([0, 2], x_vals, [sim_data_computed[f][3]], 
+            plot_for_ues([0, 2], x_vals, [sim_data_computed[f][3][:,:,l]], 
                                 [sim_data_trimmed[f][8]], 
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['BLER [%]', '$\Delta_{OLLA}$'], 
@@ -2102,7 +2221,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
                 print(f'Saved: {file_name}')
         
         if plot_idx == 11.4: 
-            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][10][:,:,l]], 
+            plot_for_ues(ues, x_vals, 
+                         [sim_data_trimmed[f][10][:,:,l]], 
                                 [sim_data_trimmed[f][15]], 
                                 x_axis_label=x_label_time, 
                                 y_axis_label=['Signal Power [W]', 
@@ -2184,7 +2304,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         if plot_idx == 15:
             if f_sp.save_power_per_CSI_beam:
                 # IDX 18 has powers of each CSI beam for each TTI for each UE.
-                plot_for_ues(ues, x_vals, [sim_data_computed[f][28]], 
+                plot_for_ues(ues, x_vals, [sim_data_computed[f][28][:,:,:,l]], 
                              tune_opacity=False,
                              savefig=save_fig, filename=file_name, 
                              saveformat=save_format)
@@ -2194,8 +2314,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         if plot_idx == 16:
             a = 2
             lims = (-a,a)
-            plot_for_ues(ues, sim_data_computed[f][29], 
-                         [sim_data_computed[f][30]], xlim=lims, ylim_left=lims,
+            plot_for_ues(ues, sim_data_computed[f][29][:,:,l], 
+                         [sim_data_computed[f][30][:,:,l]], xlim=lims, ylim_left=lims,
                          use_legend=True, legend_inside=True, 
                          legend_loc="lower right",
                          same_axs=True, plot_type_left='scatter',
@@ -2206,8 +2326,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         if plot_idx == 16.1:
             a = 2
             lims = (-a,a)
-            plot_for_ues(ues, sim_data_computed[f][29], 
-                         [sim_data_computed[f][30]], xlim=lims, ylim_left=lims,
+            plot_for_ues(ues, sim_data_computed[f][29][:,:,l], 
+                         [sim_data_computed[f][30][:,:,l]], xlim=lims, ylim_left=lims,
                          plot_type_left='scatter',
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
@@ -2393,7 +2513,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
                         # PLOT BEAMS! 
                         
                         # Red when not scheduled
-                        if sim_data_trimmed[f][15][idx_uncomp][ue] == 0:
+                        if sim_data_trimmed[f][15][idx_uncomp, ue] == 0:
                             m = 'X'
                             c = 'r'
                         else:
@@ -2513,13 +2633,25 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         if plot_idx == 18.1:
             print(sim_data_computed[f][37])
            
-        # GoB plots: plot a projection of all beams in the GoB
-        if plot_idx == 19.1:
-            plot_for_ues(ues, [sim_data_trimmed[f][2][:,:,l][:,:,:,0], 
-                               sim_data_trimmed[f][2][:,:,l][:,:,:,1]], 
-                         use_legend=True, legend_inside=True, 
-                         legend_loc="lower right",
-                         same_axs=True, plot_type_left='scatter',
-                         savefig=save_fig, filename=file_name, 
-                         saveformat=save_format)    
-            
+        
+        if plot_idx == 19.102:
+            plot_for_ues(ues, x_vals, 
+                         [sim_data_trimmed[f][2][:,:,0], 
+                          sim_data_trimmed[f][2][:,:,1]], 
+                         x_axis_label=x_label_time, y_axis_label=['SINR [dB]'], 
+                         y_labels_left=['Layer 1', 'Layer 2'], 
+                         use_legend=True, ncols=2, size=1.3,
+                         filename=file_name, 
+                         savefig=save_fig)
+    
+    if plot_idx == 20.002:
+        plot_for_ues(ues, x_vals, 
+                    [sim_data_trimmed[0][2][:,:,l], 
+                     sim_data_trimmed[1][2][:,:,l]], 
+                    x_axis_label=x_label_time, y_axis_label=['SINR [dB]'], 
+                    y_labels_left=['Trace 1', 'Trace 2'], 
+                    use_legend=True, ncols=2, size=1.3,
+                    filename=file_name, 
+                    savefig=save_fig)
+    
+        
