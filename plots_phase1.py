@@ -83,7 +83,9 @@ combinations = list(itertools.product(speeds, freq_idxs,
                                       seeds))
 
 
-# the variables to be loaded at each position of sim_data_(loaded/trimmed)
+# These are the names of the variables that are present in each index of 
+# the sim_data_(loaded/trimmed) variables. We loaded these variables from the
+# simulation. 
 # NOTE: ALWAYS ADD VARIABLES AT THE END!!
 VARS_NAME_LOAD = [
     'sp',                       #  0 
@@ -108,9 +110,9 @@ VARS_NAME_LOAD = [
     'real_scheduled_layers',    # 19 [tti] x [ue]
     '']
 
-# Variable names that can be computed from the loaded and trimmed variables
-# 1L means it is specific to the layer we specified, it does not have the 
-# information of both layers
+# Besides the variables we load from the simulations, we can compute other
+# variables. The names of these variables are below and they will be stored in
+# sim_data_computed.
 VARS_NAME_COMPUTE = [
     'sinr_diff',                         # 0  [tti] x [ue] x [layer]
     'running_avg_bitrate',               # 1  [tti] x [ue] x [layer]
@@ -153,8 +155,8 @@ VARS_NAME_COMPUTE = [
     'avg_sinr_multitrace',               # 38 [ue] x [layer]
     '']
 
-# (Loaded) Vars with information per layer
-vars_with_layers = [2,3,4,5,6,7,9,10,12,13]
+# In this script we plot data from two variables only. 
+# ........................................
 
 # file_sets has the sets of files to load at any given time.
 # e.g. if we want to make a plot for each seed, we just want to load one seed
@@ -476,8 +478,7 @@ X        20.137 ->  'avg_sinr_multitrace'                  #  37
         plt_func.compute_sim_data(i, layer, ues, ttis, VARS_NAME_LOAD, 
                                   VARS_NAME_COMPUTE, which_vars_to_compute, 
                                   which_vars_to_trim, sim_data_trimmed, 
-                                  sim_data_computed, file_set, 
-                                  vars_with_layers)
+                                  sim_data_computed, file_set)
         
         # Plots:
         plt_func.plot_sim_data(i, file_set, layer, ues, ttis, x_vals, 

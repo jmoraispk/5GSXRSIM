@@ -819,8 +819,7 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
 def compute_sim_data(plot_idx, l, ues, ttis, 
                      all_loadable_var_names, all_computable_var_names, 
                      vars_to_compute, vars_to_trim,
-                     sim_data_trimmed, sim_data_computed, file_set,
-                     vars_with_layers):
+                     sim_data_trimmed, sim_data_computed, file_set):
     
     # Setup some useful variables:
     n_ues = len(ues)
