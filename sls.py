@@ -793,7 +793,7 @@ def load_coeffs(tti, time_div_idx, n_time_divs, ttis_per_time_div,
 
 
 def update_channel_vars(tti, TTIs_per_batch, n_ue, coeffs, channel, 
-                        channel_per_prb, save_prb_vars):
+                        channel_per_prb, save_prb_channel):
     
     """
     Aggregate channel responses across antenna elements per ue. Assumes BS 0.
@@ -819,7 +819,7 @@ def update_channel_vars(tti, TTIs_per_batch, n_ue, coeffs, channel,
             # The second check is to prevent this to run before it is properly
             # implemented and tested. The save_prb_vars should be enough.
             # PS: actually, separate in channel and sig_pow vars to be specific
-            if save_prb_vars and channel_per_prb != []:
+            if save_prb_channel and channel_per_prb != []:
                 channel_per_prb[ttis[t_idx]][ue] = 10 * \
                     np.log10(np.sum(np.sum(np.abs(c[:,:,:,t_idx]) ** 2, 0), 0))
 
@@ -1689,7 +1689,7 @@ def update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti):
     
         if not buffers[ue].is_empty:
             # These UEs have something to send this TTI.
-            active_UEs[tti].append(ue)
+            active_UEs[tti][ue] = 1
 
 
 
@@ -1718,6 +1718,8 @@ def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs,
                          save_power_per_CSI_beam, vectorize):
     
     for ue in active_UEs[tti]:
+        if not active_UEs[tti][ue]:
+            continue
         for bs in range(n_bs):
             # 1- Precoder Estimation
             # a) Check if the precoder should be updated (CSI periodicity)
@@ -1754,7 +1756,7 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
                    est_dl_interference, wideband_noise_power_dl, 
                    TTI_duration, freq_compression_ratio, 
                    use_olla, olla, debug_su_mimo_choice, 
-                   su_mimo_bitrates, est_su_mimo_bitrate, su_mimo_setting,
+                   su_mimo_bitrates, est_su_mimo_bitrate, est_scheduled_layers,
                    dl_radio_efficiency, bandwidth_mult):
     
     """
@@ -1762,7 +1764,7 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
     schedule for each UE. 
     Returns the bitrates of the two options, the estimated bitrate of the 
     best option and which option was the best, respectively, in 
-    'su_mimo_bitrates', 'est_su_mimo_bitrate' and 'su_mimo_setting'.
+    'su_mimo_bitrates', 'est_su_mimo_bitrate' and 'est_scheduled_layers'.
     
     """
     
@@ -1816,14 +1818,14 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
         est_su_mimo_bitrate[tti][ue] = max(su_mimo_bitrates[tti][ue][:])
         
         # Number of layers to be transmitted for each ue
-        su_mimo_setting[tti][ue] = 1 + \
+        est_scheduled_layers[tti][ue] = 1 + \
             np.where(su_mimo_bitrates[tti][ue] == 
                      est_su_mimo_bitrate[tti][ue])[0][0]
         
         if debug_su_mimo_choice:
             print(f"Su_mimo_bitrates: {su_mimo_bitrates[tti][ue]}")
             print(f"est_su_mimo_bitrates: {est_su_mimo_bitrate[tti][ue]}")
-            print(f"su_mimo_setting: {su_mimo_setting[tti][ue]}")
+            print(f"est_scheduled_layers: {est_scheduled_layers[tti][ue]}")
 
 
 def compute_priorities(tti, ue_priority, all_delays, buffers, 
@@ -1860,14 +1862,22 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
 
 
 def mu_mimo_choice(tti, curr_priorities, curr_schedule, serving_BS_dl, 
-                   su_mimo_setting, curr_beam_pairs, 
+                   est_scheduled_layers, curr_beam_pairs, 
                    min_beam_distance, scheduled_UEs, scheduling_method,
-                   scheduled_layers, debug):
+                   real_scheduled_layers, debug):
     
     """
     The first user has as many layers as it can handle.
     The next users have the layers that are compatible with the layers
     already added to the schedule.
+    
+    
+    NOTE: The choice of layers does not take into account the
+          estimation of the aggregated throughput. This is because
+          we don't have measurements of the interference for all 
+          combinations we can schedule. Thus we cannot be sure which
+          will actually bring the best performance. Our 
+          'beam-compatibility' function aims to approximate it.
     """
         
     curr_schedule['DL'] = []
@@ -1893,7 +1903,7 @@ def mu_mimo_choice(tti, curr_priorities, curr_schedule, serving_BS_dl,
         last_ue = ue
 
         # The layers in curr_beam_pairs are sorted based on channel_quality
-        for l in range(su_mimo_setting[tti][ue]):
+        for l in range(est_scheduled_layers[tti][ue]):
             beam_pair = curr_beam_pairs[(bs,ue,l)]
                 
             new_schedule_entry = Schedule_entry(bs, ue, beam_pair)
@@ -1911,7 +1921,7 @@ def mu_mimo_choice(tti, curr_priorities, curr_schedule, serving_BS_dl,
                     if debug:
                         curr_scheduled_ues.append(ue)
                 
-                scheduled_layers[tti][ue] += 1
+                real_scheduled_layers[tti][ue] += 1
                 # print(f'UE {ue} layer {l} is compatible with schedule')
             else:
                 # print(f'UE {ue} layer with polarisation {p} is NOT '
@@ -1922,10 +1932,10 @@ def mu_mimo_choice(tti, curr_priorities, curr_schedule, serving_BS_dl,
     
     if debug:
         print(f"MU-MIMO scheduled UEs: {curr_scheduled_ues}")
-        print(f"Scheduled layers: {scheduled_layers[tti]}")
+        print(f"Scheduled layers: {real_scheduled_layers[tti]}")
 
 
-def power_control(tti, bs_max_pow, scheduled_UEs, scheduled_layers, 
+def power_control(tti, bs_max_pow, scheduled_UEs, real_scheduled_layers, 
                   curr_schedule):
     """
     Now that we know which UEs will be scheduled, we may attribute the
@@ -1950,14 +1960,14 @@ def power_control(tti, bs_max_pow, scheduled_UEs, scheduled_layers,
     for schedule_entry in curr_schedule['DL']:
         # If the UE has 2 layers, distribute the power between them
         schedule_entry.tx_power = (tx_pow_per_ue / 
-                                   scheduled_layers[tti][schedule_entry.ue])
+                                   real_scheduled_layers[tti][schedule_entry.ue])
 
 
 def final_mcs_update(tti, curr_schedule, est_interference,
                      wideband_noise_power, n_prb, TTI_dur_in_secs,
                      freq_compression_ratio, estimated_SINR, 
                      use_olla, olla, tbs_divisor, efficiency, bw_multiplier,
-                     scheduled_UEs, scheduled_layers):
+                     scheduled_UEs, real_scheduled_layers):
     # With all choices made, there may have been changes to the SINRs
     # Update the estimations such that the best MCS is used
     # There may also have been updates to the interference, pro-actively
@@ -2000,7 +2010,7 @@ def final_mcs_update(tti, curr_schedule, est_interference,
     for entry in curr_schedule['DL']:
         if entry.cqi == 0:
             scheduled_UEs[tti][entry.ue] = 0
-            scheduled_layers[tti][entry.ue] -= 1 
+            real_scheduled_layers[tti][entry.ue] -= 1 
             
     curr_schedule['DL'] = [entry for entry in curr_schedule['DL'] 
                            if entry.cqi != 0]
@@ -2012,11 +2022,11 @@ def final_mcs_update(tti, curr_schedule, est_interference,
 def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs, 
                    tti_relative, intercell_interference_power_per_prb, 
                    noise_power_per_prb, tti, real_dl_interference, 
-                   info_bits_table, buffers, n_transport_blocks, realised_bits, 
+                   info_bits_table, buffers, n_transport_blocks,
                    olla, use_olla, bler_target, olla_stepsize, 
                    blocks_with_errors, realised_SINR, TTI_dur_in_secs, 
-                   realised_bitrate_total, beams_used, sig_pow_per_prb, 
-                   mcs_used, save_per_prb_variables, experienced_signal_power):
+                   realised_bitrate, beams_used, sig_pow_per_prb, 
+                   mcs_used, save_per_prb_sig_pow, experienced_signal_power):
     
     for entry in curr_schedule[slot_type]:
         if debug:
@@ -2067,7 +2077,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                                   entry.beam_pair.ue_weights,
                                   ch_matrix)
             
-            if save_per_prb_variables:
+            if save_per_prb_sig_pow:
                 sig_pow_per_prb[tti][entry.ue][entry.layer_idx][prb] = \
                     sig_pow_of_prb[prb]
                 
@@ -2128,6 +2138,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                                                experienced_sinr)
         success_tb = 0
         fail_tb = 0
+        realised_bits = 0
         if not buffers[entry.ue].is_empty:
             # 5- Flip a BLER biased coin to assess the errors on TBs
             for tb in transport_blocks:
@@ -2137,7 +2148,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                     success_tb += 1
                     # If the transport block is well received, remove bits from
                     # buffer
-                    realised_bits[tti][entry.ue][entry.layer_idx] += tb.size
+                    realised_bits += tb.size
                     
                     buffers[entry.ue].remove_bits(tb.size, tb.start_idx)
                     suc_or_fail = 'success'
@@ -2167,20 +2178,22 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
         
         # 6- Update the realised bitrates with the bitrate of given entry
         realised_SINR[tti][entry.ue][entry.layer_idx] = experienced_sinr
-        r = (realised_bits[tti][entry.ue][entry.layer_idx] / 
-             TTI_dur_in_secs / 1e6)
         
-        realised_bitrate_total[tti][entry.ue] += r
+        realised_bitrate[tti][entry.ue][entry.layer_idx] = \
+            realised_bits / TTI_dur_in_secs / 1e6
             
-        
         if debug:
-            print(f'Realised bitrate: {r} Mbits/s') 
+            print('Realised bitrate in tti {tti}, ue {entry.ue}, '
+                  'layer {entry.layer_idx} is: '
+                  f'{realised_bitrate[tti][entry.ue][entry.layer_idx]} '
+                  'Mbits/s') 
          
         
         
 def update_avg_bitrates(tti, n_ue, realised_bitrate, avg_bitrate):
     for ue in range(n_ue):
-        avg_bitrate[tti][ue] = compute_avg_bitrate(avg_bitrate[tti-1][ue], 
-                                                   realised_bitrate[tti][ue], 
-                                                   tc=100)
+        avg_bitrate[tti][ue] = \
+            compute_avg_bitrate(avg_bitrate[tti-1][ue], 
+                                np.sum(realised_bitrate[tti][ue]), 
+                                tc=100)
         
