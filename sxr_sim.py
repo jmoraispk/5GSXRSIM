@@ -17,6 +17,7 @@ import utils as ut
 import application_traffic as at
 import simulation_parameters as sim_par
 
+
 parent_folder = \
     r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks"
 
@@ -41,7 +42,7 @@ csi_periodicities = [5]
 users = [None]
 
 rot_factors = [1]
-n_layers = [1,2]
+n_layers = [2]
 
 # Now we usually keep these constant (so we removed them from the file name!):
 application_bitrates = [100] # Mbps

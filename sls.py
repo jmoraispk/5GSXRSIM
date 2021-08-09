@@ -8,7 +8,6 @@ import numpy.linalg
 import scipy.io
 import scipy.interpolate
 
-
 import application_traffic as at
 
 
@@ -881,7 +880,8 @@ def load_precoders(precoders_paths, vectorize_GoB):
         
         precoder_file = scipy.io.loadmat(precoders_paths[bs])
         
-        precoders_dict[(bs, 'matrix')] = precoder_file['precoders_matrix']
+        precoders_dict[(bs, 'matrix')] = \
+            precoder_file['precoders_matrix'].astype(np.complex64)
         precoders_dict[(bs, 'directions')] = \
             precoder_file['precoders_directions']
         
@@ -900,20 +900,6 @@ def load_precoders(precoders_paths, vectorize_GoB):
         # for a square GoBs, it is the square root of the total # of precoders
         precoders_dict[(bs, 'size')] = [n_azi_beams, n_ele_beams]
         precoders_dict[(bs, 'n_directions')] = n_directions
-        
-        
-        
-        # TODO: try vectorizing the GoB
-        # if vectorize_GoB:
-        #     # If the GoB is vectorized, create the full precoder matrix 
-        #     # AE_BS x N_GoB, where N_GoB is the number of beams in the grid
-        #     n_beams = np.prod(precoders_dict[(bs)])
-        #     precoders_dict[(bs, 'full-matrix')] = np.zeros()
-        #     for azi_idx in range(n_azi_vals):
-        #         for el_idx in range(n_el_vals):
-        #             beam_idx = el_idx + azi_idx * n_el_vals
-        #             precoders_dict[(bs, 'full-matrix')][:, beam_idx] = \
-        #                 precoders_dict[(bs, azi_idx, el_idx)]
         
     return precoders_dict
     
@@ -1025,6 +1011,45 @@ def interleave(arrays, axis=0, out=None):
     return np.stack(arrays, axis=axis+1, out=out).reshape(shape)
 
 
+# from numba import jit  -> resulted in no performance improvement.
+# @jit(nopython=True)
+def loop_all_directions(codebook, channel, extra=False):
+    curr_max_ch_gain = 0
+    
+    power_per_beam_list = []
+    
+    for dir_idx in range(codebook.shape[1]):
+        
+        w = codebook[:,dir_idx]
+        
+        # Compute internal product between ch coeffs and precoder, 
+        # that is what the UE will see from a transmission with w
+        at_ue_ant = np.dot(channel, w)
+        
+        # The UE will use the Maximum Ratio Beamformer, 
+        # both for receiving and for transmitting
+        mr_precoder = at_ue_ant.conj().T
+        mr_precoder = mr_precoder / np.linalg.norm(mr_precoder)
+        
+        # Resulting in a amplitude channel gain of:
+        ch_gain = np.dot(at_ue_ant, mr_precoder)
+        
+        # The channel gain should be a scalar by now...
+        # Save the precoder that performs the best
+        
+        if abs(ch_gain) > curr_max_ch_gain:
+            best_idx = dir_idx
+            curr_max_ch_gain = abs(ch_gain)
+            best_ue_weights = mr_precoder
+            best_bs_weights = w
+        
+        if extra:
+            power_per_beam_list.append(abs(ch_gain))
+
+    return (best_idx, curr_max_ch_gain, best_ue_weights, best_bs_weights, 
+            power_per_beam_list) 
+
+
 def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs, 
                          codebook_subset_directions, ch_resp, bs, n_csi_beams,
                          save_power_per_CSI_beam, vectorize, N1, N2, O1, O2):
@@ -1101,34 +1126,12 @@ def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
         if save_power_per_CSI_beam:
             power_per_beam_list = list_of_ch_gains
     else:
-        for dir_idx in range(codebook_subset.shape[1]):
-            
-            w = codebook_subset[:,dir_idx]
-            
-            # Compute internal product between ch coeffs and precoder, 
-            # that is what the UE will see from a transmission with w
-            at_ue_ant = np.dot(ch_resp, w)
-            
-            # The UE will use the Maximum Ratio Beamformer, 
-            # both for receiving and for transmitting
-            mr_precoder = at_ue_ant.conj().T
-            mr_precoder = mr_precoder / np.linalg.norm(mr_precoder)
-            
-            # Resulting in a amplitude channel gain of:
-            ch_gain = np.dot(at_ue_ant, mr_precoder)
-            
-            # The channel gain should be a scalar by now...
-            # Save the precoder that performs the best
-            
-            if abs(ch_gain) > curr_max_ch_gain:
-                best_idx = dir_idx
-                curr_max_ch_gain = abs(ch_gain)
-                best_ue_weights = mr_precoder
-                best_bs_weights = w
-            
-            if save_power_per_CSI_beam:
-                power_per_beam_list.append(abs(ch_gain))
-    
+        
+        (best_idx, curr_max_ch_gain, best_ue_weights, best_bs_weights, 
+         power_per_beam_list) = \
+            loop_all_directions(codebook=codebook_subset,
+                                channel=ch_resp, 
+                                extra=save_power_per_CSI_beam)
     
     # Create and load the best Beam Pair found
     beam_pair = Beam_pair()
