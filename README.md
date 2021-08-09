@@ -14,3 +14,11 @@
 
 [Spyder](https://www.spyder-ide.org/), installed through Anaconda.
 
+For installing:
+1. Install anaconda
+2. Open anaconda prompt
+3. Update anaconda: conda update conda
+4. Search the most recent version of spyder: conda search -f spyder
+5. Install that version (say 5.0.5 is currently the most recent): conda install spyder=5.0.5 
+
+For updating to a new version of Spyder, repeat steps 2 to 5.
