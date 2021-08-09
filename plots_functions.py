@@ -830,6 +830,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
     # Let's handle first the single_trace computations
     # In this first computation phase, we compute variables per trace only.
     for f in range(n_files):
+        
         # Current file simulation parameters
         f_sp = sim_data_trimmed[f][0]
         
@@ -1419,7 +1420,11 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         
         if save_fig and not ut.isdir(save_folder):
             ut.makedirs(save_folder)
-                    
+        
+        if plot_idx > 20:
+            # Continue to Multi-trace plots
+            break
+            
         # Avg. channel across time (sum over the PRBs, and antenna elements)
         if plot_idx == 0.1:
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][16]],
@@ -2643,6 +2648,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
                          filename=file_name, 
                          savefig=save_fig)
     
+    
+    # Multi-trace plots:
     if plot_idx == 20.002:
         plot_for_ues(ues, x_vals, 
                     [sim_data_trimmed[0][2][:,:,l], 
