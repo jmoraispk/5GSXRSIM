@@ -16,11 +16,12 @@ import utils as ut
 
 class Simulation_parameters:
     def __init__(self, folder_to_load, freq_idx, csi_periodicity, 
-                 application_bitrate, user_list, bw, lat_budget, rot_factor):
+                 application_bitrate, user_list, bw, lat_budget, 
+                 n_layers, rot_factor):
 
         # 1- Init General Variables (General parameters and Vari)
         self.set_simulation_param(freq_idx, csi_periodicity, user_list, 
-                                  rot_factor)
+                                  n_layers, rot_factor)
         
         # 2- Init IO parameters (which folders to write to, and so on)
         self.set_io_param(folder_to_load)
@@ -35,7 +36,7 @@ class Simulation_parameters:
         self.compute_application_traffic_vars()
 
     def set_simulation_param(self, freq_idx, csi_periodicity, user_list, 
-                             rot_factor):
+                             n_layers, rot_factor):
         # ################# Mode 1: General Parameters  #######################
         # Note: everything will be zero-indexed from now on, because now we
         #       are in Python land
@@ -86,7 +87,7 @@ class Simulation_parameters:
         IMPLEMENTED_LAYERS_EXPLICIT_BF = 2
         
         # Maximum 2 layers per UE
-        self.n_layers = 1
+        self.n_layers = n_layers
         
         if self.bf_method == 'gob':
             if self.n_layers > IMPLEMENTED_LAYERS_EXPLICIT_BF:
@@ -231,9 +232,9 @@ class Simulation_parameters:
             # the past, which leads to a lot of errors!
             # There are workarounds, but take time. So: postponed for later.
         
-        # In case we need per PRB information on the channel and signal 
-        # strength. TODO: check if the channel is also working.
-        self.save_per_prb_variables = False
+        # In case we need per PRB information on the channel and signal power:
+        self.save_per_prb_sig_pow = False
+        self.save_per_prb_channel = False
         
         # In case we need to know how much power is received given a certain
         # choice of GoB

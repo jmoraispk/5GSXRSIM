@@ -17,50 +17,47 @@ import utils as ut
 import application_traffic as at
 import simulation_parameters as sim_par
 
-parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+
+parent_folder = \
+    r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks"
 
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
-seed = 1
+seed = 3
 speed = 3
 
+folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 
-# folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
-folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-# folders_to_simulate = ["Sim_2021-07-08_14h58m53s_SEED1"]
-
-folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
+folders_to_simulate = [parent_folder + '\\' + f for f in folders_to_simulate]
 
 freq_idxs = [0]
 
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
-# application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
 
 csi_periodicities = [5]
-application_bitrates = [100]
+
 
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
 users = [None]
 
-# bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
-bandwidths = [50] # MHz
-
-# latencies = [10, 20, 30, 40, 50] # ms
-latencies = [10]
 rot_factors = [1]
+n_layers = [2]
+
+# Now we usually keep these constant (so we removed them from the file name!):
+application_bitrates = [100] # Mbps
+bandwidths = [50] # MHz
+latencies = [10] # ms
+
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
-                                    users, bandwidths, latencies, rot_factors))
-# itertools.product does: 
-#   [[1st element of 1st list, ..., 1st of last list], 
-#    [1st element of 1st list, ..., 2nd element of last list], 
-#    ... ]
+                                    users, bandwidths, latencies, n_layers,
+                                    rot_factors))
 
+# Feel free to check the parameter combinations before running the simulation
 # for param in sim_params:
-#     print(param)
-   
+#     print(param)   
 # ut.stop_execution()
 
 for param in sim_params:
@@ -72,8 +69,9 @@ for param in sim_params:
     users = param[4]
     bw = param[5]
     lat_budget = param[6]
-    rot_factor = param[7]    
-
+    n_layers = param[7]
+    rot_factor = param[8]    
+    
     if users != None:
         if users == 1:
             user_list = [0]
@@ -102,7 +100,7 @@ for param in sim_params:
     # Initialise the simulation parameters
     sp = sim_par.Simulation_parameters(sim_folder, freq_idx, csi_periodicity,
                                        application_bitrate, user_list, bw, 
-                                       lat_budget, rot_factor)
+                                       lat_budget, n_layers, rot_factor)
     # NOTE: 
         # a) users will subset the generated users;
         # b) bw will use the frequency samples of the generated bandwidht
@@ -116,10 +114,8 @@ for param in sim_params:
     include_timestamp = False 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
-    output_str = f'{seed_str}_SPEED-{sp.speed_idx}_FREQ-{freq_idx}_' + \
-                 f'CSIPER-{csi_periodicity}_APPBIT-{application_bitrate}_' + \
-                 f'USERS-{users}_BW-{bw}_LATBUDGET-{lat_budget}_' + \
-                 f'ROTFACTOR-{rot_factor}'
+    output_str = f'{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
+                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
@@ -176,7 +172,7 @@ for param in sim_params:
     #       if UL is used in the future, do:
     #       UL_buffers = cam_buffers
     #       DL_buffers = user_buffers
-    #       And don't forget to complement across the simulator.
+    #       And address the UL and DL buffers from here onwards.
     
     
     if sp.n_prb > 1: 
@@ -189,17 +185,22 @@ for param in sim_params:
     # Note: there are only precoders in the DL. 
     #        UL is computed implicitly with MR, see find_best_beam in sls.py
 
-    # Dictionary indexed by a tupple of bs and a given angle
+    # Keys:
+    #    'matrix': N_ant x N_beams
+    #    'directions': 2 x N_beams
+    #    'N1', 'N2', 'O1', 'O2': Codebook parameters
+    #    'size': [n_azi, n_el]
+    #    'n_directions': = n_azi * n_el = N_beams
     precoders_dict = sls.load_precoders(sp.precoders_paths, sp.vectorize_GoB)
     
     # In the precoders_folder there should be files with the
     # sp.precoder_file_prefix for the correct antennas 
     
+    # Load GoB parameters into the sp variable. Needed for data analysis.
+    sp.load_gob_params(precoders_dict)
     
-    # System Level Simulator (SLS) part
     
-    # Each UE has a precoder list, each having n_layers of beam_pairs, which
-    # are pairs of RX/TX combiners/precoders between the UE and serving BS 
+    # Each UE will have a beam pair per layer, to 
     curr_beam_pairs = {}
     for bs in range(sp.n_bs):
         for ue in range(sp.n_ue):
@@ -212,17 +213,57 @@ for param in sim_params:
     coeffs = ''
     
     
-    
-    # Per TTI:
-    #   Per user:
-    #     - estimated SINR [dB]
-    #     - realised SINR [dB]
-    #     - estimated bits to send (possible to derive MCS from here)
-    #     - bits sent
-    #     - transport blocks that had transmission errors
-    #     - interference (estimation) from other users 
-    #     - scheduled resources (wideband, for each UE and TTI)
-    
+    """
+    The names and descriptions of all variables we save (some are optional):
+    NOTE: All variables are per TTI and per UE.
+
+    - realised_SINR              [tti] x [ue] x [layer]
+        the SINR achieved in a given transmission, in [dB].
+    - estimated_SINR             [tti] x [ue] x [layer]
+        the estimated SINR, in [dB].
+    - realised_bitrate           [tti] x [ue] x [layer]
+        the bitrate of achieved, in [Mbps].
+    - blocks_with_errors         [tti] x [ue] x [layer]
+        the number of transport blocks with errors in a given layer. It 
+        can vary from 0 (no errors) to the number of transport blocks in
+        the transmission - see next variable.
+    - n_transport_blocks         [tti] x [ue] x [layer]
+        number of transport blocks into which the data of a given layer 
+        will be divided. 
+    - beams_used                 [tti] x [ue] x [layer] x 2
+        the direction (in degrees, azimuth and elevation, hence the '2' at the 
+        end) of the beam selected at the BS for receiving and transmitting 
+        from/to a UE.
+    - olla                       [tti] x [ue]
+        the value of olla parameter. If OLLA adjustments are enabled, we adjust
+        the MCS based on this parameter. 
+    - mcs_used                   [tti] x [ue] x [layer]
+        the cqi/mcs index used for transmission of a given layer.
+    - experienced_signal_power   [tti] x [ue] x [layer]
+        signal power received (sum over PRBs), in [Watt].
+    - sig_pow_per_prb            [tti] x [ue] x [layer] x [prb]      (optional)
+        signal power received per PRB, in [Watt].
+    - real_dl_interference       [tti] x [ue] x [layer]
+        the realized interference in the DL, in [Watt].
+    - est_dl_interference        [tti] x [ue] x [layer]
+        the estimated interference in the DL, in [Watt].
+    - est_scheduled_layers       [tti] x [ue] x [layer]
+        the number of estimated layers a UE can support.
+    - scheduled_UEs              [tti] x [ue]
+        '1' if the UE was scheduled in this TTI, '0' otherwise. Scheduled means
+        there energy is transmitted to him, in case of a DL TTI, in the 
+        selected beam pair.
+    - channel                    [tti] x [ue]
+        channel aggregated over PRBs and antenna elements (see function for
+        details), in [Watt].
+    - real_scheduled_layers      [tti] x [ue]
+        the number of layers actually scheduled.
+    - channel_per_prb            [tti] x [ue] x [prb]                (optional)
+        channel aggregated antenna elements, in [Watt].
+    - power_per_beam             [tti] x [ue] x [layer] x [beam]     (optional)
+        signal power received on a given beam, using the MRC at the receiver,
+        for each beam in the GoB
+    """    
     # About Python lists: they can shrink and expand. The definition below 
     # either creates a python lists with zeros (if there are as many dimensions
     # in the size variable as the stated number of dimensions), or it creates 
@@ -231,60 +272,91 @@ for param in sim_params:
     # of active UEs in a given TTI (i.e. UEs with something to send, i.e. 
     # non-empty buffers)
     
-    # The information that is meant to be saved will be stored in lists
-    
-    # UEs with something to transmit in the given TTI
-    active_UEs = ut.make_py_list(2, [sp.sim_TTIs])
-    
-    # Estimated and Realised Interferences and Signal Powers [Downlink]
-    est_dl_interference = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, 
-                                              sp.n_layers])
-    real_dl_interference = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, 
-                                               sp.n_layers])
-    
-    olla = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    mcs_used = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
-    su_mimo_bitrates = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue])
-    est_su_mimo_bitrate = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    ue_priority = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    all_delays = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    
-    # The UEs with an active link
-    scheduled_UEs = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    scheduled_layers = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    su_mimo_setting = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    realised_bits = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
-    realised_bitrate_total = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    avg_bitrate = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    blocks_with_errors = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, 
-                                             sp.n_layers])
-    estimated_SINR = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
-    realised_SINR = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
-    
-    # This tells which direction the beam is pointed, in which polarisation 
-    beams_used = ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers, 2])
-    
-    
-    if sp.save_per_prb_variables:
-        sig_pow_per_prb = ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, 
-                                              sp.n_layers, sp.n_prb])
-        channel_per_prb = [] # ut.make_py_list(3, [sp.n_ue, sp.sim_TTIs])
+    # Variables we save:
+    realised_SINR = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    estimated_SINR = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    realised_bitrate = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    blocks_with_errors = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    n_transport_blocks = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    beams_used = \
+        ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers, 2])
+    olla = \
+        ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+    mcs_used = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    experienced_signal_power = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    real_dl_interference = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    est_dl_interference = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    est_scheduled_layers = \
+        ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+    scheduled_UEs = \
+        ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+    channel = \
+        ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+    real_scheduled_layers = \
+        ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue]) 
+        
+    # Optional Variables:
+    if sp.save_per_prb_sig_pow:
+        sig_pow_per_prb = \
+            ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers, sp.n_prb])
     else:
         sig_pow_per_prb = []
+    
+    if sp.save_per_prb_channel:
+        channel_per_prb = \
+            ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_prb])
+    else:
         channel_per_prb = []
     
-    
-    sp.load_gob_params(precoders_dict)
     if sp.save_power_per_CSI_beam:
-        power_per_beam = ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers, 
-                                             sp.gob_n_beams])
+        power_per_beam = \
+            ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers, sp.gob_n_beams])
     else:
         power_per_beam = []
     
-    channel = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
-    experienced_signal_power = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, 
-                                                   sp.n_layers])
-    n_transport_blocks = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    """
+    We also keep some auxiliar variables, often useful for debugging:
+    
+    - active_UEs                   [tti] (x [ue])
+        List of UE indices corresponding to the UEs with non-empty buffers at
+        the beginning of the TTI. Only those will contend in the scheduling.
+    - su_mimo_bitrates             [tti] x [ue] x [layer]
+        The bitrate of single-layer and for dual-layer transmissions, 
+        respectively, for the first and second indices. If three layers are
+        possible, it will include that estimation as well in the third index.
+    - est_su_mimo_bitrate          [tti] x [ue]
+        the maximum of the variable above, i.e. the estimated layer-aggregated 
+        bitrate for the (estimated) best su_mimo option. This bitrate is used 
+        for scheduling.
+    - ue_priority                  [tti] x [ue]
+        the priority attributed by the scheduler to each UE.
+    - all_delays                   [tti] x [ue]
+        the delay at the head of line/queue (HOL) packet.
+    - avg_bitrate                  [tti] x [ue]
+        the bitrate of each UE averaged across time to the present moment.        
+    """
+    # Purely auxiliary variables
+    active_UEs = \
+        ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+    su_mimo_bitrates = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    est_su_mimo_bitrate = \
+        ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+    ue_priority = \
+        ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+    all_delays = \
+        ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+    avg_bitrate = \
+        ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     
     
     # The schedule is a list of Schedule_entries.
@@ -365,7 +437,7 @@ for param in sim_params:
             
             sls.update_channel_vars(tti, sp.TTIs_per_batch, sp.n_ue, coeffs,
                                     channel, channel_per_prb, 
-                                    sp.save_per_prb_variables)
+                                    sp.save_per_prb_channel)
             
         # Copy information from previous ttis and update some parameters
         tti_timestamp, tti_relative = \
@@ -462,7 +534,7 @@ for param in sim_params:
             
             # Copy the how many layers are decided to be the best for that UE
             for ue in range(sp.n_ue):
-                su_mimo_setting[tti][ue] = su_mimo_setting[tti-1][ue]
+                est_scheduled_layers[tti][ue] = est_scheduled_layers[tti-1][ue]
             
             # And do nothing to the schedules
         else: 
@@ -510,7 +582,7 @@ for param in sim_params:
                                sp.wideband_noise_power_dl, sp.TTI_duration, 
                                sp.freq_compression_ratio, sp.use_olla, olla, 
                                sp.debug_su_mimo_choice, su_mimo_bitrates, 
-                               est_su_mimo_bitrate, su_mimo_setting, 
+                               est_su_mimo_bitrate, est_scheduled_layers, 
                                sp.DL_radio_efficiency, sp.bandwidth_multiplier)
             
             if sp.debug:
@@ -531,24 +603,24 @@ for param in sim_params:
                 print(curr_priorities)
                 print(avg_bitrate[tti])
                 if tti > 0:
-                    print(realised_bitrate_total[tti-1])
+                    print(realised_bitrate[tti-1])
                 print('Priorities are sorted!')
             # -------------------------------
             
             # 5- Select MU-MIMO setting, based on UE priorities
             # Create the actual schedule
             sls.mu_mimo_choice(tti, curr_priorities, curr_schedule, 
-                               serving_BS_dl, su_mimo_setting, curr_beam_pairs, 
-                               sp.min_beam_distance, scheduled_UEs, 
-                               sp.scheduling_method, scheduled_layers, 
-                               sp.debug)
+                               serving_BS_dl, est_scheduled_layers, 
+                               curr_beam_pairs, sp.min_beam_distance, 
+                               scheduled_UEs, sp.scheduling_method, 
+                               real_scheduled_layers, sp.debug)
             
             # -------------------------------
             
             # 6- Power Control
             
             sls.power_control(tti, sp.bs_max_pow, scheduled_UEs, 
-                              scheduled_layers, curr_schedule)
+                              real_scheduled_layers, curr_schedule)
             
             # -------------------------------
             
@@ -560,7 +632,7 @@ for param in sim_params:
                                  estimated_SINR, sp.use_olla, olla,
                                  sp.tbs_divisor, sp.DL_radio_efficiency, 
                                  sp.bandwidth_multiplier, scheduled_UEs, 
-                                 scheduled_layers)
+                                 real_scheduled_layers)
             
         # ################## END OF SCHEDULING UPDATE ####################
         # print(tti)
@@ -571,12 +643,12 @@ for param in sim_params:
                            sp.intercell_interference_power_per_prb, 
                            sp.noise_power_per_prb_dl, tti, 
                            real_dl_interference, info_bits_table, buffers, 
-                           n_transport_blocks, realised_bits, olla, 
+                           n_transport_blocks, olla, 
                            sp.use_olla, sp.bler_target, sp.olla_stepsize, 
                            blocks_with_errors, realised_SINR, 
-                           sp.TTI_dur_in_secs, realised_bitrate_total, 
+                           sp.TTI_dur_in_secs, realised_bitrate, 
                            beams_used, sig_pow_per_prb, mcs_used, 
-                           sp.save_per_prb_variables, experienced_signal_power)
+                           sp.save_per_prb_sig_pow, experienced_signal_power)
         
         if sp.debug:
             print(f'----------Done measuring tti {tti} ---------------------')
@@ -584,7 +656,7 @@ for param in sim_params:
                 # if schedulable_UEs[tti][ue] == 0:
                 #     continue
                 print(f'Realised bitrate for ue {ue} in tti {tti} was '
-                      f'{realised_bitrate_total[tti][ue]}.'
+                      f'{realised_bitrate[tti][ue]}.'
                       f'Estimated Interference: '
                       f'[{est_dl_interference[tti][ue][0]:.2e}'
                       f', {est_dl_interference[tti][ue][1]:.2e}]; '
@@ -594,7 +666,7 @@ for param in sim_params:
                   
         # 11- Update end of tti variables
         
-        sls.update_avg_bitrates(tti, sp.n_ue, realised_bitrate_total, 
+        sls.update_avg_bitrates(tti, sp.n_ue, realised_bitrate, 
                                 avg_bitrate)
         
         # ####################################################################
@@ -657,15 +729,36 @@ for param in sim_params:
             print('weird... no user buffers... something is wrong...')
             # A bug we are still trying to catch... almost never happens...
         
-        # TODO: use np.save instead. Convert them right here and test.
-        # Then simply create them as numpy arrays from the get go.
+        # TODO: convert all lists to numpy arrays. The tasks are the following:
+        #       0- before any changes, make a simulation. This will serve as 
+        #          a reference to make sure any change in the code didn't cause
+        #          a change in the results. 
+        #       1- change "ut.make_py_list(x, [ttis, n_ues, ..])" to 
+        #          "np.ndarray((ttis, n_ues, ..))"
+        #       2- some variables (see the sxr_sim2.py, or ask about it)
+        #          they need to be ints, so add: dtype=int as an argument of
+        #          np.ndarray()
+        #       3- Fix sls.py.
+        #          If done properly, the first two steps will now cause errors.
+        #          However, they are there. In what circumstances 
+        #          numpy arrays misbehave when we treat them as python lists?
+        #          They are currently treated as python lists and we need to 
+        #          corret those situations in sls.py to make sure the data is 
+        #          compute properly. 
+        #       4- Remove "np.array()" from the trim_sim_data() in 
+        #          plots_functions.py and see the plots. Do they look the same?
+        #          If yes, proceed to 5. If not, go back to 3.
+        #       5- Change "ut.save_var_pickle" to np.save instead. 
+        #          And "ut.load_var_pickle" in plots_functions.py to np.load.
+        #       6- Everything running properly and giving the same results as
+        #          in step 0? Then congrats! You've done it!!
         
         # Pickle all results 
         ut.save_var_pickle(sp, sp.stats_path, globals_dict)
         ut.save_var_pickle(buffers, sp.stats_path, globals_dict)        
         ut.save_var_pickle(estimated_SINR, sp.stats_path, globals_dict)
         ut.save_var_pickle(realised_SINR, sp.stats_path, globals_dict)
-        ut.save_var_pickle(realised_bitrate_total, sp.stats_path, globals_dict)
+        ut.save_var_pickle(realised_bitrate, sp.stats_path, globals_dict)
         ut.save_var_pickle(n_transport_blocks, sp.stats_path, globals_dict)    
         ut.save_var_pickle(blocks_with_errors, sp.stats_path, globals_dict)        
         ut.save_var_pickle(beams_used, sp.stats_path, globals_dict)
@@ -674,9 +767,10 @@ for param in sim_params:
         ut.save_var_pickle(real_dl_interference, sp.stats_path, globals_dict)
         ut.save_var_pickle(est_dl_interference, sp.stats_path, globals_dict)
         ut.save_var_pickle(scheduled_UEs, sp.stats_path, globals_dict)
-        ut.save_var_pickle(su_mimo_setting, sp.stats_path, globals_dict)
+        ut.save_var_pickle(est_scheduled_layers, sp.stats_path, globals_dict)
         ut.save_var_pickle(channel, sp.stats_path, globals_dict)
         ut.save_var_pickle(experienced_signal_power, sp.stats_path, globals_dict)
+        ut.save_var_pickle(real_scheduled_layers, sp.stats_path, globals_dict)
         
         # Variables that take the most memory: they are always saved,
         # but when sp.save_per_prb_variables is False, they are None
