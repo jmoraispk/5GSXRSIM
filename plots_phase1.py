@@ -57,7 +57,7 @@ users = [None]
 bandwidths = [50] # MHz
 latencies = [10]
 freq_idxs = [0]
-n_layers = [2] 
+n_layers = [1,2] 
 results_folder = r'Results\Batch X - testing' + '\\'
 
 layer = 0
