@@ -6,9 +6,11 @@
     * scipy
     * joblib     (          for generation) 
     * matplotlib (          for data analysis)
-    * moviepy    (optional, for data analysis, use pip) 
-    * PyPDF2     (optional, for data analysis) 
+    * moviepy    (optional, for data analysis. To install do: conda install -c conda-forge moviepy) 
+    * PyPDF2     (optional, for data analysis. To install do: conda install -c conda-forge pypdf2) 
+
 3. Matlab Runtime Compiler 9.8 (for Matlab 2020a)
+
 
 # Suggested Development Environment
 
