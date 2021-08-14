@@ -54,7 +54,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = 4000 * 2
+        self.sim_TTIs = 4000 * 16
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -293,7 +293,7 @@ class Simulation_parameters:
         
         # A precoder for each antenna, for each frequency [freq][bs_idx]
         self.precoders_files = \
-            [["precoders_4_4_4_4_pol_3_RI_1_ph_1"], 
+            [["precoders_4_4_4_4_pol_3_RI_2_ph_1"], 
              ["1-omni-element"]]
         
         # the case above has a single precoder for each frequency

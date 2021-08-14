@@ -18,11 +18,11 @@ import application_traffic as at
 import simulation_parameters as sim_par
 
 parent_folder = \
-    r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks"
+    r"Y:\SXRSIMv3\Matlab\TraceGeneration"
 
-#seed = int(ut.get_input_arg(1)) # 1
+seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
-seed = 3
+# seed = 3
 speed = 3
 
 folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
@@ -40,8 +40,10 @@ csi_periodicities = [5]
 # users = [1,2,4,6,8] 
 users = [None]
 
-rot_factors = [1]
-n_layers = [1,2]
+rot_factors = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+
+# rot_factors = [4]
+n_layers = [2]
 
 # Now we usually keep these constant (so we removed them from the file name!):
 application_bitrates = [100] # Mbps

@@ -586,10 +586,10 @@ def get_vars_to_load(idx, vars_to_load_names):
                  13: [14],
                  14.1: [1], 14.2: [1], 
                  15: [18], 
-                 16: [7], 16.1: [7], 16.2: [], 16.25: [],
+                 16: [7], 16.1: [7], 16.2: [], 16.25: [], 16.3: [],
                  17: [], 17.01: [7,15], 17.02: [7,15], 17.03: [7,15], 
                  17.11: [7,15], 17.12: [7,15], 17.13: [7,15],
-                 18.1: [2]
+                 18.1: [2], 19.1: [2]
                  }
     
     # Always add 'sp' variable and return list of var names.
@@ -636,11 +636,12 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     13: [],
                     14.1: [], 14.2: [],
                     15: [28], 
-                    16: [29,30], 16.1: [29,30],  16.2: [32], 16.25: [32],
+                    16: [29,30], 16.1: [29,30],  16.2: [32], 16.25: [32], 16.3: [32],
                     17: [33,34], 17.01: [33,34,35,36], 17.02: [33,34,35,36], 
                     17.03: [33,34,35,36], 17.11: [35,36], 17.12: [35,36],
                     17.13: [35,36],
-                    18.1: [37]
+                    18.1: [37],
+                    19.1: [37]
                     }
             
     return [vars_to_compute_names[i] for i in compute_dict[idx]]
@@ -1220,9 +1221,10 @@ def compute_sim_data(plot_idx, l, ues, ttis,
             if var_to_compute == 'individual_beam_gob_details' and \
                sim_data_computed[f][v] is None:
                 pass
-                folder = sim_data_trimmed[0][0].precoders_folder + '\\'
+                # folder = sim_data_trimmed[0][0].precoders_folder + '\\'
+                folder = 'Z:\SXRSIMv3\Matlab\precoders' + '\\'
                 # file = 'beam_details_4_4_-60_60_12_0_-60_60_12_0_pol_1.mat'
-                file = 'beam_details_4_4_4_4_pol_3_RI_1_ph_1.mat'
+                file = 'beam_details_4_4_4_4_pol_3_RI_2_ph_1.mat'
                 print(f'Loading beam details file: {file}')
                 
                 # [121][6]:
@@ -1244,7 +1246,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 # if not scheduled, keep the same beam (it will only change
                 # color in the plots)
                 # IDX 7 is beams_used
-                sim_data_computed[f][v] = sim_data_trimmed[f][7]
+                sim_data_computed[f][v] = sim_data_trimmed[f][7][:,:,l,:]
                 
                 # IDX 15 is scheduled_ues
                 for tti in range(1, n_ttis):
@@ -1256,11 +1258,12 @@ def compute_sim_data(plot_idx, l, ues, ttis,
             # COMPUTE INDEX 37: Avg. SINR across time, per UE
             if var_to_compute == 'avg_sinr' and \
                sim_data_computed[f][v] is None:
-                sim_data_computed[f][v] = np.zeros([n_ues])
+                sim_data_computed[f][v] = np.zeros([n_ues, n_layers])
                 
                 for ue in range(n_ues):
-                    sim_data_computed[f][v][ue] = \
-                        np.mean(sim_data_trimmed[f][2][:,ue])
+                    for l_i in range(n_layers):
+                        sim_data_computed[f][v][ue][l_i] = \
+                        np.mean(sim_data_trimmed[f][2][:, ue, l_i])
                         
             
             # COMPUTE INDEX XX: 
@@ -2223,6 +2226,49 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             else:
                 idxs = [i for i in range(n_beams)]
                 
+            # pick which layer to plot the GoB
+            plot_for_ues([0], sim_data_computed[f][32][idxs,0], 
+                         [sim_data_computed[f][32][idxs,1]], 
+                         use_legend=True, legend_inside=True, 
+                         legend_loc="lower right",
+                         same_axs=True, plot_type_left='scatter',
+                         savefig=save_fig, filename=file_name, 
+                         saveformat=save_format)
+            
+        if plot_idx == 16.3:
+            n_beams = f_sp.gob_directions.shape[-1]
+            if f_sp.n_layers > 1:    
+                if l == 1:    
+                    idxs = [i for i in range(int(n_beams/2))]
+                else:   
+                    idxs = [i for i in range(int(n_beams/2), n_beams)]            
+            else:
+                idxs = [i for i in range(n_beams)]
+            
+            N1 = N2 = O1 = O2 = 4
+            rot_factor = 1
+            gob_col_size = N2 * O2
+            q = rot_factor
+            
+            if q <= 3:
+                pass 
+            elif 4 <= q <= 7:
+                q = q + (gob_col_size - O2) * 1
+            elif 8 <= q <= 11:
+                q = q - 8 + (gob_col_size - O2) * 2
+            elif 12 <= q <= 15:
+                q = q - 12 + (gob_col_size - O2) * 3
+            else: 
+                raise Exception('That value of q is not supported. Integers 0 to 15.')
+    
+            # Step 2: Sum 'offsets' to get the remaining beams in the set
+            q_col_idxs = q + np.arange(0,N2) * N2*O2*O1
+            q_idxs_list = [q_idx + np.arange(0,N1) * N1 for q_idx in q_col_idxs]
+            q_idxs = np.array(q_idxs_list).reshape((-1))
+            
+            if f_sp.n_layers == 2:
+                q_idxs = np.hstack((q_idxs, q_idxs + int(N1) * int(N2) * int(O1) * int(O2)))
+            idxs = q_idxs
             # pick which layer to plot the GoB
             plot_for_ues([0], sim_data_computed[f][32][idxs,0], 
                          [sim_data_computed[f][32][idxs,1]], 

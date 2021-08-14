@@ -1103,7 +1103,7 @@ def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
     else:
         for dir_idx in range(codebook_subset.shape[1]):
             
-            w = codebook_subset[:,dir_idx]
+            w = codebook_subset[:, dir_idx]
             
             # Compute internal product between ch coeffs and precoder, 
             # that is what the UE will see from a transmission with w
@@ -1187,35 +1187,58 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
     else:
         q_idxs = np.arange(precoders_dict[(bs, 'n_directions')])
     
-    codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs]
-    # The channel response is a square matrix of AE_UE x AE_BS
-    [azi_len, el_len] = precoders_dict[(bs, 'size')]
+    # codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs]
+    # # The channel response is a square matrix of AE_UE x AE_BS
+    # [azi_len, el_len] = precoders_dict[(bs, 'size')]
     
-    codebook_subset_directions = precoders_dict[(bs, 'directions')][:, q_idxs]
+    # codebook_subset_directions = precoders_dict[(bs, 'directions')][:, q_idxs]
     
     for l in range(n_layers):
         # Compute the means across frequency
         mean_coeffs.append(np.mean(coeffs[(bs, ue)][:,:,:,tti_csi], 2))
         
+        
+        if not l:
+            q_idxs_l = q_idxs[0: 15]
+            idxs_l = 0
+            # q_idxs_l = q_idxs[0: 255]
+            # idxs_l = 0
+        else:
+            q_idxs_l = q_idxs[16: 31]
+            idxs_l = 16
+            # q_idxs_l = q_idxs[256: 511]
+            # idxs_l = 256
+            # [int(N1)*int(N2)*int(O1)*int(O2)]
+        
+            
+        codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs_l]
+        # The channel response is a square matrix of AE_UE x AE_BS
+        [azi_len, el_len] = precoders_dict[(bs, 'size')]
+        codebook_subset_directions = precoders_dict[(bs, 'directions')][:, q_idxs_l]
+        
         # Save list of best beam pairs on that polarisation combination
         (best_beam_pairs, power_per_beam[l], best_beam_relative_idxs) = \
-            find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
+            find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs_l,
                                  codebook_subset_directions, mean_coeffs[l], 
                                  bs, n_csi_beams, 
                                  save_power_per_CSI_beam, vectorize,
                                  N1, N2, O1, O2)
-        
+   
+        best_beam_relative_idxs[0] = best_beam_relative_idxs[0] + idxs_l
+        # print('tti_csi', tti_csi, 'ue', ue, 'l', l, 'precoder', 
+        #                                       q_idxs[best_beam_relative_idxs])
+        # print(q_idxs)
         # Best Beam Pairs is a list with the best n_csi_beams pairs for a layer
         
         # Remove beams picked from codebook (so the next layer doesn't pick them)
-        if n_layers > 1:
-            # Trim indices, codebook and directions accordingly
-            q_idxs = np.delete(q_idxs, best_beam_relative_idxs)
-            codebook_subset = np.delete(codebook_subset, 
-                                        best_beam_relative_idxs, axis=1)
-            codebook_subset_directions = np.delete(codebook_subset_directions, 
-                                                   best_beam_relative_idxs, 
-                                                   axis=1)
+        # if n_layers > 1:
+        #     # Trim indices, codebook and directions accordingly
+        #     q_idxs = np.delete(q_idxs, best_beam_relative_idxs)
+        #     codebook_subset = np.delete(codebook_subset, 
+        #                                 best_beam_relative_idxs, axis=1)
+        #     codebook_subset_directions = np.delete(codebook_subset_directions, 
+        #                                            best_beam_relative_idxs, 
+        #                                            axis=1)
         
         # Take the beam list and compress it to a single precoder
         # e.g. by scaling each beam according with the feedback
@@ -1274,7 +1297,7 @@ def orthogonal_precoder_indices1(N1, N2, O1, O2, RI, q, q1=-1, q2=-1):
     q_idxs = np.array(q_idxs_list).reshape((-1))
     
     if RI == 2:
-        q_idxs = np.hstack((q_idxs, q_idxs + N1*N2*O1*O2))
+        q_idxs = np.hstack((q_idxs, q_idxs + int(N1) * int(N2) * int(O1) * int(O2)))
 
     return q_idxs
 
@@ -1718,8 +1741,8 @@ def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs,
                          save_power_per_CSI_beam, vectorize):
     
     for ue in active_UEs[tti]:
-        if not active_UEs[tti][ue]:
-            continue
+        # if not active_UEs[tti][ue]:
+        #     continue
         for bs in range(n_bs):
             # 1- Precoder Estimation
             # a) Check if the precoder should be updated (CSI periodicity)
@@ -1972,13 +1995,16 @@ def final_mcs_update(tti, curr_schedule, est_interference,
     # Update the estimations such that the best MCS is used
     # There may also have been updates to the interference, pro-actively
     # from the radiation pattern or with other techniques...
+    #print ("Current schedule value:", curr_schedule)
     for entry in curr_schedule['DL']:
         
+        #print("debug values:", entry.tx_power, entry.beam_pair.ch_power_gain, est_interference[tti][entry.ue][entry.layer_idx], wideband_noise_power)
+        # print("debug values ch_power_gain:", entry.beam_pair.ch_power_gain)
         sinr = calc_SINR(entry.tx_power, 
                          entry.beam_pair.ch_power_gain, 
                          est_interference[tti][entry.ue][entry.layer_idx],
                          wideband_noise_power)
-        
+        # print("debug value sinr:", sinr)
         (cqi, bler) = calc_CQI(sinr)
         
         # efficiency has to do with the overhead
