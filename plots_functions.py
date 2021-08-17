@@ -1224,7 +1224,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 # folder = sim_data_trimmed[0][0].precoders_folder + '\\'
                 folder = 'Z:\SXRSIMv3\Matlab\precoders' + '\\'
                 # file = 'beam_details_4_4_-60_60_12_0_-60_60_12_0_pol_1.mat'
-                file = 'beam_details_4_4_4_4_pol_3_RI_2_ph_1.mat'
+                file = 'beam_details_4_4_4_4_pol_3_RI_2_ph_0-1i.mat'
                 print(f'Loading beam details file: {file}')
                 
                 # [121][6]:

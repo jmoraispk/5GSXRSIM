@@ -40,9 +40,9 @@ csi_periodicities = [5]
 # users = [1,2,4,6,8] 
 users = [None]
 
-rot_factors = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+#rot_factors = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
-# rot_factors = [4]
+rot_factors = [10, 14]
 n_layers = [2]
 
 # Now we usually keep these constant (so we removed them from the file name!):
@@ -57,9 +57,9 @@ sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     rot_factors))
 
 # Feel free to check the parameter combinations before running the simulation
-# for param in sim_params:
+#for param in sim_params:
 #     print(param)   
-# ut.stop_execution()
+#ut.stop_execution()
 
 for param in sim_params:
     # unpack simulation parameters
@@ -116,7 +116,7 @@ for param in sim_params:
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
-                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}'
+                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-0-1i'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
