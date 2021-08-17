@@ -1719,7 +1719,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             print(f'Mean {avg_pdr_i} %, STD {avg_pdr_i_std} %.')
             print(f'Avg. drop rate for P frames: '
                   f'{sim_data_computed[f][21]} %.')
-            print(f'Mean {avg_pdr_i} %, STD {avg_pdr_i_std} %.')
+            print(f'Mean {avg_pdr_p} %, STD {avg_pdr_p_std} %.')
     
         # prints all detailed measurements on frame information for simulations
         # with I-frame spacing
@@ -1761,7 +1761,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             print(f'Mean {avg_pdr_i} %, STD {avg_pdr_i_std} %.')
             print(f'Avg. drop rate for P frames: '
                   f'{sim_data_computed[f][42]} %.')
-            print(f'Mean {avg_pdr_i} %, STD {avg_pdr_i_std} %.')
+            print(f'Mean {avg_pdr_p} %, STD {avg_pdr_p_std} %.')
         
         # Plots avg_pck_latency per frame of the GoP
         if plot_idx == 10.8:
