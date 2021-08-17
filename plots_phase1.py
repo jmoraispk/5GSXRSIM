@@ -65,7 +65,7 @@ always_compute = True
 
 #-------------------------
 
-stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Meeting\20-100-20\I-frame spacing 0-1-2-3' + '\\'
+stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Meeting\40 - Same' + '\\'
 
 seeds = [1]
 speeds = [1]
@@ -77,7 +77,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [0, int(4000 * 15)]
+trim_ttis = [0, int(4000 * 16)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -139,7 +139,8 @@ VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
                      'beam_sum',                          # 10
                      'freq_vec',                          # 11
                      'frames',                            # 12
-                     'I_frames',                          # 13
+                      #TODO: ADD for I-frame spacing on!!!
+                     'I_frames',                          # 13 
                      'avg_packet_lat',                    # 14
                      'avg_packet_drop_rate',              # 15
                      'avg_pck_lat_per_frame',             # 16
@@ -165,6 +166,10 @@ VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
                      'beams_processed',                   # 36
                      'avg_sinr',                          # 37
                      'avg_sinr_multitrace',               # 38
+                     'avg_pck_lat_per_I_frame_spaced',      # 39
+                     'avg_pck_lat_per_P_frame_spaced',      # 40
+                     'avg_pck_drop_rate_per_I_frame_spaced',# 41
+                     'avg_pck_drop_rate_per_P_frame_spaced',# 42
                      '']
 
 # file_sets has the sets of files to load at any given time.
@@ -175,16 +180,19 @@ file_sets = []
 
 # Create the file set combinations from the variables given previously
 
+
+# stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Meeting\40 - Same' + '\\'
+
 for comb in combinations:
 
     # stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
     #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
     #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
 
-    stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-20_BW-100_LAT-20_LEN-16s_PF' + '\\'
+    stats_dir_end = r'Sim_SEED_SAME3_FREQ-0_APPBIT-20_BW-100_LAT-40_LEN-16s_M-LWDF_True' + '\\'
     # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-20_BW-100_LAT-50_LEN-16s_Frametype' + '\\'
 
-    # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-50_BW-100_LAT-20_LEN-16s_M-LWDF_no-int' + '\\'
+    # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-50_BW-100_LAT-20_LEN-16s_M-LWDF' + '\\'
 
     
     print(f'\nDoing for: {stats_dir_end}')
@@ -256,7 +264,7 @@ for file_set in file_sets:
     """        
             
             
-    idxs_to_plot = [10.15,10.25]  
+    # idxs_to_plot = [10.15,10.25]  
     """
     plot_idx meanings:
 
@@ -359,6 +367,9 @@ X   0.3   -> Channel Power across prbs (for a given tti)
                 -> for each I frame
                 -> for each P frame
                 -> averaged across all frames and std
+    TODO
+    10.75 -> prints all detailed measurement information as in 10.7
+             but for simulations with 'uniformly spaced I-frames'   
     10.8  -> Average packet latency for each frame in the GoP (bar plot) 
     10.9  -> Average packet drop rate for each frame in the GoP (bar plot)
     10.11 -> Average packet latency and drop rate per frame of the GoP 
@@ -457,26 +468,26 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     """
    
     # Latency and PLR
-    idxs_to_plot = [10.7]  
-    # idxs_to_plot = [10.7]
+    idxs_to_plot = [10.75]#, 10.75]
     # idxs_to_plot = [10.3]
 
     # Power [Mbps]
-    # idxs_to_plot = [0.1]
+    # idxs_to_plot = [10.2]
     # Throughput + SINR[dB]&BLER%
     # idxs_to_plot = [1, 2.4]  
     # MCS per user 
     # idxs_to_plot = [4.2]      
     # Packet sequences
     # idxs_to_plot = [14.2]  
-    
+    # idxs_to_plot = [0.1]
+
     # ues = [0]
     # estimate interference should be different from 0!
     
     # Test save_plot
     save_plots = False
     saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
-    base_plots_folder = 'Plots\\' 
+    base_plots_folder = 'Zheng - Plots\\Meeting\\' 
     
     for i in idxs_to_plot:
         print(f'Plotting {i}')

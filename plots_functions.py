@@ -207,7 +207,7 @@ def get_vars_to_load(idx, vars_to_load_names):
                  10.1: [1], 10.15: [1], 10.2: [1], 10.25: [1], 
                  10.3: [1], 10.31: [1], 10.4: [1], 10.45: [1], 
                  10.5: [1], 10.55: [1], 10.6: [1], 10.65: [1], 
-                 10.7: [1], 10.8: [1], 10.9: [1], 10.11: [1],
+                 10.7: [1], 10.75: [1], 10.8: [1], 10.9: [1], 10.11: [1],
                  11: [15], 11.1: [15], 11.2: [15], 11.3: [4], 11.4: [10,15],
                  13: [14],
                  14.1: [1], 14.2: [1], 
@@ -254,7 +254,8 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     10.25: [12,15], 10.3: [12,14,15], 10.31: [12,14,15], 
                     10.4: [12,13,14,15], 10.45: [12,13,14,15], 
                     10.5: [16], 10.55: [16], 10.6: [17], 10.65: [17], 
-                    10.7: [14,15,16,17,18,19,20,21,22,23], 
+                    10.7: [14,15,16,17,18,19,20,21,22,23],
+                    10.75: [14,15,16,17,22,23,39,40,41,42], # 
                     10.8: [22,27], 10.9: [23,27], 
                     10.11: [22,23,27],                    
                     11: [24], 11.1: [], 11.2: [], 11.3: [25], 11.4: [],
@@ -501,7 +502,8 @@ def compute_sim_data(plot_idx, ues, ttis,
                  'avg_pck_drop_rate_per_I_frame', 
                  'avg_pck_drop_rate_per_P_frame',
                  'avg_pck_lat_per_frame_in_gop', 
-                 'avg_pck_drop_rate_per_frame_in_gop']
+                 'avg_pck_drop_rate_per_frame_in_gop'
+                 ]
             
             if var_to_compute in vars_requiring_12_or_13 and \
                sim_data_computed[f][v] is None:
@@ -515,7 +517,9 @@ def compute_sim_data(plot_idx, ues, ttis,
                 for frame_idx in range(n_frames):
                     if frame_idx % GoP == 0:
                         sim_data_computed[f][13][frame_idx,:] = 1
-            
+                           
+            # TODO: Verify if computation/saved information is correct!!! 
+            # (Spike at beginning of SIM, rest of SIM almost constantly instant)
             # COMPUTE INDEX 14: Average Packet Latency 
             if var_to_compute in ['avg_packet_lat',
                                   'avg_pck_lat_per_frame',
@@ -528,11 +532,11 @@ def compute_sim_data(plot_idx, ues, ttis,
                 for ue in ues:
                     for per in range(n_periods):
                         # Loop over frame indices (fi)
-                        for fi in range(GoP):
+                        for frm in range(GoP):
                             # IDX 1 are the buffers
                             f_info = \
-                                sim_data_trimmed[f][1][ue].frame_infos[per][fi]
-                            sim_data_computed[f][14][fi][ue] = \
+                                sim_data_trimmed[f][1][ue].frame_infos[per][frm]
+                            sim_data_computed[f][14][frm][ue] = \
                                 (f_info.avg_lat.microseconds / 1e3)
                                 
             # COMPUTE INDEX 15: Average Packet Drop Rate
@@ -562,15 +566,13 @@ def compute_sim_data(plot_idx, ues, ttis,
                             # print('UE:', ue, 'Period:', per, 'GoP-Frame', frm,\
                             #       'Total packets:',total_packets)
                             
-                            frame_idx = per * GoP + frm
-                            
+                            frame_idx = per * GoP + frm                            
                             try:
                                 sim_data_computed[f][15][frame_idx][ue] = \
                                     dropped_packets / total_packets * 100
                             except ZeroDivisionError:
                                 print('Error...')
-                                
-                                
+                                                                
             # COMPUTE INDEX 16: Average Packet Latency across all frames
             if var_to_compute == 'avg_pck_lat_per_frame' and \
                sim_data_computed[f][v] is None:
@@ -630,10 +632,9 @@ def compute_sim_data(plot_idx, ues, ttis,
                 sim_data_computed[f][22] = np.zeros([GoP, n_ues])
                 sim_data_computed[f][23] = np.zeros([GoP, n_ues])
                 
-                
                 I_frame_idxs = np.array([i for i in range(n_frames) 
                                          if i % GoP == 0])
-                
+                              
                 # IDX 14 and 15 are avg_lat and drop_rate
                 for idx_in_gop in range(GoP):
                     idxs = I_frame_idxs + idx_in_gop
@@ -675,6 +676,70 @@ def compute_sim_data(plot_idx, ues, ttis,
                 sim_data_computed[f][22] = np.round(sim_data_computed[f][22],2)
                 sim_data_computed[f][23] = np.round(sim_data_computed[f][23],2)
         
+            # COMPUTE INDEX 39-42: 
+            # TODO: For simulations with I-frame spacing on!
+            # Additional compute indices!
+            if var_to_compute in ['avg_pck_lat_per_I_frame_spaced',
+                                  'avg_pck_lat_per_P_frame_spaced',
+                                  'avg_pck_drop_rate_per_I_frame_spaced',
+                                  'avg_pck_drop_rate_per_P_frame_spaced'] and \
+               sim_data_computed[f][v] is None:
+                
+            
+                # METRICS PER FRAME IN THE GOP: lat and drop rate
+                sim_data_computed[f][22] = np.zeros([GoP, n_ues])
+                sim_data_computed[f][23] = np.zeros([GoP, n_ues])
+                
+                I_frame_idxs = np.array([i for i in range(n_frames) 
+                                         if i % GoP == 0])
+                              
+                # IDX 14 and 15 are avg_lat and drop_rate
+                for idx_in_gop in range(GoP):
+                    idxs = I_frame_idxs + idx_in_gop
+                    sim_data_computed[f][22][idx_in_gop,:] = \
+                        np.mean(sim_data_computed[f][14][idxs, :], 0)
+                    sim_data_computed[f][23][idx_in_gop,:] = \
+                        np.mean(sim_data_computed[f][15][idxs, :], 0)
+                        
+                # Different frame idxs for I-frames for every user if I-frame
+                # spacing is used                
+                ue_offset = [0, 1, 3, 4] # ONLY HOLDS FOR 4 UES
+                sim_data_computed[f][39] = np.zeros(n_ues)       
+                sim_data_computed[f][40] = np.zeros(n_ues)             
+                sim_data_computed[f][41] = np.zeros(n_ues)              
+                sim_data_computed[f][42] = np.zeros(n_ues)        
+                
+                for ue in range(n_ues):
+                    # PER I-frames: 
+                    sim_data_computed[f][39][ue] = \
+                        sim_data_computed[f][22][ue_offset[ue], ue]
+                    sim_data_computed[f][41][ue] = \
+                        sim_data_computed[f][23][ue_offset[ue], ue]
+               
+                    # PER P frame
+                
+                    sim_data_computed[f][40][ue] = \
+                        (sum(sim_data_computed[f][22][0:, ue],0) - \
+                            sim_data_computed[f][22][ue_offset[ue], ue]) \
+                            / (GoP - 1)
+                    sim_data_computed[f][42][ue] = \
+                        (sum(sim_data_computed[f][23][0:, ue],0) - 
+                            sim_data_computed[f][23][ue_offset[ue], ue]) \
+                            / (GoP - 1)
+                       
+                sim_data_computed[f][39] = np.round(sim_data_computed[f][39],2)
+                sim_data_computed[f][40] = np.round(sim_data_computed[f][40],2)
+                sim_data_computed[f][41] = np.round(sim_data_computed[f][41],2)
+                sim_data_computed[f][42] = np.round(sim_data_computed[f][42],2)
+        
+                # I_frame_idxs_spaced = np.zeros((n_ues, int(n_frames/GoP)),dtype=int)
+                # for ue in range (n_ues):
+                #      I_frame_idxs_spaced[ue] = \
+                #          np.array([i for i in range(n_frames) if i % GoP == 0])
+                #      for i in range(len(I_frame_idxs_spaced[ue])):
+                #          if I_frame_idxs_spaced[ue][i] + ue_offset[ue] <= n_frames:
+                #            I_frame_idxs_spaced[ue][i] = I_frame_idxs_spaced[ue][i] + ue_offset[ue]
+                
             # COMPUTE INDEX 24: Count_ues_scheduled
             if var_to_compute == 'count_ues_scheduled' and \
                sim_data_computed[f][v] is None:
@@ -945,6 +1010,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                          x_axis_label=x_label_time, y_axis_label='Power [dBW]',
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
+            print(np.mean(sim_data_trimmed[f][16]),'dBW')
         
         # The two indicies below require the channel_per_prb variable
         # Channel across time for many PRBs
@@ -1616,7 +1682,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         # prints all detailed measurements on frame information
         if plot_idx == 10.7:
             
-            # TODO: print(f'Analysis of folder {stats_folder}.')
+            # print(f'Analysis of folder {stats_folder}.')
             
             # Latency stats
             avg_latency = round(np.mean(sim_data_computed[f][16]),2)
@@ -1641,6 +1707,34 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             print(f'Avg. drop rate for P frames: '
                   f'{sim_data_computed[f][21]} %.')
     
+        # prints all detailed measurements on frame information for simulations
+        # with I-frame spacing
+        if plot_idx == 10.75:
+            
+            print('Stats for Simulation with I-frame spacing ON')
+
+            # Latency stats
+            avg_latency = round(np.mean(sim_data_computed[f][16]),2)
+            avg_latency_std = round(np.std(sim_data_computed[f][16]),2)     
+            print(f'Avg. Latency is {avg_latency} ms,' + \
+                  f' with STD of {avg_latency_std} ms.')
+                
+            print(f'Avg. latency per frames: {sim_data_computed[f][16]} ms.')
+            print(f'Avg. latency for I frames: {sim_data_computed[f][39]} ms.')
+            print(f'Avg. latency for P frames: {sim_data_computed[f][40]} ms.')
+            
+            # Drop rate stats
+            avg_pdr = round(np.mean(sim_data_computed[f][17]),2)
+            avg_pdr_std = round(np.std(sim_data_computed[f][17]),2)
+            print(f'Avg. PDR is {avg_pdr} %,' + \
+                  f' with STD of {avg_pdr_std} %.')
+            
+            print(f'Avg. drop rate per frames: '
+                  f'{sim_data_computed[f][17]} %.')
+            print(f'Avg. drop rate for I frames: '
+                  f'{sim_data_computed[f][41]} %.')
+            print(f'Avg. drop rate for P frames: '
+                  f'{sim_data_computed[f][42]} %.')
         
         # Plots avg_pck_latency per frame of the GoP
         if plot_idx == 10.8:
