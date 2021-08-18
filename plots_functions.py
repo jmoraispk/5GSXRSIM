@@ -1692,14 +1692,14 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             avg_latency_p = round(np.mean(sim_data_computed[f][19]),2)
             avg_latency_p_std = round(np.std(sim_data_computed[f][19]),2)  
             
-            print(f'Avg. Latency is {avg_latency} ms,' + \
-                  f' with STD of {avg_latency_std} ms.')                            
-            print(f'Avg. latency per frames: {sim_data_computed[f][16]} ms.')
+            # print(f'Avg. Latency is {avg_latency} ms,' + \
+            #       f' with STD of {avg_latency_std} ms.')                            
+            # print(f'Avg. latency per frames: {sim_data_computed[f][16]} ms.')
             
-            print(f'Avg. latency for I frames: {sim_data_computed[f][18]} ms.')
-            print(f'Mean {avg_latency_i} ms, STD {avg_latency_i_std} ms.')
-            print(f'Avg. latency for P frames: {sim_data_computed[f][19]} ms.')
-            print(f'Mean {avg_latency_p} ms, STD {avg_latency_p_std} ms.')
+            # print(f'Avg. latency for I frames: {sim_data_computed[f][18]} ms.')
+            # print(f'Mean {avg_latency_i} ms, STD {avg_latency_i_std} ms.')
+            # print(f'Avg. latency for P frames: {sim_data_computed[f][19]} ms.')
+            # print(f'Mean {avg_latency_p} ms, STD {avg_latency_p_std} ms.')
             
             # Drop rate stats
             avg_pdr = round(np.mean(sim_data_computed[f][17]),2)
@@ -1735,14 +1735,14 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             avg_latency_p = round(np.mean(sim_data_computed[f][40]),2)
             avg_latency_p_std = round(np.std(sim_data_computed[f][40]),2)   
             
-            print(f'Avg. Latency is {avg_latency} ms,' + \
-                  f' with STD of {avg_latency_std} ms.')                
-            print(f'Avg. latency per frames: {sim_data_computed[f][16]} ms.')
+            # print(f'Avg. Latency is {avg_latency} ms,' + \
+            #       f' with STD of {avg_latency_std} ms.')                
+            # print(f'Avg. latency per frames: {sim_data_computed[f][16]} ms.')
             
-            print(f'Avg. latency for I frames: {sim_data_computed[f][39]} ms.')
-            print(f'Mean {avg_latency_i} ms, STD {avg_latency_i_std} ms.')
-            print(f'Avg. latency for P frames: {sim_data_computed[f][40]} ms.')
-            print(f'Mean {avg_latency_p} ms, STD {avg_latency_p_std} ms.')
+            # print(f'Avg. latency for I frames: {sim_data_computed[f][39]} ms.')
+            # print(f'Mean {avg_latency_i} ms, STD {avg_latency_i_std} ms.')
+            # print(f'Avg. latency for P frames: {sim_data_computed[f][40]} ms.')
+            # print(f'Mean {avg_latency_p} ms, STD {avg_latency_p_std} ms.')
             
             # Drop rate stats
             avg_pdr = round(np.mean(sim_data_computed[f][17]),2)

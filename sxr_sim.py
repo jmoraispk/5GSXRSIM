@@ -27,7 +27,7 @@ speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-folders_to_simulate = ["Sim_SEED5"]
+folders_to_simulate = ["Sim_SEED1"]
 
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
@@ -69,11 +69,11 @@ Ideas:
 
 """
 # application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
-application_bitrates = [50]
+application_bitrates = [20]
 # bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
 bandwidths = [100] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
-latencies = [100]
+latencies = [40]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
@@ -144,11 +144,12 @@ for param in sim_params:
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split(' ')[0]
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'{seed_str}_FREQ-{freq_idx}_' + \
-                 f'CSIPER-{csi_periodicity}_APPBIT-{application_bitrate}_' + \
+                 f'APPBIT-{application_bitrate}_' + \
                  f'BW-{bw}_LAT-{lat_budget}_' + \
-                 f'LEN-{sim_dur}s_{sp.scheduler}'
+                 f'LEN-{sim_dur}s_{sp.scheduler}_' + \
+                 f'{sp.uniformly_space_UE_I_frames}'
                  # SPEED-{sp.speed_idx} USERS-{users}_
-    # output_str = output_stats_folder + output_strNo
+    # output_str = output_stats_folder + output_str
     
     # Continue the execution
     # TODO: print('Initialising variables...') 
@@ -345,7 +346,7 @@ for param in sim_params:
             else:
                 print(f"TTI: {tti}")
         # TODO: TTIs    
-        if tti % 4000 == 0 or tti == sp.sim_TTIs:
+        if tti % 4000 == 0 or tti == sp.sim_TTIs - 1:
             print(f"TTI: {tti}")
         
         # If necessary, load new set of coefficients
@@ -569,7 +570,9 @@ for param in sim_params:
                                        ut.get_seconds(sp.delay_threshold), 
                                        sp.scheduler_param_delta, 
                                        sp.scheduler_param_c)
-
+                
+            # TODO: Round Robin Scheduler for testing purposes
+            
             if sp.debug:
                 print(curr_priorities)
                 print(avg_bitrate[tti])

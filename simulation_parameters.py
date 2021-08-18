@@ -53,12 +53,9 @@ class Simulation_parameters:
         # Debug variables
         self.debug_su_mimo_choice = 0
         
-        # TTIs to simulate
-        self.sim_TTIs = 4000 * 16
-
-        # Has to be 'int', if multiplying with float -> int/float type error 
-        # Or rather just change the range in the TTI loop!
-        self.sim_TTIs = int(4000 * 4)
+        # TTIs to simulate -> min. 1000/TTIs_per_batch size
+        # Has to be 'int', if multiplying with float -> int/float type error
+        self.sim_TTIs = int(4000 * 1)
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -169,7 +166,7 @@ class Simulation_parameters:
         # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
         self.scheduler = 'Frametype' 
         # self.scheduler = 'M-LWDF'
-        # self.scheduler = 'PF'
+        self.scheduler = 'PF'
         self.debug_zheng = 0
 
 
@@ -267,7 +264,7 @@ class Simulation_parameters:
         
         
         # Stats folder
-        self.stats_dir = self.curr_path + '\\Stats\\'
+        self.stats_dir = self.curr_path + '\\Stats\\Meeting\\40 - Same\\'
         
         # Plots folder
         self.plots_dir = self.curr_path + '\\Plots\\'

@@ -151,7 +151,7 @@ def frametype_scheduler(avg_thrput, curr_expected_bitrate,
     # elif buffer.num_I_packets > 9:   
     #     frame_weight = 2.0     
 
-    return (frame_weight + frame_weight * curr_delay * 1000) * \
+    return (frame_weight + frame_weight * curr_delay * 100) * \
             np.log10(pf_scheduler(avg_thrput, curr_expected_bitrate))
 
     # return frame_weight * delay_priority 

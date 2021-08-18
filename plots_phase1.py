@@ -189,7 +189,7 @@ for comb in combinations:
     #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
     #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
 
-    stats_dir_end = r'Sim_SEED_SAME3_FREQ-0_APPBIT-20_BW-100_LAT-40_LEN-16s_M-LWDF_True' + '\\'
+    stats_dir_end = r'Sim_SEED_SAME0_FREQ-0_APPBIT-20_BW-100_LAT-40_LEN-16s_M-LWDF_True' + '\\'
     # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-20_BW-100_LAT-50_LEN-16s_Frametype' + '\\'
 
     # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-50_BW-100_LAT-20_LEN-16s_M-LWDF' + '\\'
@@ -468,7 +468,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     """
    
     # Latency and PLR
-    idxs_to_plot = [10.75]#, 10.75]
+    idxs_to_plot = [10.9]#, 10.75]
     # idxs_to_plot = [10.3]
 
     # Power [Mbps]
@@ -479,7 +479,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     # idxs_to_plot = [4.2]      
     # Packet sequences
     # idxs_to_plot = [14.2]  
-    # idxs_to_plot = [0.1]
+    # idxs_to_plot = [1]
 
     # ues = [0]
     # estimate interference should be different from 0!
