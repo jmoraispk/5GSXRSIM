@@ -215,6 +215,7 @@ def get_vars_to_load(idx, vars_to_load_names):
                  16: [7], 16.1: [7], 16.2: [],
                  17: [], 17.01: [7,15], 17.02: [7,15], 17.03: [7,15], 
                  17.11: [7,15], 17.12: [7,15], 17.13: [7,15],
+                 18.1: [19]
                  }
     
     # Always add 'sp' variable and return list of var names.
@@ -265,7 +266,8 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     16: [29,30], 16.1: [29,30],  16.2: [32],
                     17: [33,34], 17.01: [33,34,35,36], 17.02: [33,34,35,36], 
                     17.03: [33,34,35,36], 17.11: [35,36], 17.12: [35,36],
-                    17.13: [35,36]
+                    17.13: [35,36],
+                    18.1: []
                     }
             
     return [vars_to_compute_names[i] for i in compute_dict[idx]]
@@ -307,7 +309,7 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
     # require further trimming (e.g. to select one layer or single-layer mode):
     vars_with_no_layer = ['realised_bitrate_total', 'experienced_signal_power',
                           'olla', 'su_mimo_setting', 'channel', 
-                          'scheduled_UEs']
+                          'scheduled_UEs', 'buffer_filling']
     
     # Convert to NumPy arrays and trim to obtain only the useful parts
     for f in range(len(files)):
@@ -643,6 +645,8 @@ def compute_sim_data(plot_idx, ues, ttis,
                     sim_data_computed[f][23][idx_in_gop,:] = \
                         np.mean(sim_data_computed[f][15][idxs, :], 0)
                 
+                # TODO: Try to not have offset hardcoded -> 
+                # buffers[1].parent_packet_seq.parent_sequence.types
                 # PER I frame
                 sim_data_computed[f][18] = sim_data_computed[f][22][0, :]
                 sim_data_computed[f][20] = sim_data_computed[f][23][0, :]
@@ -704,6 +708,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                 # Different frame idxs for I-frames for every user if I-frame
                 # spacing is used                
                 ue_offset = [0, 1, 3, 4] # ONLY HOLDS FOR 4 UES
+                # ue_offset = [0, 0, 0, 0]
                 sim_data_computed[f][39] = np.zeros(n_ues)       
                 sim_data_computed[f][40] = np.zeros(n_ues)             
                 sim_data_computed[f][41] = np.zeros(n_ues)              
@@ -719,7 +724,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                     # PER P frame
                 
                     sim_data_computed[f][40][ue] = \
-                        (sum(sim_data_computed[f][22][0:, ue],0) - \
+                        (sum(sim_data_computed[f][22][:, ue],0) - \
                             sim_data_computed[f][22][ue_offset[ue], ue]) \
                             / (GoP - 1)
                     sim_data_computed[f][42][ue] = \
@@ -1335,7 +1340,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues_double(ues, x_vals, [sim_data_trimmed[f][9]], 
                                 [sim_data_trimmed[f][4]], 
                                 x_label_time, 
-                                y_label=['MCS index', 
+                                y_labels=['MCS index', 
                                          'Bit rate [Mbps]'],        
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
@@ -1360,7 +1365,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues_double(ues, x_vals, [sim_data_trimmed[f][7][:,:,0]], 
                                 [sim_data_trimmed[f][7][:,:,1]],
                                 x_label_time, 
-                                y_label=['Azimuth [º]', 'Elevation[º]'],
+                                y_labels=['Azimuth [º]', 'Elevation[º]'],
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
     
@@ -2198,5 +2203,17 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             animation.write_videofile(filename, fps=FPS, audio=False, 
                                       preset='ultrafast')
             
-            
-            
+        # Plot bits left to send in buffer before simulation of transmission 
+        if plot_idx == 18.1: 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][19]], 
+                         x_axis_label=x_label_time, 
+                         y_axis_label='Left in buffer to send (kByte)',
+                         linewidths=[.4,.4,.4,.4], 
+                         y_labels=['UE 0','UE 1','UE 2','UE 3'], 
+                         # ylim=(6.5, 15.5),
+                         ncols=1, size=1.3, 
+                         use_legend=True, legend_inside=True, 
+                         legend_loc="lower right",
+                         same_axs=False,
+                         savefig=save_fig, filename=file_name, 
+                         saveformat=save_format)

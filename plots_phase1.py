@@ -65,7 +65,7 @@ always_compute = True
 
 #-------------------------
 
-stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Meeting\40 - Same' + '\\'
+stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats' + '\\'
 
 seeds = [1]
 speeds = [1]
@@ -77,7 +77,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [0, int(4000 * 16)]
+trim_ttis = [int(4000 * 0), int(4000 * 0.2)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -123,6 +123,7 @@ VARS_NAME_LOAD = ['sp',                       #  0
                   'channel',                  # 16
                   'channel_per_prb',          # 17
                   'power_per_beam',           # 18
+                  'buffer_filling'            # 19
                   '']
 
 # Variable names that can be computed from the loaded and trimmed variables
@@ -189,7 +190,7 @@ for comb in combinations:
     #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
     #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
 
-    stats_dir_end = r'Sim_SEED_SAME0_FREQ-0_APPBIT-20_BW-100_LAT-40_LEN-16s_M-LWDF_True' + '\\'
+    stats_dir_end = r'Sim_SEED5_FREQ-0_APPBIT-20_BW-100_LAT-40_LEN-4s_PF_True' + '\\'
     # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-20_BW-100_LAT-50_LEN-16s_Frametype' + '\\'
 
     # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-50_BW-100_LAT-20_LEN-16s_M-LWDF' + '\\'
@@ -220,6 +221,9 @@ file_sets = [file_sets]
 ##############################################################################    
     
 for file_set in file_sets:
+    
+    # plot idx
+    idxs_to_plot = [7.4]#, 10.75]
     
     # For the very first run and they don't exist, initialise
     try:
@@ -368,7 +372,7 @@ X   0.3   -> Channel Power across prbs (for a given tti)
                 -> for each P frame
                 -> averaged across all frames and std
     TODO
-    10.75 -> prints all detailed measurement information as in 10.7
+    10.75 -> prints all detailed measurement information as in 10.7 
              but for simulations with 'uniformly spaced I-frames'   
     10.8  -> Average packet latency for each frame in the GoP (bar plot) 
     10.9  -> Average packet drop rate for each frame in the GoP (bar plot)
@@ -410,6 +414,9 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     17.12 -> GIF across time: Just beams used (with correct HPBW)
                                (needs to be computed in Matlab and loaded))
     17.2  -> ...
+    
+    
+    18.1 -> Bits left in buffer for each UE. [diff plot]
     """
     
     """ 
@@ -468,7 +475,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     """
    
     # Latency and PLR
-    idxs_to_plot = [10.9]#, 10.75]
+    # idxs_to_plot = [10.75]#, 10.75]
     # idxs_to_plot = [10.3]
 
     # Power [Mbps]
@@ -476,7 +483,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     # Throughput + SINR[dB]&BLER%
     # idxs_to_plot = [1, 2.4]  
     # MCS per user 
-    # idxs_to_plot = [4.2]      
+    idxs_to_plot = [18.1]      
     # Packet sequences
     # idxs_to_plot = [14.2]  
     # idxs_to_plot = [1]

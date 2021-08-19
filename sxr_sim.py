@@ -27,7 +27,7 @@ speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-folders_to_simulate = ["Sim_SEED1"]
+folders_to_simulate = ["Sim_SEED5"]
 
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
@@ -322,6 +322,9 @@ for param in sim_params:
     experienced_signal_power = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     n_transport_blocks = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
     
+    # TODO: save and plot buffer filling over duration of simulation
+    buffer_filling = ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
+
     
     # The schedule is a list of Schedule_entries.
     # The schedule entries have UEs, BSs, beam_pairs, estimated bitrates 
@@ -441,10 +444,13 @@ for param in sim_params:
         else:
             raise Exception('Invalid slot type.')
         
+        # TODO: save buffer status after every queue update
+        for ue in range(sp.n_phy):
+            buffer_filling[tti][ue] = sum(buffers[ue].bits_left[:]) / 8000 # kB
             
         # 0- c) Update Queues: Add packets, update delays, drop late packets
         sls.update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti) 
-
+                    
         # TODO: Check if counting I-frames is correct 
         if sp.debug_zheng:
             for ue in ue_idxs:
@@ -572,6 +578,7 @@ for param in sim_params:
                                        sp.scheduler_param_c)
                 
             # TODO: Round Robin Scheduler for testing purposes
+            # TODO: Save and plot UE priorities
             
             if sp.debug:
                 print(curr_priorities)
@@ -735,5 +742,6 @@ for param in sim_params:
         # If we are debugging GoBs and we need the power of each CSI beam
         # (is none when sp.save_power_per_CSI_beam is False)
         ut.save_var_pickle(power_per_beam, sp.stats_path, globals_dict)
+        ut.save_var_pickle(buffer_filling, sp.stats_path, globals_dict)
         
 print('End of sxr_sim.')
