@@ -215,7 +215,7 @@ def get_vars_to_load(idx, vars_to_load_names):
                  16: [7], 16.1: [7], 16.2: [],
                  17: [], 17.01: [7,15], 17.02: [7,15], 17.03: [7,15], 
                  17.11: [7,15], 17.12: [7,15], 17.13: [7,15],
-                 18.1: [19]
+                 18.1: [19], 18.2:[20]
                  }
     
     # Always add 'sp' variable and return list of var names.
@@ -267,7 +267,7 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     17: [33,34], 17.01: [33,34,35,36], 17.02: [33,34,35,36], 
                     17.03: [33,34,35,36], 17.11: [35,36], 17.12: [35,36],
                     17.13: [35,36],
-                    18.1: []
+                    18.1: [], 18.2: []
                     }
             
     return [vars_to_compute_names[i] for i in compute_dict[idx]]
@@ -309,7 +309,8 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
     # require further trimming (e.g. to select one layer or single-layer mode):
     vars_with_no_layer = ['realised_bitrate_total', 'experienced_signal_power',
                           'olla', 'su_mimo_setting', 'channel', 
-                          'scheduled_UEs', 'buffer_filling']
+                          'scheduled_UEs', 'packets_in_buffer', 
+                          'bits_in_buffer']
     
     # Convert to NumPy arrays and trim to obtain only the useful parts
     for f in range(len(files)):
@@ -644,9 +645,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                         np.mean(sim_data_computed[f][14][idxs, :], 0)
                     sim_data_computed[f][23][idx_in_gop,:] = \
                         np.mean(sim_data_computed[f][15][idxs, :], 0)
-                
-                # TODO: Try to not have offset hardcoded -> 
-                # buffers[1].parent_packet_seq.parent_sequence.types
+                """
                 # PER I frame
                 sim_data_computed[f][18] = sim_data_computed[f][22][0, :]
                 sim_data_computed[f][20] = sim_data_computed[f][23][0, :]
@@ -656,8 +655,41 @@ def compute_sim_data(plot_idx, ues, ttis,
                     sum(sim_data_computed[f][22][1:, :],0) / (GoP - 1)
                 sim_data_computed[f][21] = \
                     sum(sim_data_computed[f][23][1:, :],0) / (GoP - 1)
-                    
-                    
+                                    
+                # TODO: Try to not have offset hardcoded -> 
+                # buffers[1].parent_packet_seq.parent_sequence.types
+                """
+                sim_data_computed[f][18] = np.zeros(n_ues)       
+                sim_data_computed[f][19] = np.zeros(n_ues)             
+                sim_data_computed[f][20] = np.zeros(n_ues)              
+                sim_data_computed[f][21] = np.zeros(n_ues)  
+                
+                ue_offset = [0, 1, 3, 4] # ONLY HOLDS FOR 4 UES
+                ue_offset = np.zeros(n_ues, dtype=int)
+                for ue in range(n_ues):
+                    for frm in range(GoP):
+                        if sim_data_trimmed[f][1][ue].parent_packet_seq.\
+                            parent_sequence.types[frm] == 'I':
+                                ue_offset[ue] = int(frm)
+                
+                for ue in range(n_ues):
+                    # PER I frame: 
+                    sim_data_computed[f][18][ue] = \
+                        sim_data_computed[f][22][ue_offset[ue], ue]
+                    sim_data_computed[f][20][ue] = \
+                        sim_data_computed[f][23][ue_offset[ue], ue]
+               
+                    # PER P frame:                
+                    sim_data_computed[f][19][ue] = \
+                        (sum(sim_data_computed[f][22][0:, ue],0) -
+                            sim_data_computed[f][22][ue_offset[ue], ue]) \
+                            / (GoP - 1)
+                    sim_data_computed[f][21][ue] = \
+                        (sum(sim_data_computed[f][23][0:, ue],0) -
+                            sim_data_computed[f][23][ue_offset[ue], ue]) \
+                            / (GoP - 1)        
+                # """
+                            
                 # PER FRAME METRICS
                 # Adjust for proportionality on # pcks per frame
                 P_frame_pcks_proportion = (GoP - 1) * f_sp.IP_ratio 
@@ -680,7 +712,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                 sim_data_computed[f][22] = np.round(sim_data_computed[f][22],2)
                 sim_data_computed[f][23] = np.round(sim_data_computed[f][23],2)
         
-            # COMPUTE INDEX 39-42: 
+            # COMPUTE INDEX 39-42: (NOT NEEDED ANMORE)
             # TODO: For simulations with I-frame spacing on!
             # Additional compute indices!
             if var_to_compute in ['avg_pck_lat_per_I_frame_spaced',
@@ -707,12 +739,18 @@ def compute_sim_data(plot_idx, ues, ttis,
                         
                 # Different frame idxs for I-frames for every user if I-frame
                 # spacing is used                
-                ue_offset = [0, 1, 3, 4] # ONLY HOLDS FOR 4 UES
-                # ue_offset = [0, 0, 0, 0]
                 sim_data_computed[f][39] = np.zeros(n_ues)       
                 sim_data_computed[f][40] = np.zeros(n_ues)             
                 sim_data_computed[f][41] = np.zeros(n_ues)              
-                sim_data_computed[f][42] = np.zeros(n_ues)        
+                sim_data_computed[f][42] = np.zeros(n_ues)  
+                
+                ue_offset = [0, 1, 3, 4] # ONLY HOLDS FOR 4 UES
+                ue_offset = np.zeros(n_ues, dtype=int)
+                for ue in range(n_ues):
+                    for frm in range(GoP):
+                        if sim_data_trimmed[f][1][ue].parent_packet_seq.\
+                            parent_sequence.types[frm] == 'I':
+                                ue_offset[ue] = int(frm)
                 
                 for ue in range(n_ues):
                     # PER I-frames: 
@@ -724,11 +762,11 @@ def compute_sim_data(plot_idx, ues, ttis,
                     # PER P frame
                 
                     sim_data_computed[f][40][ue] = \
-                        (sum(sim_data_computed[f][22][:, ue],0) - \
+                        (sum(sim_data_computed[f][22][0:, ue],0) -
                             sim_data_computed[f][22][ue_offset[ue], ue]) \
                             / (GoP - 1)
                     sim_data_computed[f][42][ue] = \
-                        (sum(sim_data_computed[f][23][0:, ue],0) - 
+                        (sum(sim_data_computed[f][23][0:, ue],0) -
                             sim_data_computed[f][23][ue_offset[ue], ue]) \
                             / (GoP - 1)
                        
@@ -1014,8 +1052,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][16]],
                          x_axis_label=x_label_time, y_axis_label='Power [dBW]',
                          savefig=save_fig, filename=file_name, 
-                         saveformat=save_format)
-            print(np.mean(sim_data_trimmed[f][16]),'dBW')
+                         saveformat=save_format, same_axs=(True))
+            # print(np.mean(sim_data_trimmed[f][16]),'dBW')
         
         # The two indicies below require the channel_per_prb variable
         # Channel across time for many PRBs
@@ -1254,14 +1292,21 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
         
-        
+        # TODO
         # Signal power vs interference (dBw) [double axis]
         if plot_idx == 3.45:
-            plot_for_ues_double(ues, x_vals, [sim_data_computed[f][5]], 
-                                [sim_data_computed[f][7]], x_label_time, 
-                                ['Sig. Power [dBw]', 'Int. Power [dBw]'],
-                                savefig=save_fig, filename=file_name, 
-                                saveformat=save_format)
+            # plot_for_ues_double(ues, x_vals, [sim_data_computed[f][5]], 
+            #                     [sim_data_computed[f][7]], x_label_time, 
+            #                     ['Sig. Power [dBw]', 'Int. Power [dBw]'],
+            #                     savefig=save_fig, filename=file_name, 
+            #                     saveformat=save_format)
+            plot_for_ues(ues, x_vals, [sim_data_computed[f][5]], 
+                        x_label_time, 
+                        ['Sig. Power [dBw]'],
+                        linewidths = [3,3,3,3],
+                        savefig=save_fig, filename=file_name, 
+                        saveformat=save_format, same_axs=True, 
+                        plot_type_left='line')
                 
         # Signal power vs interference (dBm) [single]
         if plot_idx == 3.5:
@@ -1605,7 +1650,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                                 [sim_data_computed[f][14]],
                                 [sim_data_computed[f][15]], 'Frame index', 
                                 ['Avg. latency [ms]', 'Drop rate [%]'],
-                                linewidths=[0.6,.6,0.4], 
+                                linewidths=[0.6,0.6,0.4], 
                                 label_fonts=[14,14], fill=True, 
                                 fill_var=sim_data_computed[f][13], 
                                 fill_color='red',
@@ -1875,7 +1920,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             
             width = 4.8
             height = 4
-            size = 3
+            size = 2 #3
             r = width/height
             fig, axs = plt.subplots(n1,n2, tight_layout=True, 
                                     figsize=(r*height*size, size/r*width))
@@ -2207,13 +2252,26 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 18.1: 
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][19]], 
                          x_axis_label=x_label_time, 
-                         y_axis_label='Left in buffer to send (kByte)',
-                         linewidths=[.4,.4,.4,.4], 
+                         y_axis_label='Nr of packets left in buffer',
+                         # linewidths=[.4,.4,.4,.4], 
                          y_labels=['UE 0','UE 1','UE 2','UE 3'], 
                          # ylim=(6.5, 15.5),
-                         ncols=1, size=1.3, 
-                         use_legend=True, legend_inside=True, 
-                         legend_loc="lower right",
-                         same_axs=False,
+                         # ncols=1, size=1.3, 
+                         # use_legend=True, legend_inside=True, 
+                         # legend_loc="lower right",
+                         # same_axs=False,
+                         savefig=save_fig, filename=file_name, 
+                         saveformat=save_format)
+        if plot_idx == 18.2: 
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][20]], 
+                         x_axis_label=x_label_time, 
+                         y_axis_label='Left in buffer to send (kByte)',
+                         # linewidths=[.4,.4,.4,.4], 
+                         y_labels=['UE 0','UE 1','UE 2','UE 3'], 
+                         # ylim=(6.5, 15.5),
+                         # ncols=1, size=1.3, 
+                         # use_legend=True, legend_inside=True, 
+                         # legend_loc="lower right",
+                         # same_axs=False,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)

@@ -65,7 +65,7 @@ always_compute = True
 
 #-------------------------
 
-stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats' + '\\'
+stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Always_schedule_on' + '\\'
 
 seeds = [1]
 speeds = [1]
@@ -77,7 +77,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [int(4000 * 0), int(4000 * 0.2)]
+trim_ttis = [int(4000 * 0), int(4000 * 2)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -122,8 +122,9 @@ VARS_NAME_LOAD = ['sp',                       #  0
                   'scheduled_UEs',            # 15
                   'channel',                  # 16
                   'channel_per_prb',          # 17
-                  'power_per_beam',           # 18
-                  'buffer_filling'            # 19
+                  'power_per_beam',           # 18             
+                  'packets_in_buffer',        # 19
+                  'bits_in_buffer'            # 20     
                   '']
 
 # Variable names that can be computed from the loaded and trimmed variables
@@ -167,10 +168,6 @@ VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
                      'beams_processed',                   # 36
                      'avg_sinr',                          # 37
                      'avg_sinr_multitrace',               # 38
-                     'avg_pck_lat_per_I_frame_spaced',      # 39
-                     'avg_pck_lat_per_P_frame_spaced',      # 40
-                     'avg_pck_drop_rate_per_I_frame_spaced',# 41
-                     'avg_pck_drop_rate_per_P_frame_spaced',# 42
                      '']
 
 # file_sets has the sets of files to load at any given time.
@@ -190,7 +187,7 @@ for comb in combinations:
     #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
     #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
 
-    stats_dir_end = r'Sim_SEED5_FREQ-0_APPBIT-20_BW-100_LAT-40_LEN-4s_PF_True' + '\\'
+    stats_dir_end = r'Sim_SEED5_FREQ-0_APPBIT-20_BW-100_LAT-40_LEN-16s_PF_False' + '\\'
     # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-20_BW-100_LAT-50_LEN-16s_Frametype' + '\\'
 
     # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-50_BW-100_LAT-20_LEN-16s_M-LWDF' + '\\'
@@ -223,8 +220,8 @@ file_sets = [file_sets]
 for file_set in file_sets:
     
     # plot idx
-    idxs_to_plot = [7.4]#, 10.75]
-    
+    idxs_to_plot = [0.1, 3.45, 18.2]#, 10.75]
+    idxs_to_plot = [10.7]
     # For the very first run and they don't exist, initialise
     try:
         sim_data_loaded
@@ -304,7 +301,6 @@ X   0.3   -> Channel Power across prbs (for a given tti)
     3.3   -> Signal power vs Interference power (Watt)[single axis]
     3.35  -> Signal power vs Interference power (Watt)[double axis]
     
-    !!! Check why channel plots shows more multipath fading only for User 0 
     3.4   -> Signal power vs Interference power (dBW) [single axis] 
     
     3.45  -> Signal power vs Interference power (dBW) [double axis]
@@ -372,8 +368,10 @@ X   0.3   -> Channel Power across prbs (for a given tti)
                 -> for each P frame
                 -> averaged across all frames and std
     TODO
-    10.75 -> prints all detailed measurement information as in 10.7 
+X   10.75 -> prints all detailed measurement information as in 10.7 
              but for simulations with 'uniformly spaced I-frames'   
+             => Included offset calculation in 10.7 
+             
     10.8  -> Average packet latency for each frame in the GoP (bar plot) 
     10.9  -> Average packet drop rate for each frame in the GoP (bar plot)
     10.11 -> Average packet latency and drop rate per frame of the GoP 
@@ -416,7 +414,8 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     17.2  -> ...
     
     
-    18.1 -> Bits left in buffer for each UE. [diff plot]
+    18.1 -> Nr of packets with something left to send for each UE. [diff plot]
+    18.2 -> Total bits left to send in buffer for each UE. [diff plot]
     """
     
     """ 
@@ -442,7 +441,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
                            7.1, 7.2, 7.3, 7.35, 7.4, 7.5, 9.1, 9.2, 9.3, 9.4,
                            10.1, 10.15, 10.2, 10.25, 10.3, 10.31, 10.4, 10.45, 
                            10.7, 10.8, 10.9, 10.11, 11, 11.1, 11.2, 11.3, 
-                           13, 14.1, 14.2, 15, 16, 16.1, 16.2]
+                           13, 14.1, 14.2, 15, 16, 16.1, 16.2, 18.1, 18.2]
 
     all_idxs_available = all_plots_available + all_non_plots_available
 
@@ -483,7 +482,7 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     # Throughput + SINR[dB]&BLER%
     # idxs_to_plot = [1, 2.4]  
     # MCS per user 
-    idxs_to_plot = [18.1]      
+    # idxs_to_plot = [18.1, 18.2]      
     # Packet sequences
     # idxs_to_plot = [14.2]  
     # idxs_to_plot = [1]
