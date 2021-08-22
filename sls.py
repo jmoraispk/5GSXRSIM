@@ -1034,8 +1034,8 @@ def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
     value of internal product). 
     """
     
-    if n_csi_beams > 1:
-        raise Exception('NEEDS IMPLEMENTATION!')
+    # if n_csi_beams > 1:
+    #     raise Exception('NEEDS IMPLEMENTATION!')
         # The change is really simple:
             # create a beam list before the loop
             # every time the channel gain passes the minimum channel
@@ -1101,53 +1101,72 @@ def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
         if save_power_per_CSI_beam:
             power_per_beam_list = list_of_ch_gains
     else:
+        ch_gain = []
+        mr_precoder = []
+        # full_idx = []
+        bs_weights = []
+        # ch_gain = numpy.array(codebook_subset.shape[1])
         for dir_idx in range(codebook_subset.shape[1]):
             
+            # full_idx.append(dir_idx)
             w = codebook_subset[:, dir_idx]
             
             # Compute internal product between ch coeffs and precoder, 
             # that is what the UE will see from a transmission with w
             at_ue_ant = np.dot(ch_resp, w)
-            
+            bs_weights.append(w)
             # The UE will use the Maximum Ratio Beamformer, 
             # both for receiving and for transmitting
-            mr_precoder = at_ue_ant.conj().T
-            mr_precoder = mr_precoder / np.linalg.norm(mr_precoder)
+            mr_precoder_temp = at_ue_ant.conj().T
+            mr_precoder.append(mr_precoder_temp / np.linalg.norm(mr_precoder_temp))
             
             # Resulting in a amplitude channel gain of:
-            ch_gain = np.dot(at_ue_ant, mr_precoder)
+            ch_gain.append(abs(np.dot(at_ue_ant, mr_precoder[dir_idx])))
+            power_per_beam_list.append(ch_gain)
             
             # The channel gain should be a scalar by now...
             # Save the precoder that performs the best
             
-            if abs(ch_gain) > curr_max_ch_gain:
-                best_idx = dir_idx
-                curr_max_ch_gain = abs(ch_gain)
-                best_ue_weights = mr_precoder
-                best_bs_weights = w
+                            
+            # if abs(ch_gain) > curr_max_ch_gain:
+            #     best_idx = dir_idx
+            #     curr_max_ch_gain = abs(ch_gain)
+            #     best_ue_weights = mr_precoder
+            #     best_bs_weights = w
             
-            if save_power_per_CSI_beam:
-                power_per_beam_list.append(abs(ch_gain))
-    
-    
-    # Create and load the best Beam Pair found
-    beam_pair = Beam_pair()
-    
-    best_beam_relative_idxs.append(best_idx)
-    beam_pair.beam_idx = q_idxs[best_idx]
-    
-    az_idx = int(beam_pair.beam_idx / (N1 * O1))
-    el_idx = int(beam_pair.beam_idx - az_idx * (N1 * O1))
-    beam_pair.ang_idx = np.array([az_idx, el_idx])
-    beam_pair.ang = codebook_subset_directions[:,best_idx]
-    
-    beam_pair.bs_weights = best_bs_weights
-    beam_pair.ue_weights = best_ue_weights
-    
-    # Save the channel gain (linear/electric field)**2 = power gain
-    beam_pair.ch_power_gain = curr_max_ch_gain ** 2
-    
-    beam_pairs.append(beam_pair)
+            # if save_power_per_CSI_beam:
+            #     power_per_beam_list.append(abs(ch_gain))
+        best_idx = []
+        curr_max_ch_gain = []
+        best_ue_weights = []
+        best_bs_weights = []
+        beam_pair = {}
+            
+    for L in range(n_csi_beams):
+        best_idx.append(ch_gain.index(max(ch_gain)))
+        curr_max_ch_gain.append(max(ch_gain))
+        best_ue_weights.append(mr_precoder[best_idx[L]])
+        best_bs_weights.append(w[best_idx[L]])
+        ch_gain[best_idx[L]] = 0
+        
+        # Create and load the best Beam Pair found
+        beam_pair[L] = Beam_pair()
+        
+        best_beam_relative_idxs.append(best_idx[L])
+        beam_pair[L].beam_idx = q_idxs[best_idx[L]]
+        
+        az_idx = int(beam_pair[L].beam_idx / (N1 * O1))
+        el_idx = int(beam_pair[L].beam_idx - az_idx * (N1 * O1))
+        beam_pair[L].ang_idx = np.array([az_idx, el_idx])
+        beam_pair[L].ang = codebook_subset_directions[:,best_idx[L]]
+        
+        beam_pair[L].bs_weights = best_bs_weights[L]
+        beam_pair[L].ue_weights = best_ue_weights[L]
+        
+        # Save the channel gain (linear/electric field)**2 = power gain
+        beam_pair[L].ch_power_gain = curr_max_ch_gain[L] ** 2
+        
+        beam_pairs.append(beam_pair[L])
     
     # Return best n_best beams 
     return (beam_pairs, power_per_beam_list, best_beam_relative_idxs)
@@ -1194,42 +1213,46 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
     # codebook_subset_directions = precoders_dict[(bs, 'directions')][:, q_idxs]
     
     for l in range(n_layers):
+        # This if loop is to make sure rank 1 goes only 1 time through the loop.
+        # else rank 1 will go 2 times: range(1) is (0,1), hence twice.
+        
         # Compute the means across frequency
         mean_coeffs.append(np.mean(coeffs[(bs, ue)][:,:,:,tti_csi], 2))
-        
-        
+            
+            
         if not l:
-            q_idxs_l = q_idxs[0: 15]
+            q_idxs_l = q_idxs[0: 16]
             idxs_l = 0
             # q_idxs_l = q_idxs[0: 255]
             # idxs_l = 0
         else:
-            q_idxs_l = q_idxs[16: 31]
+            q_idxs_l = q_idxs[17: 33]
             idxs_l = 16
             # q_idxs_l = q_idxs[256: 511]
             # idxs_l = 256
             # [int(N1)*int(N2)*int(O1)*int(O2)]
-        
             
+                
         codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs_l]
         # The channel response is a square matrix of AE_UE x AE_BS
         [azi_len, el_len] = precoders_dict[(bs, 'size')]
         codebook_subset_directions = precoders_dict[(bs, 'directions')][:, q_idxs_l]
-        
+            
         # Save list of best beam pairs on that polarisation combination
         (best_beam_pairs, power_per_beam[l], best_beam_relative_idxs) = \
-            find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs_l,
-                                 codebook_subset_directions, mean_coeffs[l], 
-                                 bs, n_csi_beams, 
-                                 save_power_per_CSI_beam, vectorize,
-                                 N1, N2, O1, O2)
-   
-        best_beam_relative_idxs[0] = best_beam_relative_idxs[0] + idxs_l
+        find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs_l,
+                                     codebook_subset_directions, mean_coeffs[l], 
+                                     bs, n_csi_beams, 
+                                     save_power_per_CSI_beam, vectorize,
+                                     N1, N2, O1, O2)
+       
+        # best_beam_relative_idxs[0] = best_beam_relative_idxs[0] + idxs_l
+        best_beam_relative_idxs = np.add(best_beam_relative_idxs, idxs_l).tolist()
         # print('tti_csi', tti_csi, 'ue', ue, 'l', l, 'precoder', 
         #                                       q_idxs[best_beam_relative_idxs])
         # print(q_idxs)
         # Best Beam Pairs is a list with the best n_csi_beams pairs for a layer
-        
+            
         # Remove beams picked from codebook (so the next layer doesn't pick them)
         # if n_layers > 1:
         #     # Trim indices, codebook and directions accordingly
@@ -1239,15 +1262,47 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
         #     codebook_subset_directions = np.delete(codebook_subset_directions, 
         #                                            best_beam_relative_idxs, 
         #                                            axis=1)
-        
+            
         # Take the beam list and compress it to a single precoder
         # e.g. by scaling each beam according with the feedback
         # beam list is n_csi_beams=l long, and we need to merge it into 1 
         # beam pair (don't forget to update the receiver precoder!)
         if n_csi_beams == 1:
             created_beam_pair = best_beam_pairs[0]
-        else:
-            pass # to implement when l>1
+        elif n_csi_beams == 2:
+            Fin_w = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), 
+               (np.sqrt(0.5) * codebook_subset[:, best_beam_relative_idxs[1]]))
+        elif n_csi_beams == 3:
+            Fin_w = np.add((codebook_subset[:, best_beam_relative_idxs[0]] ), 
+              (np.sqrt(0.5) * codebook_subset[:, best_beam_relative_idxs[1]]),
+              (np.sqrt(0.25) * codebook_subset[:, best_beam_relative_idxs[2]]))
+        elif n_csi_beams == 4:
+            Fin_w = np.add((codebook_subset[:, best_beam_relative_idxs[0]] ), 
+              (np.sqrt(0.5) * codebook_subset[:, best_beam_relative_idxs[1]]),
+              (np.sqrt(0.25) * codebook_subset[:, best_beam_relative_idxs[2]]),
+              (np.sqrt(0.125) * codebook_subset[:, best_beam_relative_idxs[3]]))
+                
+        if not n_csi_beams == 1:
+            # Compute internal product between ch coeffs and precoder, 
+            # that is what the UE will see from a transmission with w
+            Fin_at_ue_ant = np.dot(mean_coeffs[l], Fin_w)
+            Fin_bs_weights = Fin_w
+            # The UE will use the Maximum Ratio Beamformer, 
+            # both for receiving and for transmitting
+            Fin_mr_precoder_temp = Fin_at_ue_ant.conj().T
+            Fin_mr_precoder = Fin_mr_precoder_temp / np.linalg.norm(Fin_mr_precoder_temp)
+                
+            # Resulting in a amplitude channel gain of:
+            Fin_ch_gain = abs(np.dot(Fin_at_ue_ant, Fin_mr_precoder))
+            power_per_beam[l] = Fin_ch_gain
+            # Create and load the best Beam Pair found
+            created_beam_pair = Beam_pair()
+            created_beam_pair.beam_idx = 0
+            created_beam_pair.bs_weights = Fin_bs_weights
+            created_beam_pair.ue_weights = Fin_mr_precoder
+            # Save the channel gain (linear/electric field)**2 = power gain
+            created_beam_pair.ch_power_gain = Fin_ch_gain ** 2
+        
         curr_beam_pairs[(bs,ue,l)] = created_beam_pair
                 
     return
@@ -1574,10 +1629,14 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim):
     If the beam is at least the so much appart, it is compatible. Less than
     that, and it is not.
     """
+    # print(bp1)
+    check_orth_beams = np.dot(bp1.bs_weights, bp2.bs_weights)
     
-    beam_distance = np.linalg.norm(np.abs(bp1.ang_idx - bp2.ang_idx))
     
-    return beam_distance >= beam_dist_lim
+    # beam_distance = np.linalg.norm(np.abs(bp1.ang_idx - bp2.ang_idx))
+    
+    # return beam_distance >= beam_dist_lim
+    return check_orth_beams <= beam_dist_lim
 
 
 def is_compatible_with_schedule(new_entry, schedule, beam_dist_lim):
