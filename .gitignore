@@ -12,8 +12,8 @@
 /Instance_logs3/
 /Testing/
 /Zheng - Plots/
-/PCAP/
 /__pycache__/
+/PCAP/__pycache__/
 /.idea/
 /.pylint.d/
 /Matlab/*
@@ -30,5 +30,7 @@
 *.txt
 test.py
 *.png
+*.csv
+*.pcap
 __init__.py
 dot_to_png.py
