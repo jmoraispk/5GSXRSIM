@@ -19,10 +19,12 @@ import simulation_parameters as sim_par
 
 parent_folder = \
     r"Y:\SXRSIMv3\Matlab\TraceGeneration"
+    # r"Z:\SXRSIMv3\Matlab\TraceGeneration"
+      
 
-seed = int(ut.get_input_arg(1)) # 1
+# seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
-# seed = 3
+seed = 1
 speed = 3
 
 folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
@@ -42,8 +44,8 @@ users = [None]
 
 #rot_factors = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
-rot_factors = [10, 14]
-n_layers = [2]
+rot_factors = [None]
+n_layers = [1]
 
 # Now we usually keep these constant (so we removed them from the file name!):
 application_bitrates = [100] # Mbps
@@ -112,11 +114,11 @@ for param in sim_params:
     print('Done setting Simulation Parameters!')
     
     # Take care of the output
-    include_timestamp = False 
+    include_timestamp = True 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
-                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-0-1i'
+                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-2'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
@@ -614,7 +616,7 @@ for param in sim_params:
                                serving_BS_dl, est_scheduled_layers, 
                                curr_beam_pairs, sp.min_beam_distance, 
                                scheduled_UEs, sp.scheduling_method, 
-                               real_scheduled_layers, sp.debug)
+                               real_scheduled_layers, sp.debug, sp.n_csi_beams)
             
             # -------------------------------
             
