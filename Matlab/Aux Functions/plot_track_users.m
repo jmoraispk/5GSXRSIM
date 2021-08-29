@@ -46,7 +46,7 @@ function [] = plot_track_users(layout, other_participants, ...
     r = 0.5; %length of the vectors (orientation)
     colors = ['k', 'b', 'y', 'm', 'c', 'r', 'g'];
     % repeat the colors when the number of users is big enough
-    colors = [colors, flip(colors)];
+    colors = [colors, flip(colors), flip(colors)];
     if shade
         w = 1;
     else
@@ -110,7 +110,7 @@ function [] = plot_track_users(layout, other_participants, ...
                           cur_pos(u, 2) + r * sin(theta) * sin(phi), ...
                           cur_pos(u, 3) + r * cos(theta)];
                 line([cur_pos(u, 1) target(1)], [cur_pos(u, 2) target(2)], ...
-                     [cur_pos(u, 3) target(3)], 'Color', colors(u), 'LineWidth', w);
+                     [cur_pos(u, 3) target(3)], 'Color', colors(u), 'LineWidth', 2*w);
             end
         end
         

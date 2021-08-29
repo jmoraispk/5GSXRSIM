@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#SBATCH -J testhw                  					# Job name
+#SBATCH -o testhw.%j.out           					# Name of output file (%j expands to jobId)
+#SBATCH -p general                     					# Use the "general" partition (default)
+#SBATCH -n 1                           					# Number of tasks/processes
+#SBATCH -c 1                           				# Number of cpus/threads per task
+#SBATCH -t 0-01:10:00                					# Run time 10 mins
+#SBATCH --mem 40G                       				# Use 1GB
+#SBATCH --mail-user=<S.Kizhakkekundil@student.tudelft.nl>			# Set e-mail address
+#SBATCH --mail-type=ALL									# Specify e-mail events
+
+# cd to working directory
+cd ~/bulk/SXRSIMv3
+source /home/kizhakkekundi/virt-env/my-app/bin/activate
+python3 ./sxr_sim.py

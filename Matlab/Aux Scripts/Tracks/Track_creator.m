@@ -10,7 +10,7 @@
 %                 users had changed.
 
 % INPUT THE CORRECT PATH to the vars.mat of choice
-load('vars.mat'); 
+% load('vars.mat'); 
 
 
 if n_time_divisions == 1
@@ -32,8 +32,10 @@ end
 %   - SEED
 %   - mvnt_values
 % speaking_time = 4;
-mvnt_vals = 4;
+%%
+mvnt_vals = 3;
 SEEDs = [1:5];
+SEEDs =[1];
 
 for SEED = SEEDs
     % SEED is set just in the beginning of the first set of tracks
@@ -259,6 +261,11 @@ for SEED = SEEDs
                 sample_idxs = [sample_idxs(1) ...
                        repmat([sample_idxs(2:end) flipped_idxs(2:end)], ...
                               [1 sample_idxs_reps])];
+%                 sample_idxs = [sample_idxs(1) ...
+%                        repmat([sample_idxs(2:end) flipped_idxs(2:end)], ...
+%                               [1 sample_idxs_reps]), ...
+%                               repmat([sample_idxs(2:end) flipped_idxs(2:end)],...
+%                               [1 sample_idxs_reps])];
 
                 % We'll be drawing from these indices until we have reached
                 % the point of switching interval, which will take more 
@@ -389,7 +396,7 @@ for SEED = SEEDs
         filename = ['Tracks\Track', ...
                     '_SEED', num2str(SEED), ...
                     '_SPEED', num2str(mvnt_val), ...
-                    '_UE', num2str(n_rx), '.mat'];
+                    '_UE', num2str(n_rx), 'test_rect.mat'];
 
         save(filename, 'l_aux');
     end

@@ -29,17 +29,17 @@ o2 = t2.orientation;
 SEED = 1;
 snapshot_interval = 100;
 display_orientation = 1;
-pause_interval = 3;
-pause_duration = 0;
+pause_interval = 8;
+pause_duration = 2;
 shade = 0;
 make_gif(4) = 1;
 plot_only_phy_users = 0;     % 0 means all phy + vir users are plotted.
 plot_with_layout = 0;        % 1 if layout is needed in the gif.
 
-for mvnt_val = 4:4  % check the speed here!
-    filename = ['Tracks\Track', '_SEED', num2str(SEED), ...
-                '_SPEED', num2str(mvnt_val), '_UE', num2str(n_rx), '.mat'];
-    filename = 'Tracks\Track_SEED1_SPEED4_UE4.mat';
+for mvnt_val = 3:3  % check the speed here!
+%     filename = ['Tracks\Track', '_SEED', num2str(SEED), ...
+%                 '_SPEED', num2str(mvnt_val), '_UE', num2str(n_rx), '.mat'];
+    filename = 'Tracks\Track_SEED1_SPEED3_UE16test_rect.mat';
     l_aux = load(filename).l_aux;
     
     for i = 1:1 % do for up only..
@@ -56,7 +56,7 @@ for mvnt_val = 4:4  % check the speed here!
                          zoom_factor, plot_only_phy_users, plot_with_layout)
         
         
-        plotCircle3D( [room_centre_xy cam_height-0.05], [0 0 1], ...
-                      r_table, [0.5 0.25 0]);
+%         plotCircle3D( [room_centre_xy cam_height-0.05], [0 0 1], ...
+%                       r_table, [0.5 0.25 0]);
     end
 end
