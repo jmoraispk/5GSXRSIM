@@ -173,11 +173,11 @@ for seeds in seeds_list:
             #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
             #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
                             
-            stats_dir_end = f'SEED{comb[-1]}_FREQ-{comb[1]}_' + \
-                            f'CSIPER-{comb[2]}_'+ \
-                            f'USERS-{comb[4]}_ROTFACTOR-{comb[7]}_LAYERS-1_COPH-1_L-2' + '\\'
+            # stats_dir_end = f'SEED{comb[-1]}_FREQ-{comb[1]}_' + \
+            #                 f'CSIPER-{comb[2]}_'+ \
+            #                 f'USERS-{comb[4]}_ROTFACTOR-{comb[7]}_LAYERS-1_COPH-1_L-2' + '\\'
             
-            # stats_dir_end = r'SEED1_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-{rot_factor}_LAYERS-2' + '\\'
+            stats_dir_end = r'SEED1_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-None_LAYERS-1_COPH-1_L-2_2021-08-29_03h04m43s' + '\\'
             
             print(f'\nDoing for: {stats_dir_end}')
             
@@ -424,12 +424,12 @@ for seeds in seeds_list:
         
             all_idxs_available = all_plots_available + all_non_plots_available
         
-            idxs_to_plot = [0.1, 1, 2, 3.45, 4.2, 5.4, 7.4, 10.45]
+            idxs_to_plot = [0.1, 1, 2, 3.45, 4.2, 5.4, 7.4, 10.45, 18.1]
         
             # idxs_to_plot = all_plots_available
             # idxs_to_plot = [i for i in all_plots_available if i >= 0]
-            idxs_to_plot = [16.1, 16.2, 16.25]
-            idxs_to_plot = [18.1]
+            # idxs_to_plot = [16.1, 16.2, 16.25]
+            # idxs_to_plot = [18.1]
             # Test save_plot
             save_plots = False
             saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'

@@ -1146,7 +1146,7 @@ def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
         best_idx.append(ch_gain.index(max(ch_gain)))
         curr_max_ch_gain.append(max(ch_gain))
         best_ue_weights.append(mr_precoder[best_idx[L]])
-        best_bs_weights.append(w[best_idx[L]])
+        best_bs_weights.append(bs_weights[best_idx[L]])
         ch_gain[best_idx[L]] = 0
         
         # Create and load the best Beam Pair found
@@ -1267,20 +1267,76 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
         # e.g. by scaling each beam according with the feedback
         # beam list is n_csi_beams=l long, and we need to merge it into 1 
         # beam pair (don't forget to update the receiver precoder!)
+        
+        amp_scaling_list = [1, np.sqrt(1/2), np.sqrt(1/4), np.sqrt(1/8), 
+                            np.sqrt(1/16), np.sqrt(1/32), np.sqrt(1/64), 0]
+        
         if n_csi_beams == 1:
             created_beam_pair = best_beam_pairs[0]
+            
         elif n_csi_beams == 2:
-            Fin_w = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), 
-               (np.sqrt(0.5) * codebook_subset[:, best_beam_relative_idxs[1]]))
+            print('ue', ue, best_beam_pairs[0].beam_idx, best_beam_pairs[1].beam_idx)
+            pow_ratio_1 = best_beam_pairs[1].ch_power_gain / best_beam_pairs[0].ch_power_gain
+            amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
+            # amp1 = round(amp1, 2)
+            # Fin_w = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), 
+            #    (amp1 * (codebook_subset[:, best_beam_relative_idxs[1]])))
+            
+            Fin_w = ((codebook_subset[:, best_beam_relative_idxs[0]])+
+               (amp1 * (codebook_subset[:, best_beam_relative_idxs[1]])))
+            
+            Fin_w = (1/np.sqrt(1+(amp1 * amp1)))*(Fin_w)
+            created_beam_pair = Beam_pair()
+            created_beam_pair.beam_idx = [best_beam_pairs[0].beam_idx,
+                                             best_beam_pairs[1].beam_idx]
+            
         elif n_csi_beams == 3:
-            Fin_w = np.add((codebook_subset[:, best_beam_relative_idxs[0]] ), 
-              (np.sqrt(0.5) * codebook_subset[:, best_beam_relative_idxs[1]]),
-              (np.sqrt(0.25) * codebook_subset[:, best_beam_relative_idxs[2]]))
+            pow_ratio_1 = best_beam_pairs[1].ch_power_gain / best_beam_pairs[0].ch_power_gain
+            amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
+            
+            pow_ratio_2 = best_beam_pairs[2].ch_power_gain / best_beam_pairs[0].ch_power_gain
+            amp2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - pow_ratio_2))]
+            
+            Fin_w = np.add(codebook_subset[:, best_beam_relative_idxs[0]], 
+              (amp1 * codebook_subset[:, best_beam_relative_idxs[1]]),
+              (amp2 * codebook_subset[:, best_beam_relative_idxs[2]]))
+            
+            Fin_w = (1/np.sqrt(1+(amp1 * amp1)+(amp2 * amp2)))*(Fin_w)
+            created_beam_pair = Beam_pair()
+            created_beam_pair.beam_idx = [best_beam_pairs[0].beam_idx,
+                                             best_beam_pairs[1].beam_idx, 
+                                             best_beam_pairs[2].beam_idx]
+            
         elif n_csi_beams == 4:
-            Fin_w = np.add((codebook_subset[:, best_beam_relative_idxs[0]] ), 
-              (np.sqrt(0.5) * codebook_subset[:, best_beam_relative_idxs[1]]),
-              (np.sqrt(0.25) * codebook_subset[:, best_beam_relative_idxs[2]]),
-              (np.sqrt(0.125) * codebook_subset[:, best_beam_relative_idxs[3]]))
+            pow_ratio_1 = best_beam_pairs[1].ch_power_gain / best_beam_pairs[0].ch_power_gain
+            amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
+            
+            pow_ratio_2 = best_beam_pairs[2].ch_power_gain / best_beam_pairs[0].ch_power_gain
+            amp2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - pow_ratio_2))]
+            
+            pow_ratio_3 = best_beam_pairs[3].ch_power_gain / best_beam_pairs[0].ch_power_gain
+            amp3 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - pow_ratio_3))]
+            
+            Fin_w1 = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), 
+              (amp1 * codebook_subset[:, best_beam_relative_idxs[1]]),
+              (amp2 * codebook_subset[:, best_beam_relative_idxs[2]]))
+            Fin_w = np.add(Fin_w1,
+              (amp3 * codebook_subset[:, best_beam_relative_idxs[3]]))
+            
+            Fin_w = (1/(np.sqrt((N1*N2)* \
+                        (1 + (amp1 * amp1)+(amp2 * amp2)+(amp3 * amp3)))))* \
+                                                                    (Fin_w)
+            created_beam_pair = Beam_pair()
+            created_beam_pair.beam_idx = [best_beam_pairs[0].beam_idx,
+                                             best_beam_pairs[1].beam_idx, 
+                                             best_beam_pairs[2].beam_idx,
+                                             best_beam_pairs[3].beam_idx]
                 
         if not n_csi_beams == 1:
             # Compute internal product between ch coeffs and precoder, 
@@ -1296,8 +1352,7 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             Fin_ch_gain = abs(np.dot(Fin_at_ue_ant, Fin_mr_precoder))
             power_per_beam[l] = Fin_ch_gain
             # Create and load the best Beam Pair found
-            created_beam_pair = Beam_pair()
-            created_beam_pair.beam_idx = 0
+            
             created_beam_pair.bs_weights = Fin_bs_weights
             created_beam_pair.ue_weights = Fin_mr_precoder
             # Save the channel gain (linear/electric field)**2 = power gain
@@ -1621,7 +1676,7 @@ class Schedule_entry():
               f'PRBS {self.n_prbs}, Est_bitrate {self.est_bitrate} bits/s')
 
 
-def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim):
+def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim, n_csi_beams):
     """
     Computes the distance between beams, and based on that returns the 
     compatiblity between beams.
@@ -1630,16 +1685,21 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim):
     that, and it is not.
     """
     # print(bp1)
-    check_orth_beams = np.dot(bp1.bs_weights, bp2.bs_weights)
+    if n_csi_beams == 1:
+        beam_distance = np.linalg.norm(np.abs(bp1.ang_idx - bp2.ang_idx))
+        return beam_distance >= beam_dist_lim
+    else:
+        check_orth_beams = abs(np.inner(bp1.bs_weights, bp2.bs_weights))
+        print(bp1.beam_idx, bp2.beam_idx,'dot product', check_orth_beams)
+        common_idxs = set(bp1.beam_idx) & set(bp2.beam_idx)
+        if not len(common_idxs):
+            return True
+        else:
+            return False
     
-    
-    # beam_distance = np.linalg.norm(np.abs(bp1.ang_idx - bp2.ang_idx))
-    
-    # return beam_distance >= beam_dist_lim
-    return check_orth_beams <= beam_dist_lim
+       
 
-
-def is_compatible_with_schedule(new_entry, schedule, beam_dist_lim):
+def is_compatible_with_schedule(new_entry, schedule, beam_dist_lim, n_csi_beams):
     """
     Iterates over the schedule entries and returns if the beam is compatible
     or not. 
@@ -1653,10 +1713,12 @@ def is_compatible_with_schedule(new_entry, schedule, beam_dist_lim):
         
         if are_beam_pairs_compatible(new_entry.beam_pair,
                                      schedule_entry.beam_pair, 
-                                     beam_dist_lim):
+                                     beam_dist_lim, n_csi_beams):
+            print('çompatible')
             continue
         else:
             is_compatible = False
+            print('not çompatible', schedule_entry.ue, new_entry.ue)
             break
     
     return is_compatible
@@ -1946,7 +2008,7 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
 def mu_mimo_choice(tti, curr_priorities, curr_schedule, serving_BS_dl, 
                    est_scheduled_layers, curr_beam_pairs, 
                    min_beam_distance, scheduled_UEs, scheduling_method,
-                   real_scheduled_layers, debug):
+                   real_scheduled_layers, debug, n_csi_beams):
     
     """
     The first user has as many layers as it can handle.
@@ -1994,7 +2056,7 @@ def mu_mimo_choice(tti, curr_priorities, curr_schedule, serving_BS_dl,
 
             if is_compatible_with_schedule(new_schedule_entry, 
                                            curr_schedule['DL'], 
-                                           min_beam_distance):
+                                           min_beam_distance, n_csi_beams):
                 
                 curr_schedule['DL'].append(new_schedule_entry)
                 
