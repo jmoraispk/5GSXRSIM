@@ -18,8 +18,10 @@ import application_traffic as at
 import simulation_parameters as sim_par
 
 parent_folder = \
-    r"Y:\SXRSIMv3\Matlab\TraceGeneration"
-    # r"Z:\SXRSIMv3\Matlab\TraceGeneration"
+    r"C:\Users\Srijan\Documents\SXRSIMv3\Matlab\TraceGeneration\Test_environment_seeds"
+    # r"~\bulk\SXRSIMv3\Matlab\TraceGeneration"
+    
+    
       
 
 # seed = int(ut.get_input_arg(1)) # 1
@@ -42,10 +44,10 @@ csi_periodicities = [5]
 # users = [1,2,4,6,8] 
 users = [None]
 
-#rot_factors = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+# rot_factors = [7, 8, 9, 10, 11, 12, 13, 14, 15]
 
-rot_factors = [None]
-n_layers = [1]
+rot_factors = [14]
+n_layers = [2]
 
 # Now we usually keep these constant (so we removed them from the file name!):
 application_bitrates = [100] # Mbps
@@ -86,6 +88,8 @@ for param in sim_params:
             user_list = [0, 1, 2, 4, 5, 6]
         elif users == 8:
             user_list = [0, 1, 2, 3, 4, 5, 6, 7]
+        elif users == 16:
+            user_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]    
         else:
             Exception('Not prepared for this number of users...')
     else:
@@ -117,7 +121,7 @@ for param in sim_params:
     include_timestamp = True 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
-    output_str = f'{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
+    output_str = f'SU_{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
                  f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-2'
     output_str = output_stats_folder + output_str
     

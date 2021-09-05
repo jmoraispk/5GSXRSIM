@@ -29,12 +29,12 @@ o2 = t2.orientation;
 SEED = 1;
 snapshot_interval = 100;
 display_orientation = 1;
-pause_interval = 8;
-pause_duration = 2;
-shade = 0;
+pause_interval = 10;
+pause_duration = 5;
+shade = 1;
 make_gif(4) = 1;
 plot_only_phy_users = 0;     % 0 means all phy + vir users are plotted.
-plot_with_layout = 0;        % 1 if layout is needed in the gif.
+plot_with_layout = 1;        % 1 if layout is needed in the gif.
 
 for mvnt_val = 3:3  % check the speed here!
 %     filename = ['Tracks\Track', '_SEED', num2str(SEED), ...

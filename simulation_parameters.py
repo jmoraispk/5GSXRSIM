@@ -80,7 +80,7 @@ class Simulation_parameters:
         # SU: Schedule one user at the time, as many layers as defined in n_layers
         # MU: Scheduled all users (remember the interference problem) at each
         #     tti, if their layers are compatible...
-        self.scheduling_method = 'MU'
+        self.scheduling_method = 'SU'
         
         self.bf_method = 'gob' # 'reciprocity'
         IMPLEMENTED_LAYERS_IMPLICIT_BF = 0
@@ -110,14 +110,14 @@ class Simulation_parameters:
         # If = 0, co-schedule always, even in the same beam.
         # If = 1, co-schedule if the beams are not be equal.
         # If = 2, don't co-schedule adjacent beams (first diagonal is dist 1.4)
-        self.min_beam_distance = 0.2 # 1 # 2.9 # 4.1
+        self.min_beam_distance = 0.1 # 1 # 2.9 # 4.1
         
         # How many beams should be reported to the BS?
         # If 1, then only the best beam is reported;
         # If 2, the second best is also reported; (etc...)
         # In case we want to test some intelligent way of handling multiple
         # reports
-        self.n_csi_beams = 2
+        self.n_csi_beams = 3
 
         # Rotation Factor (put to None for not applying, namely on a 
         # beam-steering GoB (i.e. the first GoB, non-3GPP))
@@ -293,7 +293,7 @@ class Simulation_parameters:
         
         # A precoder for each antenna, for each frequency [freq][bs_idx]
         self.precoders_files = \
-            [["precoders_4_4_4_4_pol_3_RI_1_ph_1"], 
+            [["precoders_4_4_4_4_pol_3_RI_2_ph_1"], 
              ["1-omni-element"]]
         
         # the case above has a single precoder for each frequency

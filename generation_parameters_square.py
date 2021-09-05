@@ -65,7 +65,7 @@ class Generation_parameters:
         # setup is done, any generation can use such builders to compute the
         # channel, it is only required to have the correct path. For that, 
         # see how the variable 'use_existing_builders' works.
-        self.only_setup = False
+        self.only_setup = True
         
         # In case of generating channels in different machines simultaneously,
         # this is used to setup which instances run in each one.
@@ -172,7 +172,7 @@ class Generation_parameters:
         
         # Room Characteristics #
         # Physical Users - users in this room
-        self.n_phy = 4
+        self.n_phy = 16
         # Virtual Users - users in other rooms
         self.n_vir = self.n_phy
         # Cameras per User - number of cameras each users needs
@@ -200,24 +200,24 @@ class Generation_parameters:
         
         # Important. Should these be interpreter as user indices [phy vir], 
         #            or as seats?
-        self.custom_speaker_list_uses_seats = True
+        self.custom_speaker_list_uses_seats = False
         
-        self.custom_speaker_list = np.array([[0, 1],
-                                             [2.1, 4],
-                                             [4.2, 7],
-                                             [6.3, 2],
-                                             [8.4, 5],
-                                             [10.5, 8],
-                                             [12.6, 3],
-                                             [14.7, 6]], dtype=np.double)
+        self.custom_speaker_list = np.array([[0, 18],
+                                             [2.1, 19],
+                                             [4.2, 22],
+                                             [6.3, 23],
+                                             [8.4, 26],
+                                             [10.5, 27],
+                                             [12.6, 30],
+                                             [14.7, 31]], dtype=np.double)
         
         # Either customize, or create one automatically
-        self.use_custom_speaker_list = False
+        self.use_custom_speaker_list = True
         
         # When creating one speaker list automatically, these two parameters
         # are needed to set what speakers and for how long each speaks.
         self.only_vir_speak = True
-        self.speaking_time = 4
+        self.speaking_time = 2
         
         # Antenna types, one input per frequency
         # [a single 'omni' or 'patch' or 'dipole' or 'array']        
@@ -877,12 +877,14 @@ class Generation_parameters:
         use_standard_arrangement = 1
         
         # Table format: 'quadrangular', 'rectangular' or 'round'/'circular'
-        table_type = 'round'
+        # table_type = 'round'
+        table_type = 'rectangular'
         
         # The seat arrangement is only needed for rectangular tables
         # For square tables only input one dimension (seats at one side)
         # For circular it's not used
-        seat_arrangement = [1, 1]
+        # seat_arrangement = [1, 1]
+        seat_arrangement = [8, 8]
         
         # This variable is used for defining the number of seats around a table
         # the keyword is 'around' - for 'round' tables
@@ -938,7 +940,8 @@ class Generation_parameters:
         # rest of the corners go counter-clock wise.
         
         # Room dimensions
-        room_size = [8, 8]
+        # room_size = [8, 8]
+        room_size = [10, 10]
 
         # The offset from the centre of mass of the head of a user. 
         # The first value is distance in front, the second value is height.
@@ -1023,7 +1026,7 @@ class Generation_parameters:
         # Model 5&6: avg time one person spends speaking (if the speaker list
         #            is to be created stochastically. It's ignored if the
         #            custom speaker list is used instead.)
-        speaking_avg_time = 4
+        speaking_avg_time = 2
     
         # Slack values for head movement while starring at a spot
         bank_lim = np.pi / 18  # slack on nose axis, from shoulder to shoulder
