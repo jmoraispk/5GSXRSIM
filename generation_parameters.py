@@ -172,7 +172,7 @@ class Generation_parameters:
         
         # Room Characteristics #
         # Physical Users - users in this room
-        self.n_phy = 16
+        self.n_phy = 4
         # Virtual Users - users in other rooms
         self.n_vir = self.n_phy
         # Cameras per User - number of cameras each users needs
@@ -184,7 +184,7 @@ class Generation_parameters:
         
         # Load specific tracks. Note: if tracks aren't created, this needs to
         # be set to False to create the vars.mat
-        self.load_tracks_from_file = False
+        self.load_tracks_from_file = True
         
         # Indices of users seats: these indices depend on the number of seats!
         # Phy user disposition 
@@ -217,7 +217,7 @@ class Generation_parameters:
         # When creating one speaker list automatically, these two parameters
         # are needed to set what speakers and for how long each speaks.
         self.only_vir_speak = True
-        self.speaking_time = 1
+        self.speaking_time = 4
         
         # Antenna types, one input per frequency
         # [a single 'omni' or 'patch' or 'dipole' or 'array']        
@@ -289,8 +289,9 @@ class Generation_parameters:
         self.matlab_folder = self.curr_path + '\\Matlab\\'
         
         self.tracks_filename = self.matlab_folder + \
-            r'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat'
-            #f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
+            f'Tracks\Track_SEED{seed}_SPEED{speed}_UE{self.n_phy}.mat'
+            #r'Tracks\Circ_Track_SEED1_SPEED1_UE4_point_centre.mat'
+            
             
             
               
@@ -1124,7 +1125,7 @@ class Generation_parameters:
         NLoS = "3GPP_38.901_Indoor_NLOS"
         LoSonly = "LOSonly"
         
-        default_scen = LoS
+        default_scen = NLoS
         
         # Percent of the start of scenarios, from the second scenario onwards, 
         # it's relative to the full simulation duration 
@@ -1132,7 +1133,7 @@ class Generation_parameters:
         #                    simulation duration. If sim_dur is 10, then they 
         #                    start at 30s and 6 minutes, respectively
         segment_start = np.array([[0.5]], dtype=np.double)
-        scenarios = np.array([[LoS]], dtype=np.object)
+        scenarios = np.array([[NLoS]], dtype=np.object)
     
         # So that it's not needed to repeat every row of segment start and 
         # scenarios if it's 0, then there should be as many rows in the 

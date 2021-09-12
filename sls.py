@@ -1357,8 +1357,7 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             Fin_w = np.add(Fin_w1,
               (amp3 * codebook_subset[:, best_beam_relative_idxs[3]]))
             
-            Fin_w = (1/(np.sqrt((N1*N2)* \
-                        (1 + (amp1 * amp1)+(amp2 * amp2)+(amp3 * amp3)))))* \
+            Fin_w = (1/ np.sqrt(1 + (amp1 * amp1)+(amp2 * amp2)+(amp3 * amp3)))* \
                                                                     (Fin_w)
             created_beam_pair = Beam_pair()
             created_beam_pair.beam_idx = [best_beam_pairs[0].beam_idx,
@@ -1725,10 +1724,23 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim, n_csi_beams):
         # check_orth_beams = abs(np.inner(bp1.bs_weights, bp2.bs_weights))
         # print(bp1.beam_idx, bp2.beam_idx,'dot product', check_orth_beams)
         common_idxs = set(bp1.beam_idx) & set(bp2.beam_idx)
-        # if not len(common_idxs):
-        return True
-        # else:
-        #     return False
+        both = set(bp1.beam_idx).intersection(bp2.beam_idx)
+        if len(both) == 0:
+            return True
+        else:
+            indices_bp1 = [bp1.beam_idx.index(x) for x in both]
+            indices_bp2 = [bp2.beam_idx.index(x) for x in both]
+            RPI_bp1_common = [bp1.RPI[x] for x in indices_bp1]
+            RPI_bp2_common = [bp2.RPI[x] for x in indices_bp2]
+            interfernce_bp1 = sum(RPI_bp1_common)
+            interfernce_bp2 = sum(RPI_bp2_common)
+            # interfernce_bp1 = [sum(x) for x in bp1.RPI[indices_bp1])]
+            # interfernce_bp2 = [sum(x) for x in bp2.RPI[indices_bp2])]
+            if interfernce_bp1 <= beam_dist_lim and \
+                                interfernce_bp2 <= beam_dist_lim :
+                return True
+            else:
+                return False
     
        
 
@@ -1747,7 +1759,7 @@ def is_compatible_with_schedule(new_entry, schedule, beam_dist_lim, n_csi_beams)
         if are_beam_pairs_compatible(new_entry.beam_pair,
                                      schedule_entry.beam_pair, 
                                      beam_dist_lim, n_csi_beams):
-            print('çompatible')
+            # print('çompatible')
             continue
         else:
             is_compatible = False

@@ -589,7 +589,7 @@ def get_vars_to_load(idx, vars_to_load_names):
                  16: [7], 16.1: [7], 16.2: [], 16.25: [], 16.3: [],
                  17: [], 17.01: [7,15], 17.02: [7,15], 17.03: [7,15], 
                  17.11: [7,15], 17.12: [7,15], 17.13: [7,15],
-                 18.1: [2, 15], 19.1: [2]
+                 18.1: [2, 3, 15], 19.1: [2]
                  }
     
     # Always add 'sp' variable and return list of var names.
@@ -1224,7 +1224,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 # folder = sim_data_trimmed[0][0].precoders_folder + '\\'
                 folder = r'C:\Users\Srijan\Documents\SXRSIMv3\Matlab\precoders' + '\\'
                 # file = 'beam_details_4_4_-60_60_12_0_-60_60_12_0_pol_1.mat'
-                file = 'beam_details_4_4_4_4_pol_3_RI_2_ph_1.mat'
+                file = 'beam_details_4_4_4_4_pol_3_RI_1_ph_1.mat'
                 print(f'Loading beam details file: {file}')
                 
                 # [121][6]:
@@ -1263,13 +1263,13 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 for ue in range(n_ues):
                     for tti in range(1, n_ttis):
                         if sim_data_trimmed[f][15][tti][ue] == 0:
-                            sim_data_trimmed[f][2][tti, ue, :] = np.nan
+                            sim_data_trimmed[f][3][tti, ue, :] = np.nan
                 
                 for ue in range(n_ues):
                     for l_i in range(n_layers):
                         sim_data_computed[f][v][ue][l_i] = \
-                        np.nanmean(sim_data_trimmed[f][2][:, ue, l_i])
-                print(sim_data_trimmed[f][2][:, 0, 0])           
+                        np.nanmean(sim_data_trimmed[f][3][:, ue, l_i])
+                print(sim_data_trimmed[f][3][:, 0, 0])           
             
             # COMPUTE INDEX XX: 
             if var_to_compute == 'xxxxxxx' and \

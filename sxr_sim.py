@@ -122,7 +122,7 @@ for param in sim_params:
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'SU_{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
-                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-2'
+                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-4'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
