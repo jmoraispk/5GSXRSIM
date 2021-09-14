@@ -53,9 +53,12 @@ class Simulation_parameters:
         # Debug variables
         self.debug_su_mimo_choice = 0
         
+        # Use pcap trace or not
+        self.use_pcap = True # Have it here just in case it might be useful
+        
         # TTIs to simulate -> min. 1000/TTIs_per_batch size
         # Has to be 'int', if multiplying with float -> int/float type error
-        self.sim_TTIs = int(4000 * 1)
+        self.sim_TTIs = int(4000 * 16)
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -163,10 +166,10 @@ class Simulation_parameters:
         self.olla_stepsize = 0.1
         
         
-        # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
+        # TODO: Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
         self.scheduler = 'Frametype' 
-        # self.scheduler = 'M-LWDF'
-        self.scheduler = 'PF'
+        #self.scheduler = 'M-LWDF'
+        #self.scheduler = 'PF'
         self.debug_zheng = 0
 
 
@@ -210,7 +213,7 @@ class Simulation_parameters:
         #       beam distance parameter, which is applied after. 
         #       This parameter actually skips the check of whether users have
         #       packets in the buffer, that's it.
-        self.always_schedule_every_ue = True
+        self.always_schedule_every_ue = True # TODO
         
         ##########################################
         # - self.csi_tti_delay = 0
@@ -262,10 +265,15 @@ class Simulation_parameters:
         self.info_bits_table_path = (self.curr_path + 
                                      '\\miesm_table.csv')
         
+        # PCAP folder with csv traces
+        # Separate folder, might contain multiple csv files in the future for 
+        # different video quality levels
+        # self.pcap_dir = self.curr_path + '\\PCAP\\Trace\\'  
         
         # Stats folder
-        self.stats_dir = self.curr_path + '\\Stats\\Meeting\\40 - Same\\'
-        
+        #if self.always_schedule_every_ue:
+        self.stats_dir = self.curr_path + '\\Stats\\Burstiness\\'# Constant\\Always_schedule_on\\' #Meeting\\40 - Same\\'
+ 
         # Plots folder
         self.plots_dir = self.curr_path + '\\Plots\\'
         
@@ -310,7 +318,9 @@ class Simulation_parameters:
         
         # Space the I frames across the GoP for the existant UEs
         # Set here instead of in sxr_sim
-        self.uniformly_space_UE_I_frames = False
+        self.uniformly_space_UE_I_frames = False #TODO
+        # Burstiness of packet arrival
+        self.burstiness_param = 0.35
         # Note: until the TODO in the end of simulation parameters is solved, 
         #       this should be set to False. Otherwise we fall into the 
         #       interference unpredictability problem again.
@@ -326,7 +336,7 @@ class Simulation_parameters:
         self.IP_ratio = 0.20
         # P frame std for the gaussian around the IP_ratio [%]
         self.P_std = 0
-        
+    
         # Frame Computation Strategy
         # Strategy for computing I frame size 
         # ['AVG_BITRATE_UL', 'AVG_BITRATE_DL', 'BASE_PARAMETERS']

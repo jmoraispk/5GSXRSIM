@@ -118,9 +118,6 @@ def frametype_scheduler(avg_thrput, curr_expected_bitrate,
     # TODO
     delay_priority = a * curr_delay * np.log10(pf_scheduler(avg_thrput, 
                                                curr_expected_bitrate))
-    
-    # TODO
-    # From paper: a + b * (T_curr - T_arr) = a + b * curr_delay
             
     # Weight parameter depending on number of I-frame packets at head of buffer 
     frame_weight = 0.0
@@ -130,28 +127,29 @@ def frametype_scheduler(avg_thrput, curr_expected_bitrate,
     # Try out different multipliers
     else: frame_weight = 4.0
         
-    # elif buffer.num_I_packets == 1:   
-    #     frame_weight = 1.1
-    # elif buffer.num_I_packets == 2:   
-    #     frame_weight = 1.2
-    # elif buffer.num_I_packets == 3:   
-    #     frame_weight = 1.3 
-    # elif buffer.num_I_packets == 4:   
-    #     frame_weight = 1.4
-    # elif buffer.num_I_packets == 5:   
-    #     frame_weight = 1.5
-    # elif buffer.num_I_packets == 6:   
-    #     frame_weight = 1.6
-    # elif buffer.num_I_packets == 7:   
-    #     frame_weight = 1.7         
-    # elif buffer.num_I_packets == 8:   
-    #     frame_weight = 1.8         
-    # elif buffer.num_I_packets == 9:   
-    #     frame_weight = 1.9     
-    # elif buffer.num_I_packets > 9:   
-    #     frame_weight = 2.0     
-
-    return (frame_weight + frame_weight * curr_delay * 100) * \
+    """
+    elif buffer.num_I_packets == 1:   
+        frame_weight = 1.1
+    elif buffer.num_I_packets == 2:   
+        frame_weight = 1.2
+    elif buffer.num_I_packets == 3:   
+        frame_weight = 1.3 
+    elif buffer.num_I_packets == 4:   
+        frame_weight = 1.4
+    elif buffer.num_I_packets == 5:   
+        frame_weight = 1.5
+    elif buffer.num_I_packets == 6:   
+        frame_weight = 1.6
+    elif buffer.num_I_packets == 7:   
+        frame_weight = 1.7         
+    elif buffer.num_I_packets == 8:   
+        frame_weight = 1.8         
+    elif buffer.num_I_packets == 9:   
+        frame_weight = 1.9     
+    elif buffer.num_I_packets > 9:   
+        frame_weight = 2.0     
+    """
+    return (frame_weight + frame_weight * curr_delay * 1000) * \
             np.log10(pf_scheduler(avg_thrput, curr_expected_bitrate))
 
     # return frame_weight * delay_priority 
@@ -545,9 +543,8 @@ def calc_SINR(tx_pow, ch_pow_gain, interference, noise_power):
     
     sinr_linear = sig_pow / (noise_power + interference)
     
-    return 10 * np.log10(sinr_linear) - 40 # Add some neighbor BS interference
-
-
+    return 10 * np.log10(sinr_linear) - 30 # Add some neighbor BS interference
+    # TODO: return 4.0 # Simulate Flat Channel!
 
 def get_curr_time_div(tti, time_div_ttis):
     
@@ -901,17 +898,16 @@ def update_channel_vars(tti, TTIs_per_batch, n_ue, coeffs, channel,
         # c) 
         
         for t_idx in range(len(ttis)):
-            # channel is [n_ue,tti]
+            # channel is [n_ue,tti]           
             channel[ttis[t_idx]][ue] = \
-                10 * np.log10(np.sum(np.mean(np.abs(c[:,:,:,t_idx]) ** 2, 2)))
+             10 * np.log10(np.sum(np.mean(np.abs(c[:,:,:,t_idx]) ** 2, 2)))
                 # channel_per_prb is [n_ue, tti, n_prb]
             # The second check is to prevent this to run before it is properly
             # implemented and tested. The save_prb_vars should be enough.
             # PS: actually, separate in channel and sig_pow vars to be specific
             if save_prb_vars and channel_per_prb != []:
                 channel_per_prb[ttis[t_idx]][ue] = 10 * \
-                    np.log10(np.sum(np.sum(np.abs(c[:,:,:,t_idx]) ** 2, 0), 0))
-
+                   np.log10(np.sum(np.sum(np.abs(c[:,:,:,t_idx]) ** 2, 0), 0))
 
 
 def copy_last_coeffs(coeffs, last_x):
@@ -983,7 +979,6 @@ def load_precoders(precoders_paths, vectorize_GoB):
         # for a square GoBs, it is the square root of the total # of precoders
         precoder_dict[(bs, 'size')] = [n_azi_beams, n_ele_beams]
         precoder_dict[(bs, 'n_directions')] = n_directions
-        
         
         
         # TODO: try vectorizing the GoB
@@ -1705,7 +1700,6 @@ def tti_info_copy_and_update(tti, TTI_duration, first_coeff_tti, n_phy,
 
     return tti_timestamp, tti_relative
 
-
 def update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti):
     for ue in ue_idxs:
         
@@ -2130,7 +2124,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
         
             
         # list of (size, start_packet_idx) pairs, one for each TB
-        tb_sizes_and_idxs = at.gen_transport_blocks(buffers[entry.ue], 
+        tb_sizes_and_idxs = buffers[entry.ue].gen_transport_blocks(
                                                     entry.bits_to_send,
                                                     entry.tb_max_size, tti)
         
