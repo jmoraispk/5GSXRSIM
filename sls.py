@@ -1114,6 +1114,8 @@ def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
             
             # full_idx.append(dir_idx)
             w = codebook_subset[:, dir_idx]
+            # w = (1/sum(abs(w))) * w
+            w = w / np.linalg.norm(w)
             
             # Compute internal product between ch coeffs and precoder, 
             # that is what the UE will see from a transmission with w
@@ -1279,23 +1281,27 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
         if n_csi_beams == 1:
             created_beam_pair = best_beam_pairs[0]
             
+            
         elif n_csi_beams == 2:
             # print('ue', ue, best_beam_pairs[0].beam_idx, best_beam_pairs[1].beam_idx)
             pow_ratio_1 = best_beam_pairs[1].ch_power_gain / best_beam_pairs[0].ch_power_gain
             amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
             
+            if not amp1:
+                amp1 = pow_ratio_1
+            
             # Relative power index saved for further orhtogonality checks
             best_beam_pairs[0].RPI = 1
-            best_beam_pairs[1].RPI = amp1
-            # amp1 = round(amp1, 2)
-            # Fin_w = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), 
-            #    (amp1 * (codebook_subset[:, best_beam_relative_idxs[1]])))
+            # best_beam_pairs[1].RPI = amp1
+            best_beam_pairs[1].RPI = pow_ratio_1
             
-            Fin_w = ((codebook_subset[:, best_beam_relative_idxs[0]])+ \
+            
+            Fin_w = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), \
                (amp1 * (codebook_subset[:, best_beam_relative_idxs[1]])))
             
             Fin_w = (1/np.sqrt(1+(amp1 * amp1)))*(Fin_w)
+            # Fin_w = (1/sum(abs(Fin_w))) * Fin_w
             
             created_beam_pair = Beam_pair()
             created_beam_pair.beam_idx = [best_beam_pairs[0].beam_idx,
@@ -1303,27 +1309,47 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             
             created_beam_pair.RPI = [best_beam_pairs[0].RPI,
                                              best_beam_pairs[1].RPI]
-            
+            # print(ue)                                
+            # print(created_beam_pair.beam_idx)
+            # print(created_beam_pair.RPI)
         elif n_csi_beams == 3:
+            # Power ratio of second and third best beams compared to first, for
+            # finding the RPI.
             pow_ratio_1 = best_beam_pairs[1].ch_power_gain / best_beam_pairs[0].ch_power_gain
             amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
+            
+            if not amp1:
+                amp1 = pow_ratio_1
             
             pow_ratio_2 = best_beam_pairs[2].ch_power_gain / best_beam_pairs[0].ch_power_gain
             amp2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_2))]
             
+            if not amp2:
+                amp2 = pow_ratio_2
+            
             # Relative power index saved for further orhtogonality checks
             best_beam_pairs[0].RPI = 1
-            best_beam_pairs[1].RPI = amp1
-            best_beam_pairs[2].RPI = amp2
+            # best_beam_pairs[1].RPI = amp1
+            # best_beam_pairs[2].RPI = amp2
+            best_beam_pairs[1].RPI = pow_ratio_1
+            best_beam_pairs[2].RPI = pow_ratio_2
             
-            Fin_w = np.add(codebook_subset[:, best_beam_relative_idxs[0]], 
-              (amp1 * codebook_subset[:, best_beam_relative_idxs[1]]),
-              (amp2 * codebook_subset[:, best_beam_relative_idxs[2]]))
+            # Linear combination of 3 best beams using RPI.
+            Fin_w1 = np.add(codebook_subset[:, best_beam_relative_idxs[0]], 
+              (amp1 * codebook_subset[:, best_beam_relative_idxs[1]]))
             
+            Fin_w = np.add(Fin_w1,(amp2 * codebook_subset[:, best_beam_relative_idxs[2]]))
             Fin_w = (1/np.sqrt(1+(amp1 * amp1)+(amp2 * amp2)))*(Fin_w)
+            
+            # Normalising the precoder
+            # Fin_w = (1/sum(abs(Fin_w))) * Fin_w
+            
             created_beam_pair = Beam_pair()
+            
+            # Save the selected precoder colm index and relative power index
+            # for future orthogonality checks for co-scheduling.
             created_beam_pair.beam_idx = [best_beam_pairs[0].beam_idx,
                                              best_beam_pairs[1].beam_idx, 
                                              best_beam_pairs[2].beam_idx]
@@ -1333,33 +1359,54 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
                                              best_beam_pairs[2].RPI]
             
         elif n_csi_beams == 4:
+            # Power ratio of second, third and fourth best beams compared to 
+            # first, for finding the RPI.
             pow_ratio_1 = best_beam_pairs[1].ch_power_gain / best_beam_pairs[0].ch_power_gain
             amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
             
+            if not amp1:
+                amp1 = pow_ratio_1
+            
             pow_ratio_2 = best_beam_pairs[2].ch_power_gain / best_beam_pairs[0].ch_power_gain
             amp2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_2))]
+            if not amp2:
+                amp2 = pow_ratio_2
             
             pow_ratio_3 = best_beam_pairs[3].ch_power_gain / best_beam_pairs[0].ch_power_gain
             amp3 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_3))]
             
+            if not amp3:
+                amp3 = pow_ratio_3
+            
             # Relative power index saved for further orhtogonality checks
             best_beam_pairs[0].RPI = 1
-            best_beam_pairs[1].RPI = amp1
-            best_beam_pairs[2].RPI = amp2
-            best_beam_pairs[3].RPI = amp3
+            # best_beam_pairs[1].RPI = amp1
+            # best_beam_pairs[2].RPI = amp2
+            # best_beam_pairs[3].RPI = amp3
+            best_beam_pairs[1].RPI = pow_ratio_1
+            best_beam_pairs[2].RPI = pow_ratio_2
+            best_beam_pairs[3].RPI = pow_ratio_3
             
+            # Linear combination of 4 best beams using RPI.
             Fin_w1 = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), 
-              (amp1 * codebook_subset[:, best_beam_relative_idxs[1]]),
-              (amp2 * codebook_subset[:, best_beam_relative_idxs[2]]))
-            Fin_w = np.add(Fin_w1,
+              (amp1 * codebook_subset[:, best_beam_relative_idxs[1]]))
+               
+            Fin_w2 = np.add((amp2 * codebook_subset[:, best_beam_relative_idxs[2]]),
               (amp3 * codebook_subset[:, best_beam_relative_idxs[3]]))
+            
+            Fin_w = np.add(Fin_w1, Fin_w2)
             
             Fin_w = (1/ np.sqrt(1 + (amp1 * amp1)+(amp2 * amp2)+(amp3 * amp3)))* \
                                                                     (Fin_w)
+            # Normalising the precoder
+            # Fin_w = (1/sum(abs(Fin_w))) * Fin_w  
+                                                      
             created_beam_pair = Beam_pair()
+            # Save the selected precoder colm index and relative power index
+            # for future orthogonality checks for co-scheduling.
             created_beam_pair.beam_idx = [best_beam_pairs[0].beam_idx,
                                              best_beam_pairs[1].beam_idx, 
                                              best_beam_pairs[2].beam_idx,
@@ -1369,12 +1416,16 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
                                              best_beam_pairs[1].RPI, 
                                              best_beam_pairs[2].RPI,
                                              best_beam_pairs[3].RPI]
-                
+            print(ue)                                
+            print(created_beam_pair.beam_idx)
+            print(created_beam_pair.RPI)
+        
+        # This is to perform the MRT for the L = 2, 3, 4 beams.        
         if not n_csi_beams == 1:
             # Compute internal product between ch coeffs and precoder, 
             # that is what the UE will see from a transmission with w
             Fin_at_ue_ant = np.dot(mean_coeffs[l], Fin_w)
-            Fin_bs_weights = Fin_w
+            Fin_bs_weights = Fin_w / np.linalg.norm(Fin_w)
             # The UE will use the Maximum Ratio Beamformer, 
             # both for receiving and for transmitting
             Fin_mr_precoder_temp = Fin_at_ue_ant.conj().T
@@ -1427,9 +1478,11 @@ def orthogonal_precoder_indices1(N1, N2, O1, O2, RI, q, q1=-1, q2=-1):
     elif 4 <= q <= 7:
         q = q + (gob_col_size - O2) * 1
     elif 8 <= q <= 11:
-        q = q - 8 + (gob_col_size - O2) * 2
+        # q = q - 8 + (gob_col_size - O2) * 2
+        q = q + (gob_col_size - O2) * 2
     elif 12 <= q <= 15:
-        q = q - 12 + (gob_col_size - O2) * 3
+        # q = q - 12 + (gob_col_size - O2) * 3
+        q = q + (gob_col_size - O2) * 3
     else: 
         raise Exception('That value of q is not supported. Integers 0 to 15.')
     

@@ -1025,7 +1025,7 @@ class Generation_parameters:
         # Model 5&6: avg time one person spends speaking (if the speaker list
         #            is to be created stochastically. It's ignored if the
         #            custom speaker list is used instead.)
-        speaking_avg_time = 1
+        speaking_avg_time = 4
     
         # Slack values for head movement while starring at a spot
         bank_lim = np.pi / 18  # slack on nose axis, from shoulder to shoulder
@@ -1125,7 +1125,7 @@ class Generation_parameters:
         NLoS = "3GPP_38.901_Indoor_NLOS"
         LoSonly = "LOSonly"
         
-        default_scen = NLoS
+        default_scen = LoSonly
         
         # Percent of the start of scenarios, from the second scenario onwards, 
         # it's relative to the full simulation duration 
@@ -1133,7 +1133,7 @@ class Generation_parameters:
         #                    simulation duration. If sim_dur is 10, then they 
         #                    start at 30s and 6 minutes, respectively
         segment_start = np.array([[0.5]], dtype=np.double)
-        scenarios = np.array([[NLoS]], dtype=np.object)
+        scenarios = np.array([[LoSonly]], dtype=np.object)
     
         # So that it's not needed to repeat every row of segment start and 
         # scenarios if it's 0, then there should be as many rows in the 

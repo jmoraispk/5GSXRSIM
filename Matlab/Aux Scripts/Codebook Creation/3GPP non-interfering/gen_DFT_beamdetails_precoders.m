@@ -4,12 +4,12 @@ O1 = 4;     % Oversampling factor in horizontal direction: O1 is always 4.
 O2 = 4;     % Oversampling factor in vertical direction: O2 can be 1 or 4.
 
 pol_indicator = 3;          % dual-pol ant array (2 coefts per cross ele).
-RI = 2;                           % Number of transmission layers.
+RI = 1;                           % Number of transmission layers.
 
 fc = 1e9;                         % Center frequency.
 elect_ele_space = [1/2, 1/2];     % Inter element spacing: ant array.
 cophase_fact = [1, -1, 1i, -1i];  % Cophasing factor used for dual pol(3).
-% cophase_fact = 1;
+cophase_fact = 1;
 
 save_precoders = 1;        % If you need to save precoders with max angles.
 Need_plot = 0;             % polar plots (az & el cuts)
@@ -74,7 +74,7 @@ for p = 1 : length(cophase_fact)
     end
     
 %     for i = 1 : 256
-    for i = 1 : 2 * N1 * O1 * N2 * O2
+    for i = 1 : 1 * N1 * O1 * N2 * O2
         
         % Creating quadriga antenna array (ULA/URA with single/dual pol).
         qd_3gpp_arr_linear = qd_arrayant('3gpp-3d',...
@@ -170,7 +170,7 @@ for p = 1 : length(cophase_fact)
                 num2str(O2), '_', ...
                 'pol_', num2str(pol_indicator), '_', ...
                 'RI_', num2str(RI), '_', ...
-                'ph_', num2str(cophase_fact(p)),'_nonflipped'];
+                'ph_', num2str(cophase_fact(p)),'expos'];
 
     if save_precoders
 	    % flip to match Quadriga Coupling and match azimuths properly.	

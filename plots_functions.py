@@ -16,6 +16,7 @@ Created on Sun Mar  7 14:34:43 2021
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
+import csv
 
 import utils as ut
 
@@ -569,7 +570,7 @@ def get_vars_to_load(idx, vars_to_load_names):
                  1: [4], 1.1: [4], 1.2: [4],
                  2: [2,3], 2.1: [2,4,5,6], 2.15: [2,4,5,6], 2.2: [2,3,4,8], 
                  2.3: [2,3], 2.4: [2,3,5,6],
-                 3: [11], 3.1: [11], 3.2: [10], 3.3: [10,12], 3.35: [10,12], 
+                 3: [11], 3.1: [11], 3.2: [10, 15], 3.3: [10,12], 3.35: [10,12], 
                  3.4: [10,12], 3.45: [10,12], 3.5: [10,12], 3.55: [10,12], 
                  3.6: [12,13], 3.65: [12,13],
                  4.1: [9], 4.2: [9], 4.3: [4,9],
@@ -1261,7 +1262,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 sim_data_computed[f][v] = np.zeros([n_ues, n_layers])
                 
                 for ue in range(n_ues):
-                    for tti in range(1, n_ttis):
+                    for tti in range(0, n_ttis-1):
                         if sim_data_trimmed[f][15][tti][ue] == 0:
                             sim_data_trimmed[f][3][tti, ue, :] = np.nan
                 
@@ -1269,7 +1270,10 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                     for l_i in range(n_layers):
                         sim_data_computed[f][v][ue][l_i] = \
                         np.nanmean(sim_data_trimmed[f][3][:, ue, l_i])
-                print(sim_data_trimmed[f][3][:, 0, 0])           
+                # print(sim_data_trimmed[f][3][:, 0, 0])  
+                # print(sim_data_trimmed[f][3][:, 1, 0])
+                # print(sim_data_trimmed[f][3][:, 2, 0])
+                # print(sim_data_trimmed[f][3][:, 3, 0])
             
             # COMPUTE INDEX XX: 
             if var_to_compute == 'xxxxxxx' and \
@@ -1536,6 +1540,17 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
                          y_axis_label=['Power [W]'], 
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
+            
+            average_rec_power = np.array
+            for ue in range(n_ues):
+                    for tti in range(0, n_ttis-1):
+                        if sim_data_trimmed[f][15][tti][ue] == 0:
+                            sim_data_trimmed[f][10][tti, ue, :] = np.nan
+                
+            for ue in range(n_ues):
+                for l_i in range(1):
+                    print(np.nanmean(sim_data_trimmed[f][10][:, ue, l_i]))
+            # print('average received power: ',average_rec_power)
     
         # Signal power vs interference (Watt) [single axis]
         if plot_idx == 3.3:        
@@ -2230,7 +2245,12 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
                     idxs = [i for i in range(int(n_beams/2), n_beams)]            
             else:
                 idxs = [i for i in range(n_beams)]
-                
+       #      idxs = [  0,   4,   8,  12,  64,  68,  72,  76, 128, 132, 136, 140, 192,
+       # 196, 200, 204]
+            idxs = [ 34,  38,  42,  46,  98, 102, 106, 110, 162, 166, 170, 174, 226,
+        230, 234, 238]
+        #     idxs = [ 50,  54,  58,  62, 114, 118, 122, 126, 178, 182, 186, 190, 242,
+        # 246, 250, 254]
             # pick which layer to plot the GoB
             plot_for_ues([0], sim_data_computed[f][32][idxs,0], 
                          [sim_data_computed[f][32][idxs,1]], 

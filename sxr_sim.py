@@ -26,10 +26,11 @@ parent_folder = \
 
 # seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
-seed = 1
+seed = 3
 speed = 3
 
 folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
+# folders_to_simulate = [f"Sim_2021-09-16_19h23m32s_SEED1"]
 
 folders_to_simulate = [parent_folder + '\\' + f for f in folders_to_simulate]
 
@@ -38,16 +39,16 @@ freq_idxs = [0]
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
 
 csi_periodicities = [5]
-
+L = 4
 
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
 users = [None]
 
-# rot_factors = [7, 8, 9, 10, 11, 12, 13, 14, 15]
+# rot_factors = [8, 9, 10, 11, 12, 13, 14, 15]
 
-rot_factors = [14]
-n_layers = [2]
+rot_factors = [0]
+n_layers = [1]
 
 # Now we usually keep these constant (so we removed them from the file name!):
 application_bitrates = [100] # Mbps
@@ -61,9 +62,9 @@ sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     rot_factors))
 
 # Feel free to check the parameter combinations before running the simulation
-#for param in sim_params:
+# for param in sim_params:
 #     print(param)   
-#ut.stop_execution()
+# ut.stop_execution()
 
 for param in sim_params:
     # unpack simulation parameters
@@ -118,11 +119,11 @@ for param in sim_params:
     print('Done setting Simulation Parameters!')
     
     # Take care of the output
-    include_timestamp = True 
+    include_timestamp = False 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
-    output_str = f'SU_{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
-                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-4'
+    output_str = f'MU_{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
+                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-{L}'
     output_str = output_stats_folder + output_str
     
     # Continue the execution

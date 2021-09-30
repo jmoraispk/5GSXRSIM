@@ -20,7 +20,7 @@ function [W] = DFT_codebook(N1, N2, O1, O2, pol, RI, cophase_fact)
 
     for n1 = 0 : N1 - 1
         for k1 = 0 : (N1 * O1) - 1
-            b1(n1+1, k1+1) = exp(-(1i * 2 * pi * n1 * k1) / (N1 * O1));       
+            b1(n1+1, k1+1) = exp((1i * 2 * pi * n1 * k1) / (N1 * O1));       
         end
     end
 
@@ -28,7 +28,7 @@ function [W] = DFT_codebook(N1, N2, O1, O2, pol, RI, cophase_fact)
 
     for n2 = 0 : N2 - 1
         for k2 = 0 : (N2 * O2) - 1     
-            b2(n2+1, k2+1) = exp(-(1i * 2 * pi * n2 * k2) / (N2 * O2));
+            b2(n2+1, k2+1) = exp((1i * 2 * pi * n2 * k2) / (N2 * O2));
         end
     end
 

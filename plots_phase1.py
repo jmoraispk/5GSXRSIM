@@ -58,13 +58,13 @@ bandwidths = [50] # MHz
 latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
-# rot_factors_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-rot_factors_list = [14]
+rot_factors_list = [10]
+# rot_factors_list = [14]
 
 for seeds in seeds_list:
     for rot_factor in rot_factors_list:
         layer = 0
-        trim_ttis = [20, int(4000 * 16)]
+        trim_ttis = [20, int(4000 * 4)]
         
         TTI_dur_in_secs = 0.25e-3
         
@@ -173,11 +173,11 @@ for seeds in seeds_list:
             #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
             #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
                             
-            # stats_dir_end = f'SEED{comb[-1]}_FREQ-{comb[1]}_' + \
+            # stats_dir_end = f'SU_SEED{comb[-1]}_FREQ-{comb[1]}_' + \
             #                 f'CSIPER-{comb[2]}_'+ \
-            #                 f'USERS-{comb[4]}_ROTFACTOR-{comb[7]}_LAYERS-1_COPH-1_L-2' + '\\'
+            #                 f'USERS-{comb[4]}_ROTFACTOR-{comb[7]}_LAYERS-1_COPH-1_L-1' + '\\'
             
-            stats_dir_end = r'SU_SEED1_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-14_LAYERS-1_COPH-1_L-4_2021-09-13_00h11m48s' + '\\'
+            stats_dir_end = r'MU_SEED3_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-10_LAYERS-1_COPH-1_L-4' + '\\'
             
             print(f'\nDoing for: {stats_dir_end}')
             
@@ -430,7 +430,9 @@ for seeds in seeds_list:
             # idxs_to_plot = [i for i in all_plots_available if i >= 0]
             idxs_to_plot = [2, 3.2, 3.3, 3.6]
             idxs_to_plot = [2.3, 3.3, 3.6, 18.1]
-            idxs_to_plot = [1.1, 18.1]
+            idxs_to_plot = [11.1, 3.2, 18.1 ]
+            # idxs_to_plot = [3.2, 18.1]
+            idxs_to_plot = [16.1, 16.2, 18.1]
             # Test save_plot
             save_plots = False
             saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'

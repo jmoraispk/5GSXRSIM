@@ -54,7 +54,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = 4000 * 16
+        self.sim_TTIs = 4000 * 4
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -80,7 +80,7 @@ class Simulation_parameters:
         # SU: Schedule one user at the time, as many layers as defined in n_layers
         # MU: Scheduled all users (remember the interference problem) at each
         #     tti, if their layers are compatible...
-        self.scheduling_method = 'SU'
+        self.scheduling_method = 'MU'
         
         self.bf_method = 'gob' # 'reciprocity'
         IMPLEMENTED_LAYERS_IMPLICIT_BF = 0
@@ -293,7 +293,7 @@ class Simulation_parameters:
         
         # A precoder for each antenna, for each frequency [freq][bs_idx]
         self.precoders_files = \
-            [["precoders_4_4_4_4_pol_3_RI_2_ph_1"], 
+            [["precoders_4_4_4_4_pol_3_RI_1_ph_1"], 
              ["1-omni-element"]]
         
         # the case above has a single precoder for each frequency
