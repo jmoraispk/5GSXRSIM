@@ -1031,7 +1031,8 @@ def interleave(arrays, axis=0, out=None):
 
 def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs, 
                          codebook_subset_directions, ch_resp, bs, n_csi_beams,
-                         save_power_per_CSI_beam, vectorize, N1, N2, O1, O2):
+                         save_power_per_CSI_beam, vectorize, N1, N2, O1, O2,
+                         adap_rot_factor):
     """
     Given a precoder dictionary, and a channel response, and a bs index, 
     returns index pair for the best precoder for that channel (highest absolute
@@ -1212,6 +1213,17 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
     else:
         q_idxs = np.arange(precoders_dict[(bs, 'n_directions')])
     
+    #create a final q_idxs to pass to the find_best_beam_pairs, it will 
+    #automatically select the best L beams, but before that we need to find the
+    #best beam for the ue from the entire set. 2 times you must call the 
+    #find best beam function, first time putting:
+        #q_idxs = np.arange(precoders_dict[(bs, 'n_directions')])
+        
+    if adap_rot_factor is True:
+        q_idxs = np.arange(precoders_dict[(bs, 'n_directions')])
+    
+        
+        
     # codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs]
     # # The channel response is a square matrix of AE_UE x AE_BS
     # [azi_len, el_len] = precoders_dict[(bs, 'size')]
@@ -1250,7 +1262,23 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
                                      codebook_subset_directions, mean_coeffs[l], 
                                      bs, n_csi_beams, 
                                      save_power_per_CSI_beam, vectorize,
-                                     N1, N2, O1, O2)
+                                     N1, N2, O1, O2, adap_rot_factor)
+        if adap_rot_factor is True:
+            #now you have the best beam out of 256, find the corresponding rot
+            #factor and create the fresh q_idxs and then call function again, 
+            #but make sure all the parameters are correctly passed and above 
+            #layer loop.
+            (best_beam_pairs, power_per_beam[l], best_beam_relative_idxs) = \
+            find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs_l,
+                                     codebook_subset_directions, mean_coeffs[l], 
+                                     bs, n_csi_beams, 
+                                     save_power_per_CSI_beam, vectorize,
+                                     N1, N2, O1, O2, adap_rot_factor)
+            
+            
+            
+            
+            
        
         # best_beam_relative_idxs[0] = best_beam_relative_idxs[0] + idxs_l
         # best_beam_relative_idxs = np.add(best_beam_relative_idxs, idxs_l).tolist()
@@ -1288,13 +1316,13 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
             
-            if not amp1:
-                amp1 = pow_ratio_1
+            # if not amp1:
+            #     amp1 = pow_ratio_1
             
-            # Relative power index saved for further orhtogonality checks
+            # Relative power index saved for further orthogonality checks
             best_beam_pairs[0].RPI = 1
-            # best_beam_pairs[1].RPI = amp1
-            best_beam_pairs[1].RPI = pow_ratio_1
+            best_beam_pairs[1].RPI = amp1
+            # best_beam_pairs[1].RPI = pow_ratio_1
             
             
             Fin_w = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), \
@@ -1319,22 +1347,22 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
             
-            if not amp1:
-                amp1 = pow_ratio_1
+            # if not amp1:
+            #     amp1 = pow_ratio_1
             
             pow_ratio_2 = best_beam_pairs[2].ch_power_gain / best_beam_pairs[0].ch_power_gain
             amp2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_2))]
             
-            if not amp2:
-                amp2 = pow_ratio_2
+            # if not amp2:
+            #     amp2 = pow_ratio_2
             
             # Relative power index saved for further orhtogonality checks
             best_beam_pairs[0].RPI = 1
-            # best_beam_pairs[1].RPI = amp1
-            # best_beam_pairs[2].RPI = amp2
-            best_beam_pairs[1].RPI = pow_ratio_1
-            best_beam_pairs[2].RPI = pow_ratio_2
+            best_beam_pairs[1].RPI = amp1
+            best_beam_pairs[2].RPI = amp2
+            # best_beam_pairs[1].RPI = pow_ratio_1
+            # best_beam_pairs[2].RPI = pow_ratio_2
             
             # Linear combination of 3 best beams using RPI.
             Fin_w1 = np.add(codebook_subset[:, best_beam_relative_idxs[0]], 
@@ -1365,30 +1393,30 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
             
-            if not amp1:
-                amp1 = pow_ratio_1
+            # if not amp1:
+            #     amp1 = pow_ratio_1
             
             pow_ratio_2 = best_beam_pairs[2].ch_power_gain / best_beam_pairs[0].ch_power_gain
             amp2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_2))]
-            if not amp2:
-                amp2 = pow_ratio_2
+            # if not amp2:
+            #     amp2 = pow_ratio_2
             
             pow_ratio_3 = best_beam_pairs[3].ch_power_gain / best_beam_pairs[0].ch_power_gain
             amp3 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                             key = lambda i: abs(amp_scaling_list[i] - pow_ratio_3))]
             
-            if not amp3:
-                amp3 = pow_ratio_3
+            # if not amp3:
+            #     amp3 = pow_ratio_3
             
             # Relative power index saved for further orhtogonality checks
             best_beam_pairs[0].RPI = 1
-            # best_beam_pairs[1].RPI = amp1
-            # best_beam_pairs[2].RPI = amp2
-            # best_beam_pairs[3].RPI = amp3
-            best_beam_pairs[1].RPI = pow_ratio_1
-            best_beam_pairs[2].RPI = pow_ratio_2
-            best_beam_pairs[3].RPI = pow_ratio_3
+            best_beam_pairs[1].RPI = amp1
+            best_beam_pairs[2].RPI = amp2
+            best_beam_pairs[3].RPI = amp3
+            # best_beam_pairs[1].RPI = pow_ratio_1
+            # best_beam_pairs[2].RPI = pow_ratio_2
+            # best_beam_pairs[3].RPI = pow_ratio_3
             
             # Linear combination of 4 best beams using RPI.
             Fin_w1 = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), 
@@ -1774,26 +1802,13 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim, n_csi_beams):
         beam_distance = np.linalg.norm(np.abs(bp1.ang_idx - bp2.ang_idx))
         return beam_distance >= beam_dist_lim
     else:
-        # check_orth_beams = abs(np.inner(bp1.bs_weights, bp2.bs_weights))
-        # print(bp1.beam_idx, bp2.beam_idx,'dot product', check_orth_beams)
-        common_idxs = set(bp1.beam_idx) & set(bp2.beam_idx)
-        both = set(bp1.beam_idx).intersection(bp2.beam_idx)
-        if len(both) == 0:
-            return True
+        check_orth_beams = abs(np.vdot(bp1.bs_weights, bp2.bs_weights))
+        print(bp1.beam_idx, bp2.beam_idx,'dot product', check_orth_beams)
+        
+        if check_orth_beams <= beam_dist_lim:
+           return True
         else:
-            indices_bp1 = [bp1.beam_idx.index(x) for x in both]
-            indices_bp2 = [bp2.beam_idx.index(x) for x in both]
-            RPI_bp1_common = [bp1.RPI[x] for x in indices_bp1]
-            RPI_bp2_common = [bp2.RPI[x] for x in indices_bp2]
-            interfernce_bp1 = sum(RPI_bp1_common)
-            interfernce_bp2 = sum(RPI_bp2_common)
-            # interfernce_bp1 = [sum(x) for x in bp1.RPI[indices_bp1])]
-            # interfernce_bp2 = [sum(x) for x in bp2.RPI[indices_bp2])]
-            if interfernce_bp1 <= beam_dist_lim and \
-                                interfernce_bp2 <= beam_dist_lim :
-                return True
-            else:
-                return False
+           return False
     
        
 

@@ -39,15 +39,15 @@ freq_idxs = [0]
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
 
 csi_periodicities = [5]
-L = 4
+L = 2
 
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
 users = [None]
 
 # rot_factors = [8, 9, 10, 11, 12, 13, 14, 15]
-
-rot_factors = [0]
+adap_rot_factor = True
+rot_factors = [10]
 n_layers = [1]
 
 # Now we usually keep these constant (so we removed them from the file name!):
