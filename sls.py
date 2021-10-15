@@ -1612,6 +1612,24 @@ def get_delayed_tti(tti, tti_rel, tti_delay):
     return delayed_tti
 
 
+def get_delayed_tti_scheduling(tti, tti_delay):
+    delayed_tti = tti - tti_delay
+    
+    # prevention for the first couple of ttis, where the delay can't be applied
+    if tti < tti_delay:
+        delayed_tti = 0
+    
+    return delayed_tti
+
+
+def get_delayed_relative_tti_csi(tti, tti_rel, tti_delay):
+    delayed_tti = tti_rel - tti_delay
+    
+    # prevention for the first couple of ttis, where the delay can't be applied
+    if tti < tti_delay:
+        delayed_tti = 0
+
+    return delayed_tti
 
 
 ##############################################################################

@@ -489,8 +489,9 @@ for param in sim_params:
             last_csi_tti = tti
             
             # The UE will be updated with information from this tti
-            tti_with_csi = sls.get_delayed_tti(tti, tti_relative, 
-                                               sp.csi_tti_delay)
+            tti_relative_with_csi = \
+                sls.get_delayed_relative_tti_csi(tti, tti_relative, 
+                                                            sp.csi_tti_delay)
             
             # CSI UPDATE: 
                 # -interference is updated every csi_period TTIs
@@ -506,8 +507,8 @@ for param in sim_params:
                                                  real_dl_interference)
             
         # 1- c) Update precoders
-        sls.update_all_precoders(tti, tti_with_csi, active_UEs, sp.n_bs, 
-                                 curr_beam_pairs, last_csi_tti, 
+        sls.update_all_precoders(tti, tti_relative_with_csi, active_UEs, 
+                                 sp.n_bs, curr_beam_pairs, last_csi_tti, 
                                  precoders_dict, coeffs, last_coeffs, 
                                  sp.n_layers, sp.n_csi_beams, sp.rot_factor,
                                  power_per_beam, sp.save_power_per_CSI_beam, 
@@ -543,8 +544,8 @@ for param in sim_params:
             # scheduling TTI. 
             
             # The UE will be updated with information from this tti
-            tti_for_scheduling = sls.get_delayed_tti(tti, tti_relative, 
-                                                     sp.scheduling_tti_delay)
+            tti_for_scheduling = \
+                sls.get_delayed_tti_scheduling(tti, sp.scheduling_tti_delay)
     
             # ####################### SCHEDULING UPDATE ######################
             # 2- a) Which UEs to consider for scheduling?
