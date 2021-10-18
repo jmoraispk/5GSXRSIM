@@ -7,7 +7,7 @@ Created on Wed Sep 22 13:01:38 2021
 import pandas as pd
 # import numpy as np
 
-# np.savetxt("rec_power_L4.csv", sim_data_trimmed[f][10][:,:,0], delimiter=",")
+# np.savetxt("MU_rec_power_L4_adaptive.csv", sim_data_trimmed[f][10][:,:,0], delimiter=",")
 
 # Read the csv as a Pandas dataframe
 test = pd.read_csv('C:\\Users\\Srijan\\Desktop\\New.csv')

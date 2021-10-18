@@ -64,7 +64,7 @@ rot_factors_list = [10]
 for seeds in seeds_list:
     for rot_factor in rot_factors_list:
         layer = 0
-        trim_ttis = [20, int(4000 * 4)]
+        trim_ttis = [20, int(4000 * 1)]
         
         TTI_dur_in_secs = 0.25e-3
         
@@ -177,7 +177,7 @@ for seeds in seeds_list:
             #                 f'CSIPER-{comb[2]}_'+ \
             #                 f'USERS-{comb[4]}_ROTFACTOR-{comb[7]}_LAYERS-1_COPH-1_L-1' + '\\'
             
-            stats_dir_end = r'MU_SEED3_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-10_LAYERS-1_COPH-1_L-4' + '\\'
+            stats_dir_end = r'MU_SEED3_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-None_LAYERS-1_COPH-1_L-4_Adaptive' + '\\'
             
             print(f'\nDoing for: {stats_dir_end}')
             
@@ -432,7 +432,7 @@ for seeds in seeds_list:
             idxs_to_plot = [2.3, 3.3, 3.6, 18.1]
             idxs_to_plot = [11.1, 3.2, 18.1 ]
             # idxs_to_plot = [3.2, 18.1]
-            idxs_to_plot = [16.1, 16.2, 18.1]
+            # idxs_to_plot = [16.1, 16.2, 18.1]
             # Test save_plot
             save_plots = False
             saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'

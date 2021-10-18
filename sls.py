@@ -1181,7 +1181,8 @@ def find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs,
 
 def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs, 
                      last_coeffs, tti_csi, n_layers, n_csi_beams, rot_factor, 
-                     power_per_beam, save_power_per_CSI_beam, vectorize):
+                     power_per_beam, save_power_per_CSI_beam, vectorize, 
+                     full_rot_set_precoders, adap_rot_factor):
     
     """
     For a BS-UE pair, compute the best beam per polarisation.
@@ -1239,15 +1240,19 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             
             
         if not l:
-            q_idxs_l = q_idxs[0: 16]
-            idxs_l = 0
-            # q_idxs_l = q_idxs[0: 255]
-            # idxs_l = 0
+            if subset_GoB:
+                q_idxs_l = q_idxs[0: 16]
+                idxs_l = 0
+            else:
+                q_idxs_l = q_idxs[0: 256]
+                idxs_l = 0
         else:
-            q_idxs_l = q_idxs[16: 33]
-            idxs_l = 16
-            # q_idxs_l = q_idxs[256: 511]
-            # idxs_l = 256
+            if subset_GoB:
+                q_idxs_l = q_idxs[16: 33]
+                idxs_l = 16
+            else:
+                q_idxs_l = q_idxs[256: 512]
+                idxs_l = 256
             # [int(N1)*int(N2)*int(O1)*int(O2)]
             
                 
@@ -1264,10 +1269,23 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
                                      save_power_per_CSI_beam, vectorize,
                                      N1, N2, O1, O2, adap_rot_factor)
         if adap_rot_factor is True:
-            #now you have the best beam out of 256, find the corresponding rot
-            #factor and create the fresh q_idxs and then call function again, 
-            #but make sure all the parameters are correctly passed and above 
-            #layer loop.
+            #find the corresponding rotfactor and create the fresh q_idxs and
+            #then call function again, make sure all the parameters are  
+            #correctly passed and above layer loop. beware to remove the append 
+            # from the previous list inside the find best function.
+            
+            # Find the rot factor belonging to the above selected best beam
+            beam_1 = best_beam_pairs[0].beam_idx
+            beam_1_idx = np.where(full_rot_set_precoders == beam_1)
+            q_idxs_l = full_rot_set_precoders[beam_1_idx[0][0]]
+            
+            codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs_l]
+            # The channel response is a square matrix of AE_UE x AE_BS
+            [azi_len, el_len] = precoders_dict[(bs, 'size')]
+            codebook_subset_directions = precoders_dict[(bs, 'directions')][:, q_idxs_l]
+            
+            
+            
             (best_beam_pairs, power_per_beam[l], best_beam_relative_idxs) = \
             find_best_beam_pairs(codebook_subset, azi_len, el_len, q_idxs_l,
                                      codebook_subset_directions, mean_coeffs[l], 
@@ -1798,17 +1816,17 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim, n_csi_beams):
     that, and it is not.
     """
     # print(bp1)
-    if n_csi_beams == 1:
-        beam_distance = np.linalg.norm(np.abs(bp1.ang_idx - bp2.ang_idx))
-        return beam_distance >= beam_dist_lim
-    else:
-        check_orth_beams = abs(np.vdot(bp1.bs_weights, bp2.bs_weights))
-        print(bp1.beam_idx, bp2.beam_idx,'dot product', check_orth_beams)
+    # if n_csi_beams == 1:
+    #     beam_distance = np.linalg.norm(np.abs(bp1.ang_idx - bp2.ang_idx))
+    #     return beam_distance >= beam_dist_lim
+    # else:
+    check_orth_beams = abs(np.vdot(bp1.bs_weights, bp2.bs_weights))
+    print(bp1.beam_idx, bp2.beam_idx,'dot product', check_orth_beams)
         
-        if check_orth_beams <= beam_dist_lim:
-           return True
-        else:
-           return False
+    if check_orth_beams <= beam_dist_lim:
+        return True
+    else:
+        return False
     
        
 
@@ -1972,7 +1990,8 @@ def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs,
                          curr_beam_pairs, last_csi_tti, 
                          precoders_dict, coeffs, last_coeffs, 
                          n_layers, n_csi_beams, rot_factor, power_per_beam,
-                         save_power_per_CSI_beam, vectorize):
+                         save_power_per_CSI_beam, vectorize, 
+                         full_rot_set_precoders, adap_rot_factor):
     
     for ue in active_UEs[tti]:
         # if not active_UEs[tti][ue]:
@@ -1996,7 +2015,9 @@ def update_all_precoders(tti, tti_with_csi, active_UEs, n_bs,
                                  rot_factor, 
                                  pow_per_beam,
                                  save_power_per_CSI_beam,
-                                 vectorize)
+                                 vectorize,
+                                 full_rot_set_precoders,
+                                 adap_rot_factor)
                 
                 if save_power_per_CSI_beam:
                     power_per_beam[tti][ue] = pow_per_beam

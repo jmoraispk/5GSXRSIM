@@ -39,7 +39,7 @@ freq_idxs = [0]
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
 
 csi_periodicities = [5]
-L = 2
+L = 4
 
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
@@ -47,13 +47,47 @@ users = [None]
 
 # rot_factors = [8, 9, 10, 11, 12, 13, 14, 15]
 adap_rot_factor = True
-rot_factors = [10]
+rot_factors = [None] # Should be kept as None if adap_rot_factor is True.
 n_layers = [1]
 
 # Now we usually keep these constant (so we removed them from the file name!):
 application_bitrates = [100] # Mbps
 bandwidths = [50] # MHz
 latencies = [10] # ms
+
+full_rot_set_precoders = np.array([
+                                  [0, 4, 8, 12, 64, 68, 72, 76, 128, 132, 136,
+                                   	140, 192, 196, 200, 204],
+                                  [1, 5, 9,	13,	65,	69,	73,	77,	129, 133, 137,
+                                   	141, 193, 197, 201, 205],
+                                  [2, 6, 10, 14, 66, 70, 74, 78, 130, 134,
+                                   	138, 142, 194, 198,	202, 206],
+                                  [3, 7, 11, 15, 67, 71, 75, 79, 131, 135,
+                                   	139, 143, 195, 199,	203, 207],
+                                  [16,	20,	24,	28,	80,	84,	88,	92,	144, 148,
+                                   	152, 156, 208, 212, 216, 220],
+                                  [17,	21,	25,	29,	81,	85,	89,	93,	145, 149,
+                                   	153, 157, 209, 213, 217, 221],
+                                  [18,	22,	26,	30,	82,	86,	90,	94,	146, 150,
+                                   	154, 158, 210, 214, 218, 222],
+                                  [19,	23,	27,	31,	83,	87,	91,	95,	147, 151,
+                                   	155, 159, 211, 215,	219, 223],
+                                  [32,	36,	40,	44,	96,	100, 104, 108, 160,
+                                   	164, 168, 172, 224, 228, 232, 236],
+                                  [33,	37,	41,	45,	97,	101, 105, 109,	161,
+                                   	165, 169, 173, 225,	229, 233, 237],
+                                  [34,	38,	42,	46,	98,	102, 106, 110, 162,
+                                   	166, 170, 174, 226, 230, 234, 238],
+                                  [35,	39,	43,	47,	99,	103, 107, 111, 163,
+                                   	167, 171, 175, 227,	231, 235, 239],
+                                  [48, 52, 56, 60, 112, 116, 120, 124, 176, 
+                                   180, 184, 188, 240, 244, 248, 252],
+                                  [49, 53, 57, 61, 113, 117, 121, 125, 177, 
+                                   181, 185, 189, 241, 245, 249, 253],
+                                  [50, 54, 58, 62, 114, 118, 122, 126, 178, 
+                                   182, 186, 190, 242, 246, 250, 254],
+                                  [51, 55, 59, 63, 115, 119, 123, 127, 179, 
+                                   183, 187, 191, 243, 247, 251, 255] ] )
 
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
@@ -123,7 +157,7 @@ for param in sim_params:
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'MU_{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
-                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-{L}'
+                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-{L}_Adaptive'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
@@ -519,7 +553,8 @@ for param in sim_params:
                                  precoders_dict, coeffs, last_coeffs, 
                                  sp.n_layers, sp.n_csi_beams, sp.rot_factor,
                                  power_per_beam, sp.save_power_per_CSI_beam, 
-                                 sp.vectorize_GoB)
+                                 sp.vectorize_GoB, full_rot_set_precoders, 
+                                 adap_rot_factor)
         
         # From here onwards, we know what precoders are best for each UE, 
         # per layer. This has been verified with LoS simulations, print below

@@ -33,7 +33,7 @@ for a = 0 : 15
         q_idxs(:,a+1) = sort(q_idxs_list(:));
 end
 % Final rot factor precoders
-q_idxs = q_idxs + 1 ;
+% q_idxs = q_idxs + 1 ;
 %% Plot pointing direction of each rot factor beams.   
 
 load('precoders_4_4_4_4_pol_3_RI_1_ph_1.mat', 'precoders_directions');
