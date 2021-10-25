@@ -1602,6 +1602,16 @@ def print_schedule(schedule):
         schedule[entry_idx].print_entry()
         
 
+def get_delayed_tti(tti, tti_rel, tti_delay):
+    delayed_tti = tti_rel - tti_delay
+    
+    # prevention for the first couple of ttis, where the delay can't be applied
+    if tti < tti_delay:
+        delayed_tti = 0
+
+    return delayed_tti
+
+
 def get_delayed_tti_scheduling(tti, tti_delay):
     delayed_tti = tti - tti_delay
     
