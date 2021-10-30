@@ -667,7 +667,7 @@ for param in sim_params:
                   
         # 11- Update end of tti variables
         
-        sls.update_avg_bitrates(tti, sp.n_ue, realised_bitrate, 
+        sls.update_avg_bitrates(tti, scheduled_UEs[tti], realised_bitrate, 
                                 avg_bitrate)
         
         # ####################################################################

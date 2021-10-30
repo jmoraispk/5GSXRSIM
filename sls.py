@@ -2211,8 +2211,8 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
          
         
         
-def update_avg_bitrates(tti, n_ue, realised_bitrate, avg_bitrate):
-    for ue in range(n_ue):
+def update_avg_bitrates(tti, scheduled_UEs, realised_bitrate, avg_bitrate):
+    for ue in scheduled_UEs:
         avg_bitrate[tti][ue] = \
             compute_avg_bitrate(avg_bitrate[tti-1][ue], 
                                 np.sum(realised_bitrate[tti][ue]), 
