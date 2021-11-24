@@ -53,7 +53,7 @@ seeds_list = [1]
 speeds = [3]
 csi_periodicities = [5]
 app_bitrates= [100]
-users = [None]
+users = [16]
 bandwidths = [50] # MHz
 latencies = [10]
 freq_idxs = [0]
@@ -64,16 +64,17 @@ rot_factors_list = [10]
 for seeds in seeds_list:
     for rot_factor in rot_factors_list:
         layer = 0
-        trim_ttis = [20, int(4000 * 1)]
+        trim_ttis = [20, int(4000 * 0.25)]#[301, 370]
         
         TTI_dur_in_secs = 0.25e-3
         
         ttis = np.arange(trim_ttis[0], trim_ttis[1])
-        x_vals = ttis * TTI_dur_in_secs
+        x_vals = ttis #ttis * TTI_dur_in_secs
         
         
         # From the simulated UEs, which UEs do we want to plot?
-        ues = [i for i in range(4)]
+        ues = [i for i in range(16)] #[5,9]
+        # ues = [12, 13, 14, 15] 
         
         
         #----------------------
@@ -177,8 +178,8 @@ for seeds in seeds_list:
             #                 f'CSIPER-{comb[2]}_'+ \
             #                 f'USERS-{comb[4]}_ROTFACTOR-{comb[7]}_LAYERS-1_COPH-1_L-1' + '\\'
             
-            stats_dir_end = r'MU_SEED3_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-None_LAYERS-1_COPH-1_L-4_Adaptive' + '\\'
-            
+            # stats_dir_end = r'Scenario1_MU_SEED3_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-None_LAYERS-1_COPH-1_L-1_Adaptive' + '\\'
+            stats_dir_end = r'Test_Scenario2_MU_SEED-1_FREQ-0_CSIPER-5_USERS-16_ROTFACTOR-None_LAYERS-1_COPH-1_L-2' + '\\'
             print(f'\nDoing for: {stats_dir_end}')
             
             stats_dir = stats_folder + stats_dir_end
@@ -431,7 +432,9 @@ for seeds in seeds_list:
             idxs_to_plot = [2, 3.2, 3.3, 3.6]
             idxs_to_plot = [2.3, 3.3, 3.6, 18.1]
             idxs_to_plot = [11.1, 3.2, 18.1 ]
-            # idxs_to_plot = [3.2, 18.1]
+            idxs_to_plot = [3.2]
+            idxs_to_plot = [1, 1.1,2, 3.2, 11.4, 3.65]
+            # idxs_to_plot = [17.03]
             # idxs_to_plot = [16.1, 16.2, 18.1]
             # Test save_plot
             save_plots = False

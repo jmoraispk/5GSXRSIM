@@ -4,11 +4,23 @@ Created on Wed Sep 22 13:01:38 2021
 
 @author: Sandra Dheeraj
 """
+import time
 import pandas as pd
-# import numpy as np
+import numpy as np
+data_to_save = sim_data_trimmed[0][13][:,:,0] # sim_data_trimmed[f][4][:,:,0]
+# data_to_save = (10 * np.log10(sim_data_trimmed[f][13][:,:,0]))
+n_ues = 4
+n_ttis = len(trim_ttis)
+for ue in range(n_ues):
+    for tti in range(0, n_ttis-1):
+        if sim_data_trimmed[0][15][tti][ue] == 0: # if ue is not scheduled
+            data_to_save[tti, ue] = np.nan
+    
+#for ue in range(n_ues):
+#    print(np.nanmean(data_to_save[:, ue]))
 
-# np.savetxt("MU_rec_power_L4_adaptive.csv", sim_data_trimmed[f][10][:,:,0], delimiter=",")
-
+np.savetxt(f"debug_time={time.time()}.csv", data_to_save, delimiter=",")
+#%%
 # Read the csv as a Pandas dataframe
 test = pd.read_csv('C:\\Users\\Srijan\\Desktop\\New.csv')
 

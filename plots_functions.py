@@ -568,7 +568,8 @@ def get_vars_to_load(idx, vars_to_load_names):
     
     load_dict = {0.1: [16], 0.2: [17],
                  1: [4], 1.1: [4], 1.2: [4],
-                 2: [2,3], 2.1: [2,4,5,6], 2.15: [2,4,5,6], 2.2: [2,3,4,8], 
+                 2: [2,3], 2.1: [2,4,5,6], 2.15: [2,4,5,6], 
+                 2.2: [2,3,4,8], 
                  2.3: [2,3], 2.4: [2,3,5,6],
                  3: [11], 3.1: [11], 3.2: [10, 15], 3.3: [10,12], 3.35: [10,12], 
                  3.4: [10,12], 3.45: [10,12], 3.5: [10,12], 3.55: [10,12], 
@@ -1541,16 +1542,6 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
             
-            average_rec_power = np.array
-            for ue in range(n_ues):
-                    for tti in range(0, n_ttis-1):
-                        if sim_data_trimmed[f][15][tti][ue] == 0:
-                            sim_data_trimmed[f][10][tti, ue, :] = np.nan
-                
-            for ue in range(n_ues):
-                for l_i in range(1):
-                    print(np.nanmean(sim_data_trimmed[f][10][:, ue, l_i]))
-            # print('average received power: ',average_rec_power)
     
         # Signal power vs interference (Watt) [single axis]
         if plot_idx == 3.3:        
@@ -2380,7 +2371,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             # If beams are needed
             if plot_idx in [17.01, 17.02, 17.03, 17.11, 17.12, 17.13]:
                 # h = bs height - ue height
-                bs_pos = [4,4,3]
+                bs_pos = [6,6,3]
 
                 if timestamps[-1] * time_factor_uncompressed >= n_ttis: 
                     print('There are more timestamps than beam samples. Maybe'
@@ -2413,8 +2404,8 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             ax.view_init(elev=elev_view, azim=azim_view)
         
             # room size [m]
-            xlim = [1, 7]
-            ylim_left = [1, 7]
+            xlim = [1, 15]
+            ylim_left = [1, 15]
             zlim = [0, 2]
 
             
@@ -2452,13 +2443,13 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
                         ax.scatter(sim_data_computed[f][33][ue, 0, idx_comp],
                                    sim_data_computed[f][33][ue, 1, idx_comp],
                                    sim_data_computed[f][33][ue, 2, idx_comp],
-                                   s=25, color=colors[ue])
+                                   s=25, color=colors[int(ue/4)])
                         
                         # Plot orientation vector
                         ax.plot(sim_data_computed[f][34][ue, 0, idx_comp, :],
                                 sim_data_computed[f][34][ue, 1, idx_comp, :],
                                 sim_data_computed[f][34][ue, 2, idx_comp, :],
-                                linewidth=1.5, color=colors[ue])
+                                linewidth=1.5, color=colors[int(ue/4)])
                     
                     if plot_idx in [17.01, 17.02, 17.03, 17.11, 17.12, 17.13]:
                         # PLOT BEAMS! 

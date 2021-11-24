@@ -10,7 +10,7 @@ Created on Sat May 16 09:42:34 2020
 import numpy as np
 import itertools
 import time
-
+from tqdm  import tqdm
 # Own code imports
 import sls
 import utils as ut
@@ -18,19 +18,17 @@ import application_traffic as at
 import simulation_parameters as sim_par
 
 parent_folder = \
-    r"C:\Users\Srijan\Documents\SXRSIMv3\Matlab\TraceGeneration\Test_environment_seeds"
+    r"C:\Users\Srijan\Documents\SXRSIMv3\Matlab\TraceGeneration"
     # r"~\bulk\SXRSIMv3\Matlab\TraceGeneration"
     
-    
-      
 
 # seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
-seed = 3
+seed = 1
 speed = 3
 
-folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
-# folders_to_simulate = [f"Sim_2021-09-16_19h23m32s_SEED1"]
+# folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
+folders_to_simulate = [f"Scenario2_SEED{seed}_SPEED3"]
 
 folders_to_simulate = [parent_folder + '\\' + f for f in folders_to_simulate]
 
@@ -39,13 +37,14 @@ freq_idxs = [0]
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
 
 csi_periodicities = [5]
-L = 4
+# Ls = [1, 2, 3, 4]
+Ls = [1, 2]
 
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
-users = [None]
+users = [16]
 
-# rot_factors = [8, 9, 10, 11, 12, 13, 14, 15]
+# rot_factorss = [8, 9, 10, 11, 12, 13, 14, 15]
 adap_rot_factor = True
 rot_factors = [None] # Should be kept as None if adap_rot_factor is True.
 n_layers = [1]
@@ -93,7 +92,7 @@ full_rot_set_precoders = np.array([
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
                                     users, bandwidths, latencies, n_layers,
-                                    rot_factors))
+                                    rot_factors, Ls))
 
 # Feel free to check the parameter combinations before running the simulation
 # for param in sim_params:
@@ -111,6 +110,7 @@ for param in sim_params:
     lat_budget = param[6]
     n_layers = param[7]
     rot_factor = param[8]    
+    L  = param[9]
     
     if users != None:
         if users == 1:
@@ -129,7 +129,7 @@ for param in sim_params:
             Exception('Not prepared for this number of users...')
     else:
         # when there were only 4 ues
-        user_list = [i for i in range(4)]
+        user_list = [i for i in range(16)]
     
     folder_idx = folders_to_simulate.index(sim_folder)
 
@@ -142,7 +142,7 @@ for param in sim_params:
     # Initialise the simulation parameters
     sp = sim_par.Simulation_parameters(sim_folder, freq_idx, csi_periodicity,
                                        application_bitrate, user_list, bw, 
-                                       lat_budget, n_layers, rot_factor)
+                                       lat_budget, n_layers, rot_factor, L)
     # NOTE: 
         # a) users will subset the generated users;
         # b) bw will use the frequency samples of the generated bandwidht
@@ -156,8 +156,8 @@ for param in sim_params:
     include_timestamp = False 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
-    output_str = f'MU_{seed_str}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
-                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-{L}_Adaptive'
+    output_str = f'Test_Scenario2_{sp.scheduling_method}_SEED-{seed}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
+                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-{L}'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
@@ -412,7 +412,7 @@ for param in sim_params:
     print('--------- Starting simulation ---------') 
     
     # Loop for every TTI
-    for tti in range(0, sp.sim_TTIs):
+    for tti in tqdm(range(0, sp.sim_TTIs)):
         
         # Note: tti is the index of the TTI. The time value of the TTI is 
         #       given by tti_timestamp. This is done such that we don't have 
@@ -424,8 +424,8 @@ for param in sim_params:
             else:
                 print(f"TTI: {tti}")
             
-        if tti % 100 == 0:
-            print(f"TTI: {tti}")
+        # if tti % 100 == 0:
+        #     print(f"TTI: {tti}")
         
         # If necessary, load new set of coefficients
         if tti > last_coeff_tti:
@@ -470,9 +470,10 @@ for param in sim_params:
                                 sp.ae_ue,  
                                 sp.ae_bs,  
                                 sp.n_prb,
-                                sp.TTIs_per_batch)
+                                sp.TTIs_per_batch,
+                                True)
         
-            print('Batch loaded.')
+            print('Coeff batch loaded.')
             
             # Update channel trace variables such that we can easily relate
             # channel quality with received signal and etc..
@@ -531,8 +532,9 @@ for param in sim_params:
             last_csi_tti = tti
             
             # The UE will be updated with information from this tti
-            tti_with_csi = sls.get_delayed_tti(tti, tti_relative, 
-                                               sp.csi_tti_delay)
+            tti_relative_with_csi = \
+                sls.get_delayed_relative_tti_csi(tti, tti_relative, 
+                                                            sp.csi_tti_delay)
             
             # CSI UPDATE: 
                 # -interference is updated every csi_period TTIs
@@ -548,7 +550,7 @@ for param in sim_params:
                                                  real_dl_interference)
             
         # 1- c) Update precoders
-        sls.update_all_precoders(tti, tti_with_csi, active_UEs, sp.n_bs, 
+        sls.update_all_precoders(tti, tti_relative_with_csi, active_UEs, sp.n_bs, 
                                  curr_beam_pairs, last_csi_tti, 
                                  precoders_dict, coeffs, last_coeffs, 
                                  sp.n_layers, sp.n_csi_beams, sp.rot_factor,
@@ -560,8 +562,10 @@ for param in sim_params:
         # per layer. This has been verified with LoS simulations, print below
         if sp.debug:
             sls.print_curr_beam_pairs(curr_beam_pairs,
-                                      sp.n_bs, sp.n_ue, sp.n_layers, 
-                                      'single-layer')
+                                      sp.n_bs, sp.n_ue, sp.n_layers)
+            # sls.print_curr_beam_pairs(curr_beam_pairs,
+            #                           sp.n_bs, sp.n_ue, sp.n_layers, 
+            #                           'single-layer')
             print('done updating precoders')
             
         # ######################## END OF CSI UPDATE #########################
@@ -586,8 +590,8 @@ for param in sim_params:
             # scheduling TTI. 
             
             # The UE will be updated with information from this tti
-            tti_for_scheduling = sls.get_delayed_tti(tti, tti_relative, 
-                                                     sp.scheduling_tti_delay)
+            tti_for_scheduling = \
+                sls.get_delayed_tti_scheduling(tti, sp.scheduling_tti_delay)
     
             # ####################### SCHEDULING UPDATE ######################
             # 2- a) Which UEs to consider for scheduling?
@@ -709,7 +713,7 @@ for param in sim_params:
                   
         # 11- Update end of tti variables
         
-        sls.update_avg_bitrates(tti, sp.n_ue, realised_bitrate, 
+        sls.update_avg_bitrates(tti, scheduled_UEs[tti], realised_bitrate, 
                                 avg_bitrate)
         
         # ####################################################################

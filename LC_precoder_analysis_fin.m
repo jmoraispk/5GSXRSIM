@@ -15,7 +15,7 @@ amp3 = 0.11067447561807642;
 amp4 = 0.09384770753705182;
 
 % Selected precoders
-precod_col_L1 = precoders_matrix(:,246);
+precod_col_L1 = precoders_matrix(:,58);
 precod_col_L2 = precoders_matrix(:,54);
 precod_col_L3 = precoders_matrix(:,182);
 precod_col_L4 = precoders_matrix(:,118);
@@ -46,7 +46,7 @@ Fin_w1_L4 = (1/(sqrt(1+(amp2 * amp2)+(amp3 * amp3)+(amp4 * amp4)))).* ...
 norm_L4 = ((1/sum(abs(Fin_w1_L4))).*Fin_w1_L4).*4;
 % norm_L4 = ((1/sum(abs(Fin_w1_L4))).*Fin_w1_L4);
 
-precod_applied = norm_L3;
+precod_applied = norm_L1;
 
 qd_3gpp_arr_linear = qd_arrayant('3gpp-3d',...
                               4,...             % 1 element in vertical
@@ -78,7 +78,7 @@ P1_el = abs(qd_3gpp_arr_linear.Fa(:, az_max_gain_ang_indx)).^ 2 ...
 
 P1_el_db = 10 * log10(P1_el);
 P1_el_db(P1_el_db < 0) = 0;
-polarplot(el_ang_deg_range * (pi / 180), P1_el_db);
+% polarplot(el_ang_deg_range * (pi / 180), P1_el_db);
 % hold on
 % figure()
 P1_az = abs(qd_3gpp_arr_linear.Fa(el_max_gain_ang_indx, :)) .^ 2 + ...
@@ -86,5 +86,5 @@ P1_az = abs(qd_3gpp_arr_linear.Fa(el_max_gain_ang_indx, :)) .^ 2 + ...
 
 P1_az_db = 10 * log10(P1_az);
 P1_az_db(P1_az_db < 0) = 0;
-% polarplot(az_ang_deg_range * (pi / 180), P1_az_db);
+polarplot(az_ang_deg_range * (pi / 180), P1_az_db);
 hold on

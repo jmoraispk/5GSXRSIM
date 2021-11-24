@@ -29,8 +29,8 @@ o2 = t2.orientation;
 SEED = 1;
 snapshot_interval = 100;
 display_orientation = 1;
-pause_interval = 10;
-pause_duration = 5;
+pause_interval = 16;
+pause_duration = 10;
 shade = 1;
 make_gif(4) = 1;
 plot_only_phy_users = 0;     % 0 means all phy + vir users are plotted.
@@ -39,8 +39,8 @@ plot_with_layout = 1;        % 1 if layout is needed in the gif.
 for mvnt_val = 3:3  % check the speed here!
 %     filename = ['Tracks\Track', '_SEED', num2str(SEED), ...
 %                 '_SPEED', num2str(mvnt_val), '_UE', num2str(n_rx), '.mat'];
-    filename = 'Tracks\Track_SEED1_SPEED3_UE16test_rect.mat';
-    l_aux = load(filename).l_aux;
+%     filename = 'Tracks\Track_SEED1_SPEED3_UE16test_rect.mat';
+%     l_aux = load(filename).l_aux;
     
     for i = 1:1 % do for up only..
         if i == 1

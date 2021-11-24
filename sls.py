@@ -702,7 +702,7 @@ def load_coeffs(tti, time_div_idx, n_time_divs, ttis_per_time_div,
                 time_compression_ratio, f_idx, n_freq, n_bs_gen, n_ue_gen, 
                 specific_bss, specific_ues, coeff_file_prefix, 
                 coeff_file_suffix, n_ue_coeffs, n_bs_coeffs, ae_ue, ae_bs, 
-                prbs, ttis_per_batch):
+                prbs, ttis_per_batch, debug):
     """
     Loads coefficients from the respective time division:
         In order to have generation and simulation decoupled, we may
@@ -744,7 +744,8 @@ def load_coeffs(tti, time_div_idx, n_time_divs, ttis_per_time_div,
         # offset in samples
         offset = int(offset_in_ttis / time_compression_ratio)
         
-        print('Loading: ')
+        if debug:
+            print('Loading: ')
                     
     for bs in specific_bss:
         for ue in specific_ues:
@@ -760,7 +761,8 @@ def load_coeffs(tti, time_div_idx, n_time_divs, ttis_per_time_div,
             coeff_shape = (n_ue_coeffs[ue], n_bs_coeffs[bs], 
                            prbs, samples_per_time_div)
             
-            print(f'\rLoading for UE {ue}, BS {bs}...', end='')
+            if debug:
+                print(f'\rLoading for UE {ue}, BS {bs}...', end='')
             
             coeffs_aux = \
                 load_coeffs_part(name_to_load).reshape(coeff_shape, order='F')
@@ -1292,10 +1294,7 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
                                      bs, n_csi_beams, 
                                      save_power_per_CSI_beam, vectorize,
                                      N1, N2, O1, O2, adap_rot_factor)
-            
-            
-            
-            
+               
             
        
         # best_beam_relative_idxs[0] = best_beam_relative_idxs[0] + idxs_l
@@ -1326,7 +1325,8 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
         
         if n_csi_beams == 1:
             created_beam_pair = best_beam_pairs[0]
-            
+            # print(ue, tti_csi, best_beam_pairs[0].beam_idx )
+            # print(created_beam_pair.bs_weights)
             
         elif n_csi_beams == 2:
             # print('ue', ue, best_beam_pairs[0].beam_idx, best_beam_pairs[1].beam_idx)
@@ -1355,9 +1355,10 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             
             created_beam_pair.RPI = [best_beam_pairs[0].RPI,
                                              best_beam_pairs[1].RPI]
-            # print(ue)                                
+            # Sandra- print(ue)                                
             # print(created_beam_pair.beam_idx)
             # print(created_beam_pair.RPI)
+            
         elif n_csi_beams == 3:
             # Power ratio of second and third best beams compared to first, for
             # finding the RPI.
@@ -1462,16 +1463,17 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
                                              best_beam_pairs[1].RPI, 
                                              best_beam_pairs[2].RPI,
                                              best_beam_pairs[3].RPI]
-            print(ue)                                
-            print(created_beam_pair.beam_idx)
-            print(created_beam_pair.RPI)
+            # Sandra- print(ue)                                
+            # print(created_beam_pair.beam_idx)
+            # print(created_beam_pair.RPI)
         
         # This is to perform the MRT for the L = 2, 3, 4 beams.        
         if not n_csi_beams == 1:
             # Compute internal product between ch coeffs and precoder, 
             # that is what the UE will see from a transmission with w
-            Fin_at_ue_ant = np.dot(mean_coeffs[l], Fin_w)
+            # Fin_at_ue_ant = np.dot(mean_coeffs[l], Fin_w)
             Fin_bs_weights = Fin_w / np.linalg.norm(Fin_w)
+            Fin_at_ue_ant = np.dot(mean_coeffs[l], Fin_bs_weights)
             # The UE will use the Maximum Ratio Beamformer, 
             # both for receiving and for transmitting
             Fin_mr_precoder_temp = Fin_at_ue_ant.conj().T
@@ -1483,6 +1485,7 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             # Create and load the best Beam Pair found
             
             created_beam_pair.bs_weights = Fin_bs_weights
+            # Sandra-print('Fin_bs_weights: ',Fin_bs_weights)
             created_beam_pair.ue_weights = Fin_mr_precoder
             # Save the channel gain (linear/electric field)**2 = power gain
             created_beam_pair.ch_power_gain = Fin_ch_gain ** 2
@@ -1821,7 +1824,7 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim, n_csi_beams):
     #     return beam_distance >= beam_dist_lim
     # else:
     check_orth_beams = abs(np.vdot(bp1.bs_weights, bp2.bs_weights))
-    print(bp1.beam_idx, bp2.beam_idx,'dot product', check_orth_beams)
+    # print(bp1.beam_idx, bp1.RPI, bp2.beam_idx,bp2.RPI, 'dot product', check_orth_beams)
         
     if check_orth_beams <= beam_dist_lim:
         return True
@@ -1849,7 +1852,7 @@ def is_compatible_with_schedule(new_entry, schedule, beam_dist_lim, n_csi_beams)
             continue
         else:
             is_compatible = False
-            print('not çompatible', schedule_entry.ue, new_entry.ue)
+            # print('not çompatible', schedule_entry.ue, new_entry.ue)
             break
     
     return is_compatible
@@ -1874,9 +1877,10 @@ def print_schedule(schedule):
         schedule[entry_idx].print_entry()
         
 
-def get_delayed_tti(tti, tti_rel, tti_delay):
-    delayed_tti = tti_rel - tti_delay
-    
+
+def get_delayed_tti_scheduling(tti, tti_delay):
+    delayed_tti = tti - tti_delay
+
     # prevention for the first couple of ttis, where the delay can't be applied
     if tti < tti_delay:
         delayed_tti = 0
@@ -1884,7 +1888,14 @@ def get_delayed_tti(tti, tti_rel, tti_delay):
     return delayed_tti
 
 
+def get_delayed_relative_tti_csi(tti, tti_rel, tti_delay):
+    delayed_tti = tti_rel - tti_delay
 
+    # prevention for the first couple of ttis, where the delay can't be applied
+    if tti < tti_delay:
+        delayed_tti = 0
+
+    return delayed_tti
 
 ##############################################################################
 ############ Wrappers Zone - Functions to improve readibility ################
@@ -2259,7 +2270,8 @@ def final_mcs_update(tti, curr_schedule, est_interference,
                          entry.beam_pair.ch_power_gain, 
                          est_interference[tti][entry.ue][entry.layer_idx],
                          wideband_noise_power)
-        # print("debug value sinr:", sinr)
+        # Sandra-print("debug value sinr:", sinr)
+        # print("channel power gain: ", entry.beam_pair.ch_power_gain)
         (cqi, bler) = calc_CQI(sinr)
         
         # efficiency has to do with the overhead
@@ -2394,6 +2406,11 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
             print(f'Estimated SINR: {entry.est_sinr:6.1f} dB')
             print(f'Experienced SINR: {experienced_sinr:4} dB')
         
+        # Sandra-print(f'Experienced sig power: {experienced_signal_power[tti][entry.ue][entry.layer_idx]}')
+        # print(f'Interference: {real_dl_interference[tti][entry.ue][entry.layer_idx]}')
+        # print(f'Estimated SINR: {entry.est_sinr:6.1f} dB')
+        # print(f'Experienced SINR: {experienced_sinr:4} dB')
+        
         # 3- Compute the TB size per entry (from n_prbs scheduled and MCS)
         
         # Calculate how many TBS are needed and allocate them
@@ -2468,11 +2485,16 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                   'layer {entry.layer_idx} is: '
                   f'{realised_bitrate[tti][entry.ue][entry.layer_idx]} '
                   'Mbits/s') 
-         
+        # Sandra -print(f'Realised bitrate in tti {tti}, ue {entry.ue}, '
+        #           'layer {entry.layer_idx} is: '
+        #           f'{realised_bitrate[tti][entry.ue][entry.layer_idx]} '
+        #           'Mbits/s') 
         
         
-def update_avg_bitrates(tti, n_ue, realised_bitrate, avg_bitrate):
-    for ue in range(n_ue):
+def update_avg_bitrates(tti, scheduled_UEs, realised_bitrate, avg_bitrate):
+    ue_list_scheduled = [i for i, element in enumerate(scheduled_UEs) if element!=0]
+    for ue in ue_list_scheduled:
+        # ue = int(ue)
         avg_bitrate[tti][ue] = \
             compute_avg_bitrate(avg_bitrate[tti-1][ue], 
                                 np.sum(realised_bitrate[tti][ue]), 

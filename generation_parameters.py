@@ -65,7 +65,7 @@ class Generation_parameters:
         # setup is done, any generation can use such builders to compute the
         # channel, it is only required to have the correct path. For that, 
         # see how the variable 'use_existing_builders' works.
-        self.only_setup = False
+        self.only_setup = True
         
         # In case of generating channels in different machines simultaneously,
         # this is used to setup which instances run in each one.
@@ -172,7 +172,7 @@ class Generation_parameters:
         
         # Room Characteristics #
         # Physical Users - users in this room
-        self.n_phy = 4
+        self.n_phy = 16
         # Virtual Users - users in other rooms
         self.n_vir = self.n_phy
         # Cameras per User - number of cameras each users needs
@@ -184,7 +184,7 @@ class Generation_parameters:
         
         # Load specific tracks. Note: if tracks aren't created, this needs to
         # be set to False to create the vars.mat
-        self.load_tracks_from_file = True
+        self.load_tracks_from_file = False
         
         # Indices of users seats: these indices depend on the number of seats!
         # Phy user disposition 
@@ -200,19 +200,24 @@ class Generation_parameters:
         
         # Important. Should these be interpreter as user indices [phy vir], 
         #            or as seats?
-        self.custom_speaker_list_uses_seats = True
+        self.custom_speaker_list_uses_seats = False
         
-        self.custom_speaker_list = np.array([[0, 1],
-                                             [2.1, 4],
-                                             [4.2, 7],
-                                             [6.3, 2],
-                                             [8.4, 5],
-                                             [10.5, 8],
-                                             [12.6, 3],
-                                             [14.7, 6]], dtype=np.double)
+        #self.custom_speaker_list = np.array([[0, 17],
+        #                                     [2.1, 17],
+        #                                     [4.2, 21],
+        #                                     [6.3, 21],
+        #                                     [8.4, 25],
+        #                                     [10.5, 25],
+        #                                     [12.6, 29],
+        #                                     [14.7, 29]], dtype=np.double)
+                                             
+        self.custom_speaker_list = np.array([[0, 18],
+                                             [4.2, 22],
+                                             [8.4, 26],
+                                             [12.6, 30]], dtype=np.double)
         
         # Either customize, or create one automatically
-        self.use_custom_speaker_list = False
+        self.use_custom_speaker_list = True
         
         # When creating one speaker list automatically, these two parameters
         # are needed to set what speakers and for how long each speaks.
@@ -939,7 +944,7 @@ class Generation_parameters:
         # rest of the corners go counter-clock wise.
         
         # Room dimensions
-        room_size = [12, 12]
+        room_size = [10, 10]
 
         # The offset from the centre of mass of the head of a user. 
         # The first value is distance in front, the second value is height.
@@ -967,7 +972,7 @@ class Generation_parameters:
         
         # Comment to stop overriding:
         r_table = 1.4
-        r_table = 5
+        r_table = 3
         
         # Additional radius for the users to seat around the table 
         r_users_dist = 0.2 
@@ -1133,7 +1138,7 @@ class Generation_parameters:
         #                    simulation duration. If sim_dur is 10, then they 
         #                    start at 30s and 6 minutes, respectively
         segment_start = np.array([[0.5]], dtype=np.double)
-        scenarios = np.array([[LoSonly]], dtype=np.object)
+        scenarios = np.array([[LoS]], dtype=np.object)
     
         # So that it's not needed to repeat every row of segment start and 
         # scenarios if it's 0, then there should be as many rows in the 
