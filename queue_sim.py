@@ -209,7 +209,6 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
         
     tic = time.perf_counter()    
     print(f"Finished Event Simulation: {toc-tic:0.4f} seconds")
-    print(event_calendar[0])
 
 
 
