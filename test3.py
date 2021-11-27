@@ -26,8 +26,8 @@ def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
                  y_labels='', xlim=[], ylim=[], tight_x_axis=False,
                  tight_y_axis=False, use_legend=False,
                  legend_inside=False, legend_loc="center",
-                 ncols=1, size=1, width=6.4, 
-                 height=4.8, same_axs=False, n1=-1, n2=-1,
+                 ncols=1, size=1.25, width=6.4*2, 
+                 height=4.8*2, same_axs=False, n1=-1, n2=-1,
                  plot_type_left='line', plot_type_right='line', 
                  savefig=False, filename='', saveformat='pdf'):
     """
@@ -197,7 +197,7 @@ def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
         # Create the subplots with a certain figure size, n1 rows and n2 cols
         fig, axs = plt.subplots(n1,n2, tight_layout=True, 
                                 figsize=(r*height*size, size/r*width))
-    
+            
     if not isinstance(axs, np.ndarray):
         axs = [axs]
     
@@ -256,7 +256,7 @@ def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
                 elif plot_type_left== 'scatter':
                     ax_handle.scatter(x_data, y_data)  
                 elif plot_type_left == 'bar':
-                    ax_handle.bar(x_data, y_data)
+                    ax_handle.bar(x_data, y_data)#, width=1/len(y_data))
                 else:
                     raise Exception(f'No plot type named "{plot_type_left}".')
             except Exception as e:
@@ -320,11 +320,12 @@ def plot_for_ues(ue_list, x_vals, y_vals, x_axis_label='', y_axis_label='',
     # Save Figure
     if savefig:
         if use_legend and not same_axs:
-            fig.savefig(filename, format=saveformat,
+            fig.savefig(filename, format=saveformat, dpi=200,
                         bbox_extra_artists=(legend_handle,), 
                         bbox_inches='tight')
         else:
-            plt.savefig(filename, format=saveformat, bbox_inches='tight')
+            plt.savefig(filename, format=saveformat, 
+                        dpi=200, bbox_inches='tight')
             
         print(f'Saved: {filename}')
     
@@ -344,7 +345,7 @@ def plot_for_ues_double(ue_list, x_vals, y_vals_left, y_vals_right,
                         fill_var='', fill_color='grey', 
                         legend_loc='best',
                         legend_inside=False, fill_label='', 
-                        width=6.4, height=4.8, size=1,
+                        width=6.4*2, height=4.8*2, size=1.25,
                         filename='', savefig=False, plot_type_left='line',
                         plot_type_right='line', saveformat=''):
     """
@@ -537,11 +538,11 @@ def plot_for_ues_double(ue_list, x_vals, y_vals_left, y_vals_right,
         if filename == '':
             filename = ut.get_time()
         if use_legend and not legend_inside:
-            fig.savefig(filename,
+            fig.savefig(filename, dpi=200,
                         bbox_extra_artists=(legend_handle,), 
                         bbox_inches='tight')
         else:
-            plt.savefig(filename)
+            plt.savefig(filename, dpi=200)
         
         print(f'Saved: {filename}')
         

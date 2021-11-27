@@ -25,7 +25,7 @@ class Simulation_parameters:
         self.set_simulation_param(freq_idx, csi_periodicity, user_list)
         
         # 2- Init IO parameters (which folders to write to, and so on)
-        self.set_io_param(folder_to_load)
+        self.set_io_param(folder_to_load, application_bitrate, lat_budget, bw)
     
         # 3- Init Application Traffic Model parameters
         self.set_application_param(application_bitrate, lat_budget)
@@ -58,7 +58,7 @@ class Simulation_parameters:
         
         # TTIs to simulate -> min. 1000/TTIs_per_batch size
         # Has to be 'int', if multiplying with float -> int/float type error
-        self.sim_TTIs = int(4000 * 16)
+        self.sim_TTIs = int(4000 * 1)
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -166,12 +166,11 @@ class Simulation_parameters:
         self.olla_stepsize = 0.1
         
         
-        # TODO: Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
+        # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
         self.scheduler = 'Frametype' 
-        #self.scheduler = 'M-LWDF'
-        #self.scheduler = 'PF'
-        self.debug_zheng = 0
-
+        self.scheduler = 'M-LWDF'
+        self.scheduler = 'PF'
+        
 
         # Scheduler parameters
         self.scheduler_param_c = 10
@@ -205,7 +204,7 @@ class Simulation_parameters:
         # implementation is in place
         # NOTE2: This number will divide the olla step size!
         # TODO: A new more 5G compliant implementation of TBS calculation!
-        self.tbs_divisor = 5
+        self.tbs_divisor = 5 # 1
         
         # IMPORTANT: should we always co-schedule all UEs?! This makes the 
         #            simulation much simpler.
@@ -213,7 +212,7 @@ class Simulation_parameters:
         #       beam distance parameter, which is applied after. 
         #       This parameter actually skips the check of whether users have
         #       packets in the buffer, that's it.
-        self.always_schedule_every_ue = True # TODO
+        self.always_schedule_every_ue = not True 
         
         ##########################################
         # - self.csi_tti_delay = 0
@@ -244,7 +243,7 @@ class Simulation_parameters:
         self.vectorize_GoB = False
         
             
-    def set_io_param(self, folder_to_load):
+    def set_io_param(self, folder_to_load, application_bitrate, lat_budget, bw):
         # #################### IO Files & Names ##############################
         
         self.curr_path = str(pathlib.Path().absolute())
@@ -271,8 +270,8 @@ class Simulation_parameters:
         # self.pcap_dir = self.curr_path + '\\PCAP\\Trace\\'  
         
         # Stats folder
-        #if self.always_schedule_every_ue:
-        self.stats_dir = self.curr_path + '\\Stats\\Burstiness\\'# Constant\\Always_schedule_on\\' #Meeting\\40 - Same\\'
+        self.stats_dir = self.curr_path + '\\Stats\\Scheduling Study\\' + \
+            f'APP{application_bitrate}-BW{bw}-LAT{lat_budget}_Burst\\'
  
         # Plots folder
         self.plots_dir = self.curr_path + '\\Plots\\'
@@ -318,9 +317,16 @@ class Simulation_parameters:
         
         # Space the I frames across the GoP for the existant UEs
         # Set here instead of in sxr_sim
-        self.uniformly_space_UE_I_frames = False #TODO
+        self.uniformly_space_UE_I_frames = True 
         # Burstiness of packet arrival
-        self.burstiness_param = 0.35
+        self.burstiness_param = float(0.5)
+        # Dispersion model (original from Joao, new from Zheng or even more 
+        # realistic FIFO queue model)
+        # ['Joao', 'Zheng', 'Queue']
+        self.burstiness_model = 'Joao'
+        self.burstiness_model = 'Zheng'
+        # self.burstiness_model = 'Queue'
+        
         # Note: until the TODO in the end of simulation parameters is solved, 
         #       this should be set to False. Otherwise we fall into the 
         #       interference unpredictability problem again.
@@ -578,8 +584,6 @@ class Simulation_parameters:
         #       there is no difference.
         #       
         #       
-        
-        
         
         # In Hertz, the fundamental bandwidths:
         # self.subcarrier_spacing = 15e3 * 2 ** self.simulation_numerology

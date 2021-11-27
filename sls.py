@@ -8,6 +8,7 @@ import numpy.linalg
 import scipy.io
 import scipy.interpolate
 
+import time
 
 import application_traffic as at
 
@@ -116,8 +117,8 @@ def frametype_scheduler(avg_thrput, curr_expected_bitrate,
     a = -np.log(delta) / delay_threshold
     
     # TODO
-    delay_priority = a * curr_delay * np.log10(pf_scheduler(avg_thrput, 
-                                               curr_expected_bitrate))
+    delay_priority = a * curr_delay # * np.log10(pf_scheduler(avg_thrput, 
+                                    #           curr_expected_bitrate))
             
     # Weight parameter depending on number of I-frame packets at head of buffer 
     frame_weight = 0.0
@@ -149,10 +150,8 @@ def frametype_scheduler(avg_thrput, curr_expected_bitrate,
     elif buffer.num_I_packets > 9:   
         frame_weight = 2.0     
     """
-    return (frame_weight + frame_weight * curr_delay * 1000) * \
-            np.log10(pf_scheduler(avg_thrput, curr_expected_bitrate))
-
-    # return frame_weight * delay_priority 
+    return (frame_weight + frame_weight * 1000 * curr_delay) * pf_scheduler(
+        avg_thrput, curr_expected_bitrate)
 
 
 def exp_pf_scheduler(avg_thrput, curr_expected_bitrate,
@@ -543,8 +542,12 @@ def calc_SINR(tx_pow, ch_pow_gain, interference, noise_power):
     
     sinr_linear = sig_pow / (noise_power + interference)
     
-    return 10 * np.log10(sinr_linear) - 30 # Add some neighbor BS interference
-    # TODO: return 4.0 # Simulate Flat Channel!
+    return 10 * np.log10(sinr_linear) - 35 # TODO
+
+    # return 8
+    # sinr_random = np.random.normal(5, 3)
+    # if sinr_random < 0: return 0
+    # return sinr_random
 
 def get_curr_time_div(tti, time_div_ttis):
     
@@ -1621,8 +1624,8 @@ def print_schedule(schedule):
         schedule[entry_idx].print_entry()
         
 
-def get_delayed_tti(tti, tti_rel, tti_delay):
-    delayed_tti = tti_rel - tti_delay
+def get_delayed_tti_scheduling(tti, tti_delay):
+    delayed_tti = tti - tti_delay
     
     # prevention for the first couple of ttis, where the delay can't be applied
     if tti < tti_delay:
@@ -1631,6 +1634,14 @@ def get_delayed_tti(tti, tti_rel, tti_delay):
     return delayed_tti
 
 
+def get_delayed_relative_tti_csi(tti, tti_rel, tti_delay):
+    delayed_tti = tti_rel - tti_delay
+    
+    # prevention for the first couple of ttis, where the delay can't be applied
+    if tti < tti_delay:
+        delayed_tti = 0
+
+    return delayed_tti
 
 
 ##############################################################################
@@ -1700,7 +1711,8 @@ def tti_info_copy_and_update(tti, TTI_duration, first_coeff_tti, n_phy,
 
     return tti_timestamp, tti_relative
 
-def update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti):
+def update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti, 
+                  use_pcap, tti_duration):
     for ue in ue_idxs:
         
         # 1- Queue Update 
@@ -1708,8 +1720,14 @@ def update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti):
         #   b) Update head of queue delay
         #   c) Discard packets that won't make it in the latency budget
         # TODO: Add functionality to control PDR during simulation
-        buffers[ue].update_queue_time(tti_timestamp)
+        
+        # When using pcap, index and duration of TTI is needed for queue updates
+        if use_pcap:
+            buffers[ue].update_queue_time(tti, tti_duration)
+        else:
+            buffers[ue].update_queue_time(tti_timestamp)
 
+        
         if not buffers[ue].is_empty:
             # These UEs have something to send this TTI.
             active_UEs[tti].append(ue)
@@ -1844,7 +1862,6 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
             print(f"est_su_mimo_bitrates: {est_su_mimo_bitrate[tti][ue]}")
             print(f"su_mimo_setting: {su_mimo_setting[tti][ue]}")
 
-
 def compute_priorities(tti, ue_priority, all_delays, buffers, 
                        schedulable_UEs_dl, scheduler_name, avg_bitrate, 
                        est_su_mimo_bitrate, delay_threshold, 
@@ -1869,12 +1886,7 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
                       scheduler_param_delta,
                       scheduler_param_c,
                       all_delays, 
-                      buffers[ue])
-        # TODO: 
-        # if tti > 100 and tti < 150:
-        #     print(f'UE:{ue}') 
-        # print(f'I-packets:{buffers[ue].num_I_packets}')
-        # print(f"UE {ue} has priority {ue_priority[tti][ue]}")    
+                      buffers[ue])   
     curr_priorities = sorted([(ue, ue_priority[tti][ue])
                               for ue in schedulable_UEs_dl],
                              key=lambda x: x[1], reverse=True)
@@ -2006,7 +2018,7 @@ def final_mcs_update(tti, curr_schedule, est_interference,
         # Wideband scheduling for now
         entry.n_prbs = n_prb 
 
-        entry.tb_max_size = get_TB_size(entry.bits_to_send, tbs_divisor)
+        entry.tb_max_size = np.floor(get_TB_size(entry.bits_to_send, tbs_divisor))
 
 
     for entry in curr_schedule['DL']:
@@ -2102,7 +2114,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
         #       str([f'{sinr:.2e}, ' for sinr in sinr_per_prb[1:5]]))
         
         # 2- Aggregate and 'average' the sinrs over all the assigned prbs
-        if n_prb > 1:
+        if n_prb > 1: 
             experienced_sinr = \
                 avg_SINRs_MIESM(sinr_per_prb, info_bits_table,
                                 k=bits_per_symb_from_cqi(entry.cqi))
@@ -2113,7 +2125,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
         if debug:
             print(f'Estimated SINR: {entry.est_sinr:6.1f} dB')
             print(f'Experienced SINR: {experienced_sinr:4} dB')
-        
+            
         # 3- Compute the TB size per entry (from n_prbs scheduled and MCS)
         
         # Calculate how many TBS are needed and allocate them
@@ -2127,12 +2139,17 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
         tb_sizes_and_idxs = buffers[entry.ue].gen_transport_blocks(
                                                     entry.bits_to_send,
                                                     entry.tb_max_size, tti)
+                
+        # if tti < 5:
+        #     print("TBs", tb_sizes_and_idxs)
+        # if tti > 10: raise SystemExit
         
         # The Application traffic takes into account the estimated 
         # of bits, tb_max_size and the buffer state to generate pairs of 
         # (size, start_packet_idx). Then the SLS will actually create them.
         transport_blocks = [Transport_Block(tb_info[0], tb_info[1])
                             for tb_info in tb_sizes_and_idxs]
+        
         
         # 4- Compute the BLER (from SINR and MCS)
         bler = get_BLER_from_fitted_MCS_curves(entry.cqi, 
@@ -2143,7 +2160,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
             # 5- Flip a BLER biased coin to assess the errors on TBs
             for tb in transport_blocks:
                 # print(f'Flipping with BLER = {bler}. Result: ', end='')
-                if ut.success_coin_flip(prob_of_error=bler):
+                if ut.success_coin_flip(prob_of_error=bler): 
                     # print('Success!')
                     success_tb += 1
                     # If the transport block is well received, remove bits from
@@ -2189,9 +2206,11 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
          
         
         
-def update_avg_bitrates(tti, n_ue, realised_bitrate, avg_bitrate):
-    for ue in range(n_ue):
-        avg_bitrate[tti][ue] = compute_avg_bitrate(avg_bitrate[tti-1][ue], 
+def update_avg_bitrates(tti, n_ue, realised_bitrate, avg_bitrate, schedulable_UEs_dl):
+    
+    for ue in schedulable_UEs_dl: # TODO
+    # for ue in range(n_ue):
+            avg_bitrate[tti][ue] = compute_avg_bitrate(avg_bitrate[tti-1][ue], 
                                                    realised_bitrate[tti][ue], 
                                                    tc=100)
         

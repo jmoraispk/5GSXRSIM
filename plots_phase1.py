@@ -65,8 +65,6 @@ always_compute = True
 
 #-------------------------
 
-stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Always_schedule_on' + '\\'
-
 seeds = [1]
 speeds = [1]
 csi_periodicities = [5]
@@ -77,7 +75,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [int(4000 * 0), int(4000 * 2)]
+trim_ttis = [int(4000 * 0), int(4000 * 16)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -89,8 +87,6 @@ x_vals = ttis * TTI_dur_in_secs
 
 # From the simulated UEs, which UEs do we want to plot?
 ues = [i for i in range(4)]
-
-#ues = [0]
 
 
 #----------------------
@@ -124,7 +120,9 @@ VARS_NAME_LOAD = ['sp',                       #  0
                   'channel_per_prb',          # 17
                   'power_per_beam',           # 18             
                   'packets_in_buffer',        # 19
-                  'bits_in_buffer'            # 20     
+                  'bits_in_buffer',           # 20  
+                  'active_ues',               # 21
+                  'ue_priority'               # 22
                   '']
 
 # Variable names that can be computed from the loaded and trimmed variables
@@ -141,7 +139,6 @@ VARS_NAME_COMPUTE = ['sinr_diff',                         # 0
                      'beam_sum',                          # 10
                      'freq_vec',                          # 11
                      'frames',                            # 12
-                      #TODO: ADD for I-frame spacing on!!!
                      'I_frames',                          # 13 
                      'avg_packet_lat',                    # 14
                      'avg_packet_drop_rate',              # 15
@@ -178,8 +175,10 @@ file_sets = []
 
 # Create the file set combinations from the variables given previously
 
-
+# TODO
 # stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Meeting\40 - Same' + '\\'
+stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats' + \
+                "\Scheduling Study\APP25-BW50-LAT20_Burst" + '\\'
 
 for comb in combinations:
 
@@ -187,13 +186,11 @@ for comb in combinations:
     #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
     #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
 
-    stats_dir_end = r'Sim_SEED5_FREQ-0_APPBIT-20_BW-100_LAT-40_LEN-16s_PF_False' + '\\'
-    # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-20_BW-100_LAT-50_LEN-16s_Frametype' + '\\'
-
-    # stats_dir_end = r'Sim_SEED5_FREQ-0_CSIPER-5_APPBIT-50_BW-100_LAT-20_LEN-16s_M-LWDF' + '\\'
-
+    stats_dir_end = \
+        r'Sim_SEED2_APPBIT-25_BW-50_LAT-20_LEN-16s_pf_Offset-true_Burst-Zheng-0.75' + '\\' 
     
-    print(f'\nDoing for: {stats_dir_end}')
+    print(f'Stats Folder: \n{stats_folder}')
+    print(f'Simulation: \n{stats_dir_end}')
     
     stats_dir = stats_folder + stats_dir_end
     
@@ -219,10 +216,19 @@ file_sets = [file_sets]
     
 for file_set in file_sets:
     
-    # plot idx
-    idxs_to_plot = [0.1, 3.45, 18.2]#, 10.75]
+    # Test save_plot
+    save_plots = False
+    saveformat = 'png' # supported: 'png', 'svg', 'pdf'
+    base_plots_folder = 'Zheng - Plots\\Scheduling Study\\Constant\\' 
+    # base_plots_folder = 'Plots\\' 
+
+    # TODO: plot idx
+    idxs_to_plot = [10.7, 10.2, 10.9, 14.2]
+    idxs_to_plot = [14.2]
     idxs_to_plot = [10.7]
+    
     # For the very first run and they don't exist, initialise
+    
     try:
         sim_data_loaded
     except NameError:
@@ -256,14 +262,7 @@ for file_set in file_sets:
     if file_set == ['']: 
         with open("last_stats_folder.txt", 'r') as fh:
             file_set = [fh.readline()]
-            
-            
-    """
-    TODO: Plot_idxs which are not working:
-    - 10.8; 10.9; 10.11 -> Compute dir #27
-    
-    """        
-            
+                        
             
     # idxs_to_plot = [10.15,10.25]  
     """
@@ -286,6 +285,8 @@ X   0.3   -> Channel Power across prbs (for a given tti)
     1     -> Throughput
     1.1   -> Inst. vs Running avg bitrate 
     1.2   -> Inst throughput vs Rolling/moving avg bitrate 
+TODO
+    1.3   -> System throughput/load (Absolute + Relative utilization)
     
     2     -> SINR (multi-user) estimated vs realised
     2.1   -> SINR (single-user) when there are active transmissions
@@ -331,6 +332,9 @@ X   0.3   -> Channel Power across prbs (for a given tti)
     7.4   -> BLER instantaneous vs realised bit rate [double axis]
     7.5   -> BLER instantaneous vs realised SINR [double axis]
     
+    8     -> Active UEs
+    8.1   -> UE priority (each TTI)  
+    
     9.1   -> OLLA:  instantaneous BLER vs olla parameter (single-user)
                     [when active transmissions] [double axis]
     9.2   -> OLLA:  instantaneous BLER vs olla parameter (multi-user)
@@ -342,6 +346,7 @@ X   0.3   -> Channel Power across prbs (for a given tti)
     10.15 -> Average packet latency of each frame (bar plot)
     10.2  -> Average packet drop rate of each frame (line plot)
     10.25 -> Average packet drop rate of each frame (bar plot)
+    
     10.3  -> Average packet latency vs drop rate of each frame (line plot)
              [double axis] 
     10.31 -> Average packet latency vs drop rate of each frame (line plot)
@@ -366,17 +371,18 @@ X   0.3   -> Channel Power across prbs (for a given tti)
                 -> for each frame in the GoP
                 -> for each I frame
                 -> for each P frame
-                -> averaged across all frames and std
-    TODO
-X   10.75 -> prints all detailed measurement information as in 10.7 
-             but for simulations with 'uniformly spaced I-frames'   
-             => Included offset calculation in 10.7 
-             
+                -> averaged across all frames and std        
+    
     10.8  -> Average packet latency for each frame in the GoP (bar plot) 
     10.9  -> Average packet drop rate for each frame in the GoP (bar plot)
     10.11 -> Average packet latency and drop rate per frame of the GoP 
              [double plot]
-
+             
+    10.12 -> Average packet drop rate vs Realised Bit rate
+    10.13 -> Aggregate packet drop statistics
+    TODO: -> PDR and Latency statistics per period!
+    
+    
     11    -> Scheduled UEs: sum of co-scheduled UEs across time
     11.1  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not
     11.2  -> Scheduled UEs: each UE is 1 when it is scheduled and 0 when not,
@@ -388,7 +394,7 @@ X   10.75 -> prints all detailed measurement information as in 10.7
              bits across, but those might have no utility because they have
              transferred before.
     11.4  -> Scheduled UEs vs signal power (linear)
-X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
+X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
 
          
     13    -> SU-MIMO setting - number of layers scheduled per UE
@@ -435,17 +441,17 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
                                17.03, 17.11, 17.12, 17.13]
     
     # All that can be saved as figures.
-    all_plots_available = [0.1, 1, 1.1, 1.2, 2, 2.1, 2.15, 2.2, 2.3, 2.4, 3, 
-                           3.1, 3.2, 3.3, 3.4, 3.45, 3.5, 3.55, 3.6, 3.65, 4.1, 
-                           4.2, 4.3, 5.1, 5.15, 5.2, 5.3, 5.4, 5.5, 5.6, 5.65, 
-                           7.1, 7.2, 7.3, 7.35, 7.4, 7.5, 9.1, 9.2, 9.3, 9.4,
-                           10.1, 10.15, 10.2, 10.25, 10.3, 10.31, 10.4, 10.45, 
-                           10.7, 10.8, 10.9, 10.11, 11, 11.1, 11.2, 11.3, 
-                           13, 14.1, 14.2, 15, 16, 16.1, 16.2, 18.1, 18.2]
+    all_plots_available = [0.1, 1, 1.1, 1.2, 1.3, 2, 2.1, 2.15, 2.2, 2.3, 2.4, 
+                           3, 3.1, 3.2, 3.3, 3.4, 3.45, 3.5, 3.55, 3.6, 3.65, 
+                           4.1, 4.2, 4.3, 5.1, 5.15, 5.2, 5.3, 5.4, 5.5, 5.6, 
+                           5.65, 7.1, 7.2, 7.3, 7.35, 7.4, 7.5, 9.1, 9.2, 9.3, 
+                           9.4, 10.1, 10.15, 10.2, 10.25, 10.3, 10.31, 10.4, 
+                           10.45, 10.7, 10.8, 10.9, 10.11, 10.12, 10.13, 11, 11.1, 
+                           11.2, 11.3, 13, 14.1, 14.2, 15, 16, 16.1, 16.2, 
+                           18.1, 18.2]
 
     all_idxs_available = all_plots_available + all_non_plots_available
 
-    # idxs_to_plot = [0.1, 1, 2, 3.45, 3.65, 4.2, 5.4, 7.35, 7.4, 10.45, 14.2]
     # idxs_to_plot = all_plots_available
    
     """
@@ -472,33 +478,11 @@ X    11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
         
 
     """
-   
-    # Latency and PLR
-    # idxs_to_plot = [10.75]#, 10.75]
-    # idxs_to_plot = [10.3]
-
-    # Power [Mbps]
-    # idxs_to_plot = [10.2]
-    # Throughput + SINR[dB]&BLER%
-    # idxs_to_plot = [1, 2.4]  
-    # MCS per user 
-    # idxs_to_plot = [18.1, 18.2]      
-    # Packet sequences
-    # idxs_to_plot = [14.2]  
-    # idxs_to_plot = [1]
-
-    # ues = [0]
-    # estimate interference should be different from 0!
-    
-    # Test save_plot
-    save_plots = False
-    saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
-    base_plots_folder = 'Zheng - Plots\\Meeting\\' 
-    
+           
     for i in idxs_to_plot:
         print(f'Plotting {i}')
         
-        print(f'TTIs trimmed from {trim_ttis[0]}s to {trim_ttis[1]/4000}s')
+        # print(f'TTIs trimmed from {trim_ttis[0]}s to {trim_ttis[1]/4000}s')
         
         # Get which vars need to be loaded and which need to be computed
         which_vars_to_load = plt_func.get_vars_to_load(i, VARS_NAME_LOAD)

@@ -17,6 +17,34 @@ import utils as ut
 import application_traffic as at
 import simulation_parameters as sim_par
 
+# %% 
+# Run it in a cell separate for now  
+# Different traces for different video qualities/bitrates
+
+# init_pcap = True
+# def init_pcap_file():
+
+#####
+pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Trace" + '\\'
+pcap_to_simulate = pcap_folder + "trace_APP10.csv"
+# Inputs: 
+tti_dur = 0.00025
+total_ttis = 4000
+burst_param = 0.5
+# Burstiness model (New from Zheng or even more realistic FIFO queue model)
+# ['Joao', 'Zheng', 'Queue']
+burst_model = 'Zheng'
+# burst_model = 'Queue'
+pcap_file = at.PCAP_File(pcap_to_simulate, tti_dur, total_ttis, burst_param, 
+                         burst_model)     
+#####
+
+#     return pcap_file
+# if init_pcap:    
+#     pcap_file = init_pcap_file()
+
+# %%
+
 # parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks" + '\\'
 parent_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Matlab\TraceGeneration" + '\\'
 #seed = int(ut.get_input_arg(1)) # 1
@@ -27,7 +55,7 @@ speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-folders_to_simulate = ["Sim_SEED5"]
+folders_to_simulate = ["Sim_SEED2"] # , "Sim_SEED3", "Sim_SEED4"]
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
 freq_idxs = [0]
@@ -37,18 +65,10 @@ csi_periodicities = [5]
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
 users = [None]
-
-# TODO: File (csv or txt) of pcap traces to use for simulation 
-# Different traces for different video qualities/bitrates
-pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Trace" + '\\'
-pcap_to_simulate = pcap_folder + "trace_20.csv"
+users = [1]
 
 """
 Zheng 
-TODO: Check for traces generated with omni-array what combinations of bitrate,
-      bw and latency allow for decent PLR!!!
-      
-TODO: "Debug" packet_types of packet sequences in buffer with I-frame spacing
  
 TODO: Sub-band scheduling:
       How to define/differentiate the PRBs and frequency samples 
@@ -59,10 +79,10 @@ TODO: Sub-band scheduling:
       => Which are separate per sub-band? E.g. SINR, MCS, 'Precoders'(?)
       How to integrate into simulation loop???
       E.g.: 
-      for (each TTI):
+      for (each TTI)::
           most simulation..
           for (each scheduling-PRBs/sub-band):
-              do: simulation.....                  
+              do: simulation.....                   
 
 Ideas:
       - Symbol-level scheduling? 
@@ -71,9 +91,9 @@ Ideas:
 
 """
 # application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
-application_bitrates = [50]
+application_bitrates = [25]
 # bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
-bandwidths = [100] # MHz
+bandwidths = [50] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
 latencies = [20]
 
@@ -91,8 +111,6 @@ sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
 # ut.stop_execution()
 
 ut.get_time()
-
-
 
 
 for param in sim_params:
@@ -153,11 +171,10 @@ for param in sim_params:
     output_str = f'{seed_str}_' + \
                  f'APPBIT-{application_bitrate}_' + \
                  f'BW-{bw}_LAT-{lat_budget}_' + \
-                 f'Burst-{sp.burstiness_param}_' + \
                  f'LEN-{sim_dur}s_{sp.scheduler}_' + \
-                 f'Offset-{sp.uniformly_space_UE_I_frames}'
-         # TODO: f'PCAP-{pcap_to_simulate}'
-                 # f'{sp.always_schedule_every_ue}'   
+                 f'Offset-{sp.uniformly_space_UE_I_frames}_' + \
+                 f'Burst-{sp.burstiness_model}-{sp.burstiness_param}'
+                          # TODO: f'PCAP-{pcap_to_simulate}'   
                  # SPEED-{sp.speed_idx} USERS-{users}_'FREQ-{freq_idx}_' + \
     # output_str = output_stats_folder + output_str
     
@@ -172,49 +189,41 @@ for param in sim_params:
     # cam_buffers = [] # we assume cameras are wired.
     packet_sequences_DL = [0] * sp.n_phy
     # Compute offsets to space out user I frames.
-
-    # Create object from pcap file for every user 
-    # (needed for every user or just once? Since they are all synchronized)
-    pcap_file = []
-
     
     # TODO: How to implement offset with PCAP, if even possible / makes sense?
     if sp.uniformly_space_UE_I_frames:
         # I-frame order: UE 0-1-2-3
         I_frame_offsets = np.linspace(0, sp.GoP / sp.FPS, sp.n_phy + 1)[:-1]
+        # Force UE0 to have biggest offset for debugging
+        # I_frame_offsets = np.array([0.15, 0.1, 0.05 , 0.0]) 
         # I-frame order: UE 3-2-1-0
         # I_frame_offsets = np.linspace(0.15, 0.0, 4)
     else:
-        I_frame_offsets = [0] * sp.n_phy
-    
-            
+        I_frame_offsets = [0] * sp.n_phy    
+        
     for ue in range(0, sp.n_phy): # start at 1 for debug!!!
         # Generate frame sequences
         
         # TODO: Implement it as option that can be set in sim_par
         # Do this for every function from here onwards that uses the buffer??? 
         if sp.use_pcap: 
-            # At start of simulation, create packet sequence with all packets
-            # arriving within the first TTI, i.e. the first 0.25 ms
-            curr_time = sp.TTI_duration.total_seconds()    
-            # Create a packet sequence (for every UE or not??)            
-            pcap_file = at.PCAP_File(pcap_to_simulate)
             
+            # At start of simulation, create packet sequence with all packets
+            # arriving within the first TTI, i.e. the first 0.25 ms       
+            tti_duration = sp.TTI_duration.total_seconds()  
+            curr_tti = 0 
+
+            # Create packet sequence      
             packet_sequences_DL[ue] = \
-                at.gen_pcap_sequence(pcap_file, curr_time, curr_time)
-            """
-            TODO: Are other parameters needed for generating packet sequence?
-            Unlike previously, always use this function from application_traffic
-            to generate, add new packets to the buffer, since now packet attributes
-            are directly taken from the pcap trace at every buffer update
-            """
-            # raise SystemExit # for now for testing
+                at.gen_pcap_sequence(pcap_file, curr_tti)
             
             # From the packet sequences, initialise the Buffers:
             # Buffers for each user, physically located at the BSs        
             user_buffers.append(at.PCAP_Buffer(packet_sequences_DL[ue], 
-                                          sp.delay_threshold))
-                    
+                                               sp.delay_threshold,
+                                               output_str,
+                                               sp.stats_dir))
+               
         else: 
             frame_sequence_DL = at.gen_frame_sequence(sp.I_size_DL,
                                                   sp.GoP,
@@ -228,9 +237,10 @@ for param in sim_params:
             # Create Packet sequences
             packet_sequences_DL[ue] = \
                 at.gen_packet_sequence(frame_sequence_DL, 
-                                       sp.packet_size, 
-                                       burstiness_param=sp.burstiness_param,
-                                       overlap_packets_of_diff_frames=0)
+                                        sp.packet_size, 
+                                        sp.burstiness_param,
+                                        sp.burstiness_model,
+                                        overlap_packets_of_diff_frames=0)
                                        
             if sp.verbose:
                 print('DL packets:')
@@ -242,13 +252,12 @@ for param in sim_params:
             # From the packet sequences, initialise the Buffers:
             # Buffers for each user, physically located at the BSs        
             user_buffers.append(at.Buffer(packet_sequences_DL[ue], 
-                                          sp.delay_threshold))
-            
-        
+                                          sp.delay_threshold))            
     
     # Merge user and camera buffers in general variable buffers.
     buffers = user_buffers # + cam_buffers
     # raise SystemExit 
+    
     # Note: UEs can be both UL and DL. A better way to call buffers would be
     #       UL and DL. However, for our application, we consider UEs that only
     #       UL and UEs that only DL. Furthermore, the UL is wired. Nonetheless,
@@ -289,7 +298,6 @@ for param in sim_params:
     curr_time_div = -1
     last_coeff_tti = -1
     coeffs = ''
-    
     
     
     # Per TTI:
@@ -379,15 +387,15 @@ for param in sim_params:
     # during scheduling_tti TTIs.
     curr_schedule = {}
     
-    print(f'Output folder: {sp.stats_dir}')
-    print(f'Simulating: {output_str}')
+    print(f'Output folder: \n{sp.stats_dir}')
+    print(f'Simulating: \n{output_str}')
     # print('--------- Starting simulation ---------') 
     
+    
+    # raise SystemExit     
+    
     # Loop for every TTI
-    for tti in range(0, sp.sim_TTIs): 
-        if tti == 1000:
-            print(tti)
-            raise SystemExit
+    for tti in range(0, 10): # sp.sim_TTIs): 
         # Note: tti is the index of the TTI. The time value of the TTI is 
         #       given by tti_timestamp. This is done such that we don't have 
         #       to carry +-1 everywhere we go.
@@ -398,7 +406,7 @@ for param in sim_params:
             else:
                 print(f"TTI: {tti}")
         # TTIs    
-        if tti % 4000 == 0 or tti == sp.sim_TTIs - 1:
+        if tti % 16000 == 0 or tti == sp.sim_TTIs - 1:
             print(f"TTI: {tti}")
         
         # If necessary, load new set of coefficients
@@ -406,8 +414,7 @@ for param in sim_params:
             
             # Copy the coeffs that will be needed in the next batch
             last_coeffs = sls.copy_last_coeffs(coeffs, sp.csi_tti_delay)
-            
-            
+                        
             # (Force) Free memory 
             del coeffs
             
@@ -491,20 +498,23 @@ for param in sim_params:
         else:
             raise Exception('Invalid slot type.')
         
-        # TODO: save buffer status before(after?) every queue update
-        for ue in range(sp.n_phy):
-            for i in range(len(buffers[ue].bits_left)): 
-                if buffers[ue].bits_left[i] != 0: 
-                    # Nr of packets with something left to send
-                    packets_in_buffer[tti][ue] +=1 
-            # Total bits left to send in buffer (in kByte)
-            bits_in_buffer[tti][ue] = sum(buffers[ue].bits_left[:]) / 8000 
-            
-            
-        # 0- c) Update Queues: Add packets, update delays, drop late packets
-        sls.update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti) 
+        # TODO: save buffer status before(after?) every queue update 
+        if not True:
+            for ue in range(sp.n_phy):
+                for i in range(len(buffers[ue].bits_left)): 
+                    if buffers[ue].bits_left[i] != 0: 
+                        # Nr of packets with something left to send
+                        packets_in_buffer[tti][ue] +=1 
+                # Total bits left to send in buffer (in kByte)
+                bits_in_buffer[tti][ue] = sum(buffers[ue].bits_left[:]) / 8000         
         
-      
+        # 0- c) Update Queues: Add packets, update delays, drop late packets
+        sls.update_queues(ue_idxs, buffers, tti_timestamp, active_UEs, tti, 
+                          sp.use_pcap, sp.TTI_dur_in_secs) 
+        
+        # print("Update queues finished, time:", toc-tic)
+        # raise SystemExit
+        
         # active UEs are the UEs with non-empty buffers. We are putting those
         # to True, always, because we don't have a robust interference 
         # estimation. This is why the I frames need to be synchronized!
@@ -518,7 +528,8 @@ for param in sim_params:
             last_csi_tti = tti
             
             # The UE will be updated with information from this tti
-            tti_with_csi = sls.get_delayed_tti(tti, tti_relative, 
+            # Relative to current time division (Modulo 1000)
+            tti_with_csi = sls.get_delayed_relative_tti_csi(tti, tti_relative, 
                                                sp.csi_tti_delay)
             
             # CSI UPDATE: 
@@ -566,14 +577,17 @@ for param in sim_params:
             
             # And do nothing to the schedules
         else: 
+            
+            
             # Opposed to what is done with CSI, all scheduling is updated
             # in the scheduling TTI. And it is used until there is another 
             # scheduling TTI. 
             
             # The UE will be updated with information from this tti
-            tti_for_scheduling = sls.get_delayed_tti(tti, tti_relative, 
+            tti_for_scheduling = sls.get_delayed_tti_scheduling(tti,  
                                                      sp.scheduling_tti_delay)
     
+                           
             # ####################### SCHEDULING UPDATE ######################
             # 2- a) Which UEs to consider for scheduling?
             # The ones that have something in their buffer: active_UEs
@@ -582,7 +596,7 @@ for param in sim_params:
             # Given that some UEs are only for UL and others are only for DL
             schedulable_UEs_dl = [ue for ue in schedulable_UEs 
                                   if ue < sp.n_phy]
-        
+     
         # Continuation of scheduling step
         if tti % sp.scheduling_period == 0 and len(schedulable_UEs_dl) == 0:
             # Nothing to schedule
@@ -599,10 +613,11 @@ for param in sim_params:
             serving_BS_dl = [0 if ue in schedulable_UEs_dl else -1
                              for ue in range(sp.n_phy)]
             
-            #-------------------------------
+            #-------------------------------            
             
             # 3- Select the best SU-MIMO setting: 1 layer or 2 layers
             # For DL:
+                
             sls.su_mimo_choice(tti, tti_for_scheduling, sp.bs_max_pow, 
                                schedulable_UEs_dl, serving_BS_dl, 
                                sp.n_layers, sp.n_prb, 
@@ -615,9 +630,11 @@ for param in sim_params:
             
             if sp.debug:
                 print(f"SU-MIMO bitrates: {su_mimo_bitrates[tti][1:sp.n_phy]}")
+                
             # -------------------------------
-            
+
             # 4- Compute UE priorities (Using Scheduler)
+            
             curr_priorities = \
                 sls.compute_priorities(tti, ue_priority, all_delays, buffers, 
                                        schedulable_UEs_dl, sp.scheduler, 
@@ -625,13 +642,14 @@ for param in sim_params:
                                        ut.get_seconds(sp.delay_threshold), 
                                        sp.scheduler_param_delta, 
                                        sp.scheduler_param_c)
-                
+            
             if sp.debug:
                 print(curr_priorities)
                 print(avg_bitrate[tti])
                 if tti > 0:
                     print(realised_bitrate_total[tti-1])
                 print('Priorities are sorted!')
+                
             # -------------------------------
             
             # 5- Select MU-MIMO setting, based on UE priorities
@@ -659,6 +677,7 @@ for param in sim_params:
                                  sp.tbs_divisor, sp.DL_radio_efficiency, 
                                  sp.bandwidth_multiplier, scheduled_UEs, 
                                  scheduled_layers)
+
             
         # ################## END OF SCHEDULING UPDATE ####################
         # print(tti)
@@ -691,9 +710,19 @@ for param in sim_params:
                       f'{real_dl_interference[tti][ue][1]:.2e}].')
                   
         # 11- Update end of tti variables        
-        sls.update_avg_bitrates(tti, sp.n_ue, realised_bitrate_total, 
-                                avg_bitrate)
-              
+        sls.update_avg_bitrates(tti, sp.n_ue, realised_bitrate_total, # TODO
+                                avg_bitrate, schedulable_UEs_dl)
+                      
+        # TODO: save buffer status after(?) tti simulation 
+        # TODO: for pcap as well 
+        if not sp.use_pcap:
+            for ue in range(sp.n_phy):
+                for i in range(len(buffers[ue].bits_left)): 
+                    if buffers[ue].bits_left[i] != 0: 
+                        # Nr of packets with something left to send
+                        packets_in_buffer[tti][ue] +=1 
+                # Total bits left to send in buffer (in kByte)
+                bits_in_buffer[tti][ue] = sum(buffers[ue].bits_left[:]) / 8000 
         # ####################################################################
         
     # print('End of tti loop.')    
@@ -702,7 +731,16 @@ for param in sim_params:
     for ue in range(sp.n_ue):
         if scheduled_UEs[tti][ue] == 1:
             t = ut.timestamp(s=(tti + 1) * sp.TTI_dur_in_secs)
-            buffers[ue].update_head_of_queue_delay(t)
+            if sp.use_pcap: 
+                buffers[ue].update_head_of_queue_delay(tti, tti_duration)
+                        
+                print(buffers[ue].pdr_info[30:60])
+                
+                buffers[ue].create_pdr_csv(output_str, sp.stats_dir)
+                
+                
+            else: 
+                buffers[ue].update_head_of_queue_delay(t)
     
     # print(f'------ Done simulating for {output_str} ------')
     print(f'Time enlapsed: {round(time.time() - t_0)} secs.')
@@ -784,5 +822,10 @@ for param in sim_params:
         ut.save_var_pickle(power_per_beam, sp.stats_path, globals_dict)
         ut.save_var_pickle(bits_in_buffer, sp.stats_path, globals_dict)
         ut.save_var_pickle(packets_in_buffer, sp.stats_path, globals_dict)
+        ut.save_var_pickle(active_UEs, sp.stats_path, globals_dict)
+        ut.save_var_pickle(ue_priority, sp.stats_path, globals_dict)
+
+        # ut.save_var_pickle(su_mimo_bitrates, sp.stats_path, globals_dict)
+
         
 print('End of sxr_sim.')

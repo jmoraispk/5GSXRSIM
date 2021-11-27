@@ -192,7 +192,7 @@ def get_vars_to_load(idx, vars_to_load_names):
     # 'count_ues_bitrate':    'scheduled_UEs' -> [15]
     
     load_dict = {0.1: [16], 0.2: [17],
-                 1: [4], 1.1: [4], 1.2: [0,4],
+                 1: [4], 1.1: [4], 1.2: [0,4], 1.3: [4, 6, 9],
                  2: [2,3], 2.1: [2,4,5,6], 2.15: [2,4,5,6], 2.2: [2,4,8], 
                  2.3: [2,3], 2.4: [2,3,5,6],
                  3: [11], 3.1: [11], 3.2: [10], 3.3: [10,12], 3.35: [10,12], 
@@ -203,11 +203,13 @@ def get_vars_to_load(idx, vars_to_load_names):
                  5.4: [2,7], 5.5: [5,6,7], 5.6: [7], 5.65: [7],
                  7.1: [5,6], 7.2: [5,6], 7.3: [5,6],
                  7.35: [5,6], 7.4: [4,5,6], 7.5: [2,5,6],
+                 8: [21], 8.1: [15, 22], 
                  9.1: [5,6,8], 9.2: [5,6,8], 9.3: [8,9], 9.4: [5,6,8],
-                 10.1: [1], 10.15: [1], 10.2: [1], 10.25: [1], 
+                 10.1: [1], 10.15: [1], 10.2: [1], 10.25: [1],
                  10.3: [1], 10.31: [1], 10.4: [1], 10.45: [1], 
                  10.5: [1], 10.55: [1], 10.6: [1], 10.65: [1], 
-                 10.7: [1], 10.75: [1], 10.8: [1], 10.9: [1], 10.11: [1],
+                 10.7: [1], 10.75: [1], 10.8: [1], 10.9: [1], 10.11: [1], 
+                 10.12: [], 10.13:[1], 
                  11: [15], 11.1: [15], 11.2: [15], 11.3: [4], 11.4: [10,15],
                  13: [14],
                  14.1: [1], 14.2: [1], 
@@ -239,7 +241,7 @@ def get_vars_to_compute(idx, vars_to_compute_names):
     # well. So, actually, we include such computation in avg_pck_lat_per_frame
     # and we don't need to compute it again when it comes back.
     compute_dict = {0.1: [], 0.2: [],
-                    1: [], 1.1: [1], 1.2: [2],
+                    1: [], 1.1: [1], 1.2: [2], 1.3: [],
                     2: [], 2.1: [3], 2.15: [3], 2.2: [], 
                     2.3: [0], 2.4: [0,3],
                     3: [11], 3.1: [6,11], 3.2: [], 3.3: [], 3.35: [], 
@@ -250,6 +252,7 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     5.3: [10], 5.4: [10], 5.5: [3,10], 5.6: [31], 5.65: [31],
                     7.1: [3], 7.2: [3,4], 7.3: [3,4],
                     7.35: [3,4], 7.4: [3], 7.5: [3],
+                    8: [], 8.1: [],
                     9.1: [3], 9.2: [3], 9.3: [], 9.4: [3],
                     10.1: [12,14], 10.15: [12,14], 10.2: [12,15], 
                     10.25: [12,15], 10.3: [12,14,15], 10.31: [12,14,15], 
@@ -258,7 +261,7 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     10.7: [14,15,16,17,18,19,20,21,22,23],
                     10.75: [14,15,16,17,22,23,39,40,41,42], # 
                     10.8: [22,27], 10.9: [23,27], 
-                    10.11: [22,23,27],                    
+                    10.11: [22,23,27], 10.13: [],                   
                     11: [24], 11.1: [], 11.2: [], 11.3: [25], 11.4: [],
                     13: [],
                     14.1: [], 14.2: [],
@@ -310,7 +313,8 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
     vars_with_no_layer = ['realised_bitrate_total', 'experienced_signal_power',
                           'olla', 'su_mimo_setting', 'channel', 
                           'scheduled_UEs', 'packets_in_buffer', 
-                          'bits_in_buffer']
+                          'bits_in_buffer', 'su_mimo_bitrates', 
+                          'ue_priority']
     
     # Convert to NumPy arrays and trim to obtain only the useful parts
     for f in range(len(files)):
@@ -362,7 +366,7 @@ def compute_sim_data(plot_idx, ues, ttis,
     n_ues = len(ues)
     n_ttis = len(ttis)
     n_files = len(file_set)
-    usual_shape = (n_ttis, n_ues)
+    usual_shape = (n_ttis, n_ues)    
     
     # Let's handle first the single_trace computations
     # In this first computation phase, we compute variables per trace only.
@@ -370,9 +374,12 @@ def compute_sim_data(plot_idx, ues, ttis,
         # Current file simulation parameters
         f_sp = sim_data_trimmed[f][0]
         GoP = f_sp.GoP
+        FPS = f_sp.FPS
         
         # Count number of periods and frames
-        n_periods = round(ttis[-1] *  f_sp.TTI_dur_in_secs * (GoP - 1))
+        # n_periods = round(ttis[-1] *  f_sp.TTI_dur_in_secs * (GoP - 1))
+        n_periods = round(ttis[-1] *  f_sp.TTI_dur_in_secs * FPS / GoP)
+
         n_frames = n_periods * GoP
         
         for var_to_compute in vars_to_compute:
@@ -514,13 +521,16 @@ def compute_sim_data(plot_idx, ues, ttis,
                 sim_data_computed[f][12] = np.arange(n_frames)
                 
                 # Generate which of those are I frames:
+                # TODO: Include I-frame offset!!!
                 sim_data_computed[f][13] = np.zeros([n_frames, n_ues], 
                                                      dtype=int)
-                sim_data_computed[f][13][0,:] = 1
-                for frame_idx in range(n_frames):
-                    if frame_idx % GoP == 0:
-                        sim_data_computed[f][13][frame_idx,:] = 1
-                           
+                #  sim_data_computed[f][13][0,:] = 1
+                for ue in range(n_ues):
+                    for frm in range(n_frames):
+                        if sim_data_trimmed[f][1][ue].parent_packet_seq.\
+                            parent_sequence.types[frm % GoP] == 'I':
+                                sim_data_computed[f][13][frm, ue] = 1
+                                               
             # TODO: Verify if computation/saved information is correct!!! 
             # (Spike at beginning of SIM, rest of SIM almost constantly instant)
             # COMPUTE INDEX 14: Average Packet Latency 
@@ -550,7 +560,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                sim_data_computed[f][15] is None:
                    
                 sim_data_computed[f][15] = np.zeros([n_frames, n_ues])
-                
+                                
                 # Compute packet success percentages, average latencies and 
                 # drop rates
                 for ue in ues:
@@ -565,7 +575,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                             
                             # TODO: Check why total packets equals 0!!!
                             # Only happens for low SINR scenarios for the last
-                            # few frames of the simulation!
+                            # few frames of the simulation! -> frame_infos wrong?
                             # print('UE:', ue, 'Period:', per, 'GoP-Frame', frm,\
                             #       'Total packets:',total_packets)
                             
@@ -645,6 +655,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                         np.mean(sim_data_computed[f][14][idxs, :], 0)
                     sim_data_computed[f][23][idx_in_gop,:] = \
                         np.mean(sim_data_computed[f][15][idxs, :], 0)
+                
                 """
                 # PER I frame
                 sim_data_computed[f][18] = sim_data_computed[f][22][0, :]
@@ -712,6 +723,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                 sim_data_computed[f][22] = np.round(sim_data_computed[f][22],2)
                 sim_data_computed[f][23] = np.round(sim_data_computed[f][23],2)
         
+            """
             # COMPUTE INDEX 39-42: (NOT NEEDED ANMORE)
             # TODO: For simulations with I-frame spacing on!
             # Additional compute indices!
@@ -782,6 +794,7 @@ def compute_sim_data(plot_idx, ues, ttis,
                 #      for i in range(len(I_frame_idxs_spaced[ue])):
                 #          if I_frame_idxs_spaced[ue][i] + ue_offset[ue] <= n_frames:
                 #            I_frame_idxs_spaced[ue][i] = I_frame_idxs_spaced[ue][i] + ue_offset[ue]
+            """
                 
             # COMPUTE INDEX 24: Count_ues_scheduled
             if var_to_compute == 'count_ues_scheduled' and \
@@ -1047,12 +1060,22 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if save_fig and not ut.isdir(save_folder):
             ut.makedirs(save_folder)
                     
+            
+        # TODO: For checking PF      
         # Avg. channel across time (sum over the PRBs, and antenna elements)
         if plot_idx == 0.1:
+            y_min = np.amin(sim_data_trimmed[f][16]) - 5
+            y_max = np.amax(sim_data_trimmed[f][16]) + 5
+
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][16]],
                          x_axis_label=x_label_time, y_axis_label='Power [dBW]',
                          savefig=save_fig, filename=file_name, 
-                         saveformat=save_format, same_axs=(True))
+                         ylim=[(y_min, y_max), (y_min, y_max), (y_min, y_max),
+                               (y_min, y_max)],
+                         linewidths=[0.5,0.5,0.5,0.5], 
+                         width=7.8, height=4.8, size=2,
+                         saveformat=save_format, same_axs=(False)) 
+                         # use_legend=True, legend_loc="upper right")
             # print(np.mean(sim_data_trimmed[f][16]),'dBW')
         
         # The two indicies below require the channel_per_prb variable
@@ -1069,9 +1092,10 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 1:
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][4]], 
                          x_axis_label=x_label_time, 
+                         linewidths=[0.5,0.5,0.5,0.5],
                          y_axis_label='Realised bit rate [Mbps]', 
-                         savefig=save_fig, filename=file_name, 
-                         saveformat=save_format)
+                         savefig=save_fig, filename=file_name, size=1.3,
+                         saveformat=save_format, same_axs=(False))
         
         
         # Inst. vs Running avg bitrate 
@@ -1099,7 +1123,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                              y_labels=['Instantaneous', 
                                        'Rolling avg.\nover GoP duration'], 
                              use_legend=True, legend_inside=True, 
-                             legend_loc=(0.64,0.2), ncols=1, size=1, 
+                             legend_loc=(0.64,0.2), ncols=1, size=1.3, 
                              filename=file_name, savefig=save_fig, 
                              same_axs=True) 
             
@@ -1133,8 +1157,62 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                              use_legend=True, ncols=3,
                              size=1.3, filename=file_name, 
                              savefig=save_fig) 
+                    
+        # System throughput/load (aggregate bitrates of all UEs)
+        if plot_idx == 1.3:
+            # TODO: Utilization
+            n_prbs = 10
+            mcs_used = np.sum(sim_data_trimmed[f][9], axis=1)
+            max_bits_tti = np.zeros(len(mcs_used))
+            send_bits_tti = np.sum(sim_data_trimmed[f][4], axis=1) * 250           
+            freq_ratio = 5
+            bw_multi = 2.5
+            tti_dur = 0.00025
+            overhead = 1 - 0.14
             
+            multiplier = (bw_multi * overhead) / tti_dur 
+            
+            for tti in range(len(mcs_used)):
+                mcs = mcs_used[tti] 
                 
+                max_bits_prb = {
+                        0: 0.0,
+                        1: 25.5864,
+                        2: 63.3360,
+                        3: 147.3360,
+                        4: 248.0688,
+                        5: 321.5688,
+                        6: 404.2584,
+                        7: 458.7240,
+                        8: 558.1464,
+                        9: 655.5864,
+                        10: 759.9312,
+                        11: 859.3536,
+                        12: 933.1896,
+                        13: 1046.0688,
+                        14: 1161.5688,
+                        15: 1244.2584}[mcs]
+                max_bits_tti[tti] = int(np.floor(max_bits_prb * freq_ratio * 
+                                                 n_prbs)) * multiplier
+            
+            
+            n_zeros = len(np.where(max_bits_tti == 0)[0])
+            np.place(max_bits_tti, max_bits_tti == 0.0, 1.0) 
+            
+            util_percent = (send_bits_tti/max_bits_tti) * 100
+            
+            plt.figure(figsize=(20,10))
+            plt.title(stats_folder.split("SEED")[1] + " - Utilization in %")
+            plt.plot(x_vals, util_percent)
+            
+            print(f"Utilization: {np.mean(util_percent).round(5)}% \n" + \
+                  f"Total TTIs: {len(mcs_used)}, Unused TTIs: {n_zeros} - " + \
+                  f"{n_zeros/len(mcs_used)}% ")
+            
+            # plt.figure(figsize=(20,10))
+            # plt.title(stats_folder.split("SEED")[1] + " - Realized aggregate bitrate")            
+            # plt.scatter(x_vals, send_bits_per_tti)
+            
         # SINR (Multi-user case)
         if plot_idx == 2:
             plot_for_ues(ues, x_vals, 
@@ -1295,17 +1373,18 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         # TODO
         # Signal power vs interference (dBw) [double axis]
         if plot_idx == 3.45:
-            # plot_for_ues_double(ues, x_vals, [sim_data_computed[f][5]], 
-            #                     [sim_data_computed[f][7]], x_label_time, 
-            #                     ['Sig. Power [dBw]', 'Int. Power [dBw]'],
-            #                     savefig=save_fig, filename=file_name, 
-            #                     saveformat=save_format)
+        #     plot_for_ues_double(ues, x_vals, [sim_data_computed[f][5]], 
+        #                         [sim_data_computed[f][7]], x_label_time, 
+        #                         ['Sig. Power [dBw]', 'Int. Power [dBw]'],
+        #                         savefig=save_fig, filename=file_name, 
+        #                         saveformat=save_format)
             plot_for_ues(ues, x_vals, [sim_data_computed[f][5]], 
                         x_label_time, 
                         ['Sig. Power [dBw]'],
                         linewidths = [3,3,3,3],
+                        width=17.8, height=4.8, size=2,
                         savefig=save_fig, filename=file_name, 
-                        saveformat=save_format, same_axs=True, 
+                        saveformat=save_format, same_axs=False, 
                         plot_type_left='line')
                 
         # Signal power vs interference (dBm) [single]
@@ -1372,7 +1451,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                          y_axis_label='MCS index',
                          linewidths=[.4,.4,.4,.4], 
                          y_labels=['UE 0','UE 1','UE 2','UE 3'], 
-                         ylim=(6.5, 15.5),
+                         ylim=(0, 15.5),
                          ncols=1, size=1.3, 
                          use_legend=True, legend_inside=True, 
                          legend_loc="lower right",
@@ -1507,6 +1586,22 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
             
+        
+        # Active UEs
+        if plot_idx == 8:
+            active_UEs = sim_data_trimmed[f][21]
+            
+        # UE priority (Each TTI)
+        if plot_idx == 8.1:
+            ue_prio = np.log(np.array(sim_data_trimmed[f][22]))
+            np.place(ue_prio, ue_prio > 20, 20) 
+            
+            plot_for_ues(ues, x_vals, [ue_prio],
+                         x_label_time, 'PF-priority', 'UE priority per TTI',
+                         savefig=save_fig, filename=file_name, 
+                         saveformat=save_format, same_axs=False)
+                         # use_legend=True, legend_loc="upper right")
+            
         # OLLA (single-user) with Bitrate for grey areas
         if plot_idx == 9.1:
             # ONE UE ONLY:
@@ -1597,7 +1692,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                          'Drop rate [%]', '', [0.7,0.6], plot_type_left='bar',
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
-        
+                    
         # avg latency vs drop rate across frames (no I vs P distinction)
         if plot_idx == 10.3:    
             plot_for_ues_double(ues, sim_data_computed[f][12], 
@@ -1643,11 +1738,11 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
             
-        
+        # TODO: Keep latency out for now
         # Average latency and drop rate with I frame markings: bar
         if plot_idx == 10.45:
             plot_for_ues_double(ues, sim_data_computed[f][12], 
-                                [sim_data_computed[f][14]],
+                                [], # [sim_data_computed[f][14]],
                                 [sim_data_computed[f][15]], 'Frame index', 
                                 ['Avg. latency [ms]', 'Drop rate [%]'],
                                 linewidths=[0.6,0.6,0.4], 
@@ -1657,7 +1752,8 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                                 use_legend=True, legend_loc=(.5,.0), 
                                 legend_inside=False,
                                 fill_label='I frame',
-                                width=7.8, height=4.8, size=1.2,
+                                # width=7.8, height=4.8, size=1.2,
+                                width=17.8, height=4.8, size=2,
                                 plot_type_left='bar', 
                                 plot_type_right='bar',
                                 savefig=save_fig, filename=file_name, 
@@ -1733,7 +1829,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         if plot_idx == 10.7:
             
             # print(f'Analysis of folder {stats_folder}.')
-            
+                        
             # Latency stats
             avg_latency = round(np.mean(sim_data_computed[f][16]),2)
             avg_latency_std = round(np.std(sim_data_computed[f][16]),2)
@@ -1759,17 +1855,19 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             avg_pdr_p = round(np.mean(sim_data_computed[f][21]),2)
             avg_pdr_p_std = round(np.std(sim_data_computed[f][21]),2)
             
-            print(f'Avg. PDR is {avg_pdr} %,' + \
-                  f' with STD of {avg_pdr_std} %.')            
-            print(f'Avg. drop rate per frames: '
-                  f'{sim_data_computed[f][17]} %.')
+            print(f'Avg. PDR in total: {avg_pdr} %,')# + \
+            #       f' with STD of {avg_pdr_std} %.')            
+            # print(f'Avg. drop rate per frames: '
+            #      f'{sim_data_computed[f][17]} %.')
 
-            print(f'Avg. drop rate for I frames: '
-                  f'{sim_data_computed[f][20]} %.') 
-            print(f'Mean {avg_pdr_i} %, STD {avg_pdr_i_std} %.')
-            print(f'Avg. drop rate for P frames: '
-                  f'{sim_data_computed[f][21]} %.')
-            print(f'Mean {avg_pdr_p} %, STD {avg_pdr_p_std} %.')
+            # print(f'Avg. drop rate for I frames: '
+            #       f'{sim_data_computed[f][20]} %.') 
+            print(f'Avg. PDR I-frames: {avg_pdr_i} %') 
+            #, with STD of {avg_pdr_i_std} %.')
+            # print(f'Avg. drop rate for P frames: '
+            #       f'{sim_data_computed[f][21]} %.')
+            print(f'Avg. PDR P-frames: {avg_pdr_p} %')
+            # , STD {avg_pdr_p_std} %.')
     
         # prints all detailed measurements on frame information for simulations
         # with I-frame spacing
@@ -1803,15 +1901,15 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             avg_pdr_p_std = round(np.std(sim_data_computed[f][42]),2)
             print(f'Avg. PDR is {avg_pdr} %,' + \
                   f' with STD of {avg_pdr_std} %.')            
-            print(f'Avg. drop rate per frames: '
-                  f'{sim_data_computed[f][17]} %.')
+            # print(f'Avg. drop rate per UE: '
+            #       f'{sim_data_computed[f][17]} %.')
             
-            print(f'Avg. drop rate for I frames: '
-                  f'{sim_data_computed[f][41]} %.')
-            print(f'Mean {avg_pdr_i} %, STD {avg_pdr_i_std} %.')
-            print(f'Avg. drop rate for P frames: '
-                  f'{sim_data_computed[f][42]} %.')
-            print(f'Mean {avg_pdr_p} %, STD {avg_pdr_p_std} %.')
+            # print(f'Avg. drop rate for I frames: '
+            #       f'{sim_data_computed[f][41]} %.')
+            print(f'Avg. PDR I-frames: {avg_pdr_i} %, with STD of {avg_pdr_i_std} %.')
+            # print(f'Avg. drop rate for P frames: '
+            #       f'{sim_data_computed[f][42]} %.')
+            print(f'Avg. PDR P-frames: {avg_pdr_p} %, with STD of {avg_pdr_p_std} %.')
         
         # Plots avg_pck_latency per frame of the GoP
         if plot_idx == 10.8:
@@ -1844,6 +1942,122 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                                 savefig=save_fig, filename=file_name, 
                                 saveformat=save_format)
         
+        if plot_idx == 10.12: 
+            plot_for_ues_double(ues, x_vals, [sim_data_computed[f][5]], 
+                                [sim_data_computed[f][7]], x_label_time, 
+                                ['Sig. Power [dBw]', 'Int. Power [dBw]'],
+                                savefig=save_fig, filename=file_name, 
+                                saveformat=save_format)
+            
+        # Aggregate packet drop statistics    
+        if plot_idx == 10.13: 
+            
+            trim = True
+            
+            offset_true = stats_folder.find("Offset-True")
+            if offset_true < 0:
+                offset = False
+            else: offset = True
+            
+            n_periods = len(sim_data_trimmed[f][1][0].frame_infos)
+            n_frames = len(sim_data_trimmed[f][1][0].frame_infos[0])
+            n_ues = len(ues)
+            succ_packets = np.zeros((n_periods * n_frames, n_ues), dtype=int)
+            dropped_packets = np.zeros((n_periods * n_frames, n_ues), dtype=int)
+            
+            frame = 0
+            for per in range(n_periods): 
+                for frm in range(n_frames):
+                    for ue in range(len(ues)):
+                        dropped_packets[frame][ue] = \
+                            sim_data_trimmed[f][1][ue].frame_infos[per][frm].\
+                                dropped_packets
+                        succ_packets[frame][ue] = \
+                            sim_data_trimmed[f][1][ue].frame_infos[per][frm].\
+                                successful_packets
+                    frame += 1
+            
+            start_frm = 30 #66 96 
+            end_frm = 70 #96 126
+            
+            dropped_total = np.sum(dropped_packets, axis=1)
+            succ_total = np.sum(succ_packets, axis=1)          
+            total_packets = np.add(dropped_total, succ_total)
+            
+            agg_dropped = np.cumsum(dropped_total)
+            agg_total = np.cumsum(total_packets)
+            agg_pdr = (100 * (agg_dropped/agg_total)).round(3)
+            
+            agg_dropped_trim = agg_dropped[start_frm:end_frm]
+            agg_total_trim = agg_total[start_frm:end_frm]
+            agg_pdr_trim = agg_pdr[start_frm:end_frm]
+    
+            x_frames = np.arange(0, frame, 1)
+            x_frames_trim = x_frames[start_frm:end_frm]
+            
+            # print(x_frames_trim)
+            x = (np.diff(agg_dropped)/1).round(3)
+            x_trim = x[start_frm:end_frm]
+            
+            x_I_frame = np.arange(0, frame, n_frames)
+            x_I_frame_trim = []
+            for i in range(start_frm, end_frm):
+                if i % n_frames == 0:
+                    x_I_frame_trim.append(i-1)              
+            x_I_frame -= 1      
+            print(x, x_I_frame_trim)
+            
+            if True:
+                fig,ax = plt.subplots(figsize=(15,10))
+                if trim == False:
+                    ax.plot(x_frames, agg_dropped, color = "red", 
+                            label = "Aggregate dropped packets")
+                    ax.plot(x_frames, agg_total, color = "blue", 
+                            label = "Aggregate generated packets")
+                else: 
+                    ax.plot(x_frames_trim, agg_dropped_trim, color = "red", 
+                            label = "Aggregate dropped packets")
+                    ax.plot(x_frames_trim, agg_total_trim, color = "blue", 
+                            label = "Aggregate generated packets")
+                ax.set_ylim(0.0, agg_total[-1] + 100)        
+                ax.set_xlabel("Frame number", fontsize=14)
+                ax.set_ylabel("Number of packets", fontsize=14)
+                ax.set_title(stats_folder.split("SEED")[1] + " - Aggregate packet drops")
+                ax.legend(loc='upper left')
+                                
+                ax2=ax.twinx()
+                if trim == False:
+                    ax2.plot(x_frames, agg_pdr, color = "green", 
+                         label = "Total packet drop %")
+                else: 
+                     ax2.plot(x_frames_trim, agg_pdr_trim, color = "green", 
+                         label = "Total packet drop %")
+                ax2.set_ylim(0.0, 100.0)        
+                ax2.set_ylabel("Percentage of packets dropped", fontsize=14)
+                ax2.legend(loc='lower right')
+                plt.savefig(f'Aggr_PDR_{stats_folder.split("APP")[1]}.png', dpi=300, bbox_inches='tight')
+                plt.show()            
+            
+                x_val2 = np.arange(0, len(x))
+                x_val2_trim = x_val2[start_frm:end_frm]
+                
+                plt.figure(figsize=(20,10))
+                plt.title(stats_folder.split("SEED")[1] + " - Difference in packets dropped")
+                plt.savefig(f'Diff_PDR_{stats_folder.split("APP")[1]}.png', dpi=300, bbox_inches='tight')
+                
+                if trim == False: 
+                    plt.plot(x_val2, x)
+                    for frm in x_I_frame:
+                        plt.axvline(x=frm, color='r')
+                else: 
+                    plt.plot(x_val2_trim, x_trim)
+                    for frm in x_I_frame_trim:
+                        plt.axvline(x=frm, color='r', lw=1)
+                        if offset:
+                            plt.axvline(x=frm+1, color='r', ls='--', lw=1)
+                            plt.axvline(x=frm+3, color='r', ls='-.', lw=1)
+                            plt.axvline(x=frm+4, color='r', ls=':', lw=1)
+            
         # Scheduled UEs
         # Scheduled UEs: sum of co-scheduled UEs across time
         if plot_idx == 11:
@@ -1856,7 +2070,7 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         # Scheduled UEs: each UE is 1 when it is scheduled and 0 when it is not 
         if plot_idx == 11.1:
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][15]],
-                         savefig=save_fig, filename=file_name, 
+                         savefig=save_fig, filename=file_name, size=1.3, 
                          saveformat=save_format)
                     
         # Scheduled UEs: each UE is 1 when it is scheduled and 0 when it is not 
@@ -1901,11 +2115,11 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             for ue in ues:
                 pck_seq = sim_data_trimmed[f][1][ue].parent_packet_seq
                 pck_seq.plot_sequence(light=True, alpha=0.6)
-            plt.show()
             
             if save_fig:
                 plt.savefig(file_name, format=save_format)        
                 print(f'Saved: {file_name}')
+            plt.show()
             
         # Packet sequences all in different plots
         if plot_idx == 14.2:
@@ -1952,11 +2166,11 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                 
             
             fig.suptitle('Packets per ms')
-            plt.show()
             if save_fig:
-                plt.savefig(file_name, format=save_format)        
-                print(f'Saved: {file_name}')
-        
+                plt.savefig(file_name, format=save_format,
+                            dpi=200, bbox_inches='tight')        
+                print(f'Saved: {file_name}')                
+            plt.show()
         # Plot power of each GoB beam
         if plot_idx == 15:
             # IDX 18 has powers of each CSI beam for each TTI for each UE.
