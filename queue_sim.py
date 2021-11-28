@@ -105,7 +105,7 @@ def initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_packet_size,
     
     while curr_time <= sim_time and packet_counter <= total_packets - 1:
         
-        curr_time += vr_timestamps[packet_counter]
+        curr_time = vr_timestamps[packet_counter]
         new_size = vr_sizes[packet_counter]
         
         if curr_time < sim_time:
