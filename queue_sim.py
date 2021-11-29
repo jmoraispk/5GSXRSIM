@@ -23,7 +23,7 @@ TODOs:
               - Default interpacket time? 
               - Second sort command to sort by packet index!      
     - "Last event time" not needed - Last departure time for each queue enough!
-    - 
+    - Nr. of queues: Do research on realistic number of hops -> traceroute
     
 """
 
@@ -61,13 +61,13 @@ class Packet:
         self.packet_type = packet_type 
         
         
-# class Queue: 
-#     def __init__(self, serving_bitrate):
+class Queue: 
+    def __init__(self, serving_bitrate):
         
-#         # (Fixed) Serving bitrate of queue
-#         self.bitrate = serving_bitrate
-#         # List of current packets in queue
-#         self.packet_list = []
+        # (Fixed) Serving bitrate of queue
+        self.bitrate = serving_bitrate
+        # List of current packets in queue
+        self.packet_list = []
         
         
 def initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_packet_size, 
@@ -116,7 +116,7 @@ def initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_packet_size,
                     
             bg_count += 1
             
-        print("BG packets:", bg_count)
+        print(f"Queue: {q} - BG packets: {bg_count}")
                 
         
     # Generate all packet arrivals for VR packets at the first queue
@@ -231,7 +231,7 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
         # curr_time = max(next_event.time, last_event_time[curr_queue])
         curr_time = next_event.time
         
-        if debug:
+        if debug[0]:
             print(f"Current time: {curr_time}") # " - Last event time: {last_event_time}")
             print(f"Event: {next_event.packet.packet_type} - {next_event.action}" + \
                   f" - {next_event.packet.size}")
@@ -242,7 +242,7 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
             # Calculate departure time for packet
             serving_time = next_event.packet.size / serving_bitrate      
             
-            if curr_time >= last_departure_time:     
+            if curr_time >= last_departure_time[curr_queue]:     
                 new_departure_time = curr_time + serving_time 
             else: 
                 new_departure_time = serving_time + last_departure_time[
@@ -251,7 +251,7 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
             # Update last departure time for respective queue
             last_departure_time[curr_queue] = new_departure_time
             
-            if debug:
+            if debug[0]:
                 print("New departure time:", new_departure_time, 
                       next_event.packet_type)                                 
             # Create new event for packet departure into new queue
@@ -265,7 +265,7 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
             
         elif next_event.action == 'packet_departure': 
                         
-            if debug:
+            if debug[0]:
                 print(next_event.packet.packet_type)
                 
             # VR packets are send to next queue or if at last queue, to the BS
@@ -321,8 +321,8 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
 
 if __name__ == "__main__":
 
-    main(serving_bitrate=100000000, n_queues=1, max_packet_size=1500, max_time=0.02,
-         exp_size=500, exp_time=0.005, sim_time=2, debug=[False,3])
+    main(serving_bitrate=100000000, n_queues=5, max_packet_size=1500, max_time=0.02,
+         exp_size=500, exp_time=0.005, sim_time=10, debug=[False,3])
 
 
 
