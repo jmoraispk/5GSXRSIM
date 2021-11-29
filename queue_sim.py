@@ -18,12 +18,14 @@ TODOs:
     
     - Performance optimization (15s, 5 queues, 50 kbps => 15 seconds)
     - Implementation: 
-        - Default interpacket time? -> Prevent overtaking of packets! (needed?)
-          (Due to service time = bitrate/bits!!!)
-              
+          - "BUG" - IF PACKETS HAVE THE SAME ARRIVAL TIME, THE ORDER IS THE REVERSE 
+              OF THE INDICES 
+              - Default interpacket time? 
+              - Second sort command to sort by packet index!      
+    - "Last event time" not needed - Last departure time for each queue enough!
+    - 
+    
 """
-
-
 
 
 
@@ -38,10 +40,11 @@ class Event:
         self.queue = queue
         # Packet involved in the event
         self.packet = packet
+        self.packet_type = packet.packet_type
 
 
 class Packet:
-    def __init__(self, packet_id, packet_size, queue, arr_time, dep_time, 
+    def __init__(self, packet_id, packet_size, queue, # arr_time, dep_time, 
                  packet_type):
         
         # ID of packet - null/-1 if background packet, otherwise VR idx 
@@ -51,9 +54,9 @@ class Packet:
         # Current location / queue of packet
         self.queue = queue
         # Time of entry into whole queueing system
-        self.arrival = arr_time
+        # self.arrival = arr_time
         # Time of departure from last queue (and into BS buffer)
-        self.departure = dep_time
+        # self.departure = dep_time
         # Background traffic vs. VR packet - 'BG' & 'VR'
         self.packet_type = packet_type 
         
@@ -68,7 +71,7 @@ class Packet:
         
         
 def initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_packet_size, 
-                              max_time, exp_size, exp_time, sim_time): 
+                              max_time, exp_size, exp_time, sim_time, debug): 
 
     # Initialize event calendar to track all packets etc.
     event_calendar = []
@@ -76,15 +79,23 @@ def initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_packet_size,
     min_size = np.floor(max_size / 100)
     # Generate all background packet arrivals in each queue
     for q in range(queues):
+        
         curr_time = 0.0000
-        while curr_time < sim_time:
+        bg_count = 0
+        
+        while curr_time < sim_time: 
             
-            # Exponentially distributed inter-packet arrival times
-            inter_arr_time = np.random.exponential(exp_time)            
-            curr_time += inter_arr_time 
+            if debug[0]:
+                if bg_count > debug[1]:
+                    break
+            
+            np.random.seed(1)
             
             # Exponentially distributed packet size (max size = XXX)
-            new_size = int(np.random.exponential(exp_size))
+            new_size = int(np.random.exponential(exp_size))                    
+            # Exponentially distributed inter-packet arrival times
+            inter_arr_time = np.random.exponential(exp_time)    
+            curr_time += inter_arr_time 
             
             if new_size > max_size:
                 new_size = max_size
@@ -94,58 +105,78 @@ def initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_packet_size,
             
             if curr_time < sim_time:
                 bg_packet = Packet(packet_id=-1, packet_size=new_size, queue=q, 
-                                   arr_time=curr_time, dep_time=0, packet_type='BG')
-                event_calendar.append(Event(curr_time, 'packet_arrival', q, 
+                                   # arr_time=curr_time, dep_time=None, 
+                                   packet_type='BG')
+                if debug[0]:
+                    event_calendar.append(Event(0, 'packet_arrival', q, 
                                             bg_packet))
-
-    # Generate all packet arrivals of VR session at first queue
+                else:
+                    event_calendar.append(Event(curr_time, 'packet_arrival', q, 
+                                            bg_packet))
+                    
+            bg_count += 1
+            
+        print("BG packets:", bg_count)
+                
+        
+    # Generate all packet arrivals for VR packets at the first queue
     curr_time = 0.0000
-    packet_counter = 0
+    vr_packet_counter = 0
     total_packets = len(vr_timestamps)
     
-    while curr_time <= sim_time and packet_counter <= total_packets - 1:
+    while curr_time <= sim_time and vr_packet_counter < total_packets:
         
-        curr_time = vr_timestamps[packet_counter]
-        new_size = vr_sizes[packet_counter]
+        curr_time = vr_timestamps[vr_packet_counter]
+        new_size = vr_sizes[vr_packet_counter]
         
         if curr_time < sim_time:
             
-            vr_packet = Packet(packet_id=packet_counter, packet_size=new_size,
-                               queue=0, arr_time=curr_time, dep_time=0, 
-                               packet_type = 'VR')
+            vr_packet = Packet(packet_id=vr_packet_counter, packet_size=new_size,
+                               queue=0, packet_type = 'VR')
+                               # arr_time=curr_time, dep_time=None, 
+                               
             event_calendar.append(Event(curr_time, 'packet_arrival', 0, 
                                         vr_packet))
-        packet_counter += 1    
+        vr_packet_counter += 1    
         
-    return event_calendar
+    print("VR packets:", vr_packet_counter)
+        
+    return event_calendar, vr_packet_counter
+
 
 
 def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size, 
-         exp_time, sim_time):
-    
-    # return serving_bitrate
+         exp_time, sim_time, debug):
     
     tic = time.perf_counter()      
     
-    # Folder with traces 
+    # Folder with packet traces 
     file_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Trace" + '\\'
     file_to_simulate = file_folder + "trace_APP10.csv"
     
-    # Load video trace into dataframe
+    # Load into dataframe
     sim_data = pd.read_csv(file_to_simulate, encoding='utf-16-LE')  
-    
+    # Packet timestamp count starts at zero 
     sim_data['time'] = sim_data['time'].apply(lambda x: x - sim_data['time'][0])
     
-    fps = int(np.ceil(sim_data["frame"].iloc[-1] / sim_data["time"].iloc[-1]))
-    frame_time = 1 / fps
-    
     # Adjust timestamps to match frame generation time for simulation
-    sim_data['time'] = sim_data['frame'] * frame_time 
+    # TODO: Is this needed???
+    # fps = int(np.ceil(sim_data["frame"].iloc[-1] / sim_data["time"].iloc[-1]))
+    # frame_time = 1 / fps    
+    # sim_data['time'] = sim_data['frame'] * frame_time 
     
     vr_timestamps = sim_data['time'].values
-    vr_sizes = sim_data['size'].values
-    # vr_sizes *= 8 # Convert to bits
+    vr_sizes = sim_data['size'].values 
     
+    if debug[0]:
+        test_number = debug[1]
+        
+        vr_timestamps = sim_data['time'][0:test_number].values
+        print("vr_timestamps", vr_timestamps)
+        
+        vr_sizes = sim_data['size'][0:test_number].values 
+        print("vr_sizes", vr_sizes)
+        
     if n_queues < 1: 
         print('Warning: Number of queues cannot be less than 1!' + \
               '\nPlease change the number of queues in the main() arguments!')
@@ -156,12 +187,14 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
     print(f"Initializing Video File: {toc-tic:0.4f} seconds")
     
     tic = time.perf_counter()    
-    event_calendar = initialise_event_calendar(vr_timestamps, vr_sizes, queues, 
-                                               max_packet_size, max_time, 
-                                               exp_size, exp_time, sim_time)
+    event_calendar, total_vr_packets = \
+        initialise_event_calendar(vr_timestamps, vr_sizes, queues, 
+                                  max_packet_size, max_time, exp_size, 
+                                  exp_time, sim_time, debug)
+        
     toc = time.perf_counter()        
     print(f"Initializing Event Calendar: {toc-tic:0.4f} seconds")
-    print(len(event_calendar))
+    print(f"Total start events: {len(event_calendar)}")
     
     # raise SystemExit
     
@@ -169,82 +202,104 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
     print("Starting Event Simulation...")
 
     tic = time.perf_counter()    
-
     curr_time = 0.000
     
     # For performance and debugging
     counter = 0
     vr_packet_counter = 0
-    vr_timestamps_burst = np.zeros(len(vr_timestamps))
+    vr_timestamps_end = np.zeros(total_vr_packets)
     
-    arrival_counter = 0
     
-    while curr_time < sim_time and event_calendar != []:
+    # last_event_time = np.zeros(n_queues)
+    last_departure_time = np.zeros(n_queues)
+
+    while event_calendar != []: # and curr_time < sim_time and :
+    
+        if debug[0]:
+            print(f"\nIterations: {counter} - Time: {curr_time}")
     
         if counter % 1000 == 0:
-            print(f"Events: {counter} - Time: {curr_time}")
-        
-        # if counter == 10000:
-        #     raise SystemExit
+            print(f"\nIterations: {counter} - Time: {curr_time}")
         
         # Always first sort the event calendar by time 
         event_calendar.sort(key = operator.attrgetter('time'), reverse = True)
         next_event = event_calendar.pop()
-
+        
+        # Keep track of location of events for proper timestamping
+        curr_queue = next_event.queue        
+        # Keep track of current simulation time
+        # curr_time = max(next_event.time, last_event_time[curr_queue])
         curr_time = next_event.time
         
-        # filter_arr = filter(lambda x: x.action == 'packet_arrival', event_calendar)
-        # filter_dep = filter(lambda x: x.action == 'packet_departure', event_calendar)
-
-        # print(next(filter_arr).action)
-        # print(next(filter_dep).action, None)
+        if debug:
+            print(f"Current time: {curr_time}") # " - Last event time: {last_event_time}")
+            print(f"Event: {next_event.packet.packet_type} - {next_event.action}" + \
+                  f" - {next_event.packet.size}")
         
         # Simulate arrival of packet in queue
         if next_event.action == 'packet_arrival':
             
             # Calculate departure time for packet
-            serving_time = next_event.packet.size / serving_bitrate
+            serving_time = next_event.packet.size / serving_bitrate      
             
-            new_departure_time = curr_time + serving_time
+            if curr_time >= last_departure_time:     
+                new_departure_time = curr_time + serving_time 
+            else: 
+                new_departure_time = serving_time + last_departure_time[
+                                                        curr_queue] 
+                
+            # Update last departure time for respective queue
+            last_departure_time[curr_queue] = new_departure_time
             
+            if debug:
+                print("New departure time:", new_departure_time, 
+                      next_event.packet_type)                                 
             # Create new event for packet departure into new queue
             event_calendar.append(Event(new_departure_time, 'packet_departure', 
-                                        next_event.queue, next_event.packet))            
+                                        next_event.queue, next_event.packet))   
             
-            arrival_counter += 1
+            # last_event_time[curr_queue] = curr_time
+            # print("Arrival - new last event time:", last_event_time)
+            # arrival_counter += 1
             
-            if counter % 1000 == 0:
-                print(len(event_calendar))
             
         elif next_event.action == 'packet_departure': 
-            
-            # Background packets are discarded from queues
-            # if next_event.packet.packet_type == 'BG':
-            #     pass
-            
+                        
+            if debug:
+                print(next_event.packet.packet_type)
+                
             # VR packets are send to next queue or if at last queue, to the BS
-            if next_event.packet.packet_type == 'VR':              
+            if next_event.packet.packet_type == 'VR':            
+                
+                # last_event_time[curr_queue] += curr_time
+                # print("Departure - new last event time:", last_event_time)
                 next_queue = next_event.queue + 1
                 
                 # Departure from last queue - send to BS
                 if next_queue >= n_queues:
                     # Save time for correct packet ID
-                    vr_timestamps_burst[next_event.packet.id] = curr_time
+                    vr_timestamps_end[next_event.packet.id] = curr_time                   
                     vr_packet_counter += 1
                     
                 # Otherwise send to next queue in simulation 
                 else: 
                     # Create new arrival event with new parameters
                     # Departure time is new arrival time 
-                    new_arr_time = next_event.time
+                    # (assuming instant travel between queues)
+                    new_arr_time = curr_time 
                     packet = next_event.packet
+                    
                     event_calendar.append(Event(new_arr_time, 'packet_arrival', 
                                                 next_queue, packet))          
-        
-        else: 
-            print('Warning: Unknown event in the calendar!' + \
-                  '\nPlease check the proper initialization of events!')
-            raise SystemExit
+            else:
+                pass
+                # BG packet departs from queue, update last event time
+                # last_event_time[curr_queue] += curr_time
+                # print("Departure - new last event time:", last_event_time)
+        # else: 
+        #     print('Warning: Unknown event in the calendar!' + \
+        #           '\nPlease check the proper initialization of events!')
+        #     raise SystemExit
         
         counter += 1
         
@@ -253,21 +308,21 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
 
     full_file_name = os.path.join(output_save_path, output_file_name)
     
-    np.savetxt(full_file_name, vr_timestamps_burst, delimiter=",")# , fmt='%s')
-        
-    print(vr_timestamps_burst[0:50])
+    np.savetxt(full_file_name, vr_timestamps_end, delimiter=",")# , fmt='%s')
+            
+    if debug[0]:
+        print("Final:", vr_timestamps_end[0:debug[1]])
     
-    tic = time.perf_counter()    
+    toc = time.perf_counter()    
     print(f"Finished Event Simulation: {toc-tic:0.4f} seconds")
 
-    print("VR packets:", vr_packet_counter)
-    print("Arrivals:", arrival_counter)
+    print("Final VR packets:", vr_packet_counter)
 
 
 if __name__ == "__main__":
 
-    main(serving_bitrate=50000, n_queues=5, max_packet_size=1500, max_time=0.01,
-         exp_size=1000, exp_time=0.005, sim_time=10)
+    main(serving_bitrate=100000000, n_queues=1, max_packet_size=1500, max_time=0.02,
+         exp_size=500, exp_time=0.005, sim_time=2, debug=[False,3])
 
 
 
