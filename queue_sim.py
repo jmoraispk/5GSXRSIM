@@ -16,17 +16,30 @@ import os
 TODOs:
     - Correct choice/tuning of parameters, especially for random variables 
     
-    - Performance optimization (15s, 5 queues, 50 kbps => 15 seconds)
+    - Performance optimization (10s, 5 queues => 120 seconds)
     - Implementation: 
           - "BUG" - IF PACKETS HAVE THE SAME ARRIVAL TIME, THE ORDER IS THE REVERSE 
               OF THE INDICES 
-              - Default interpacket time? 
-              - Second sort command to sort by packet index!      
+              - Default interpacket time? -> Very small (1 us delta)
+              - (Second sort command to sort by packet index!)
     - "Last event time" not needed - Last departure time for each queue enough!
     - Nr. of queues: Do research on realistic number of hops -> traceroute
+    - Print: Packets per TTI (visualize dispersion)
+    
     
 """
 
+class Sim_Par:
+    def __init__(self, use_pcap, fps=0, GoP=0, bitrate=0, IP_ratio=0, 
+                 packet_size=0):
+        
+        # Use simulation parameters, when pcap trace is not used
+        self.use_pcap = use_pcap # True vs False
+        self.fps = int(fps) # Integer
+        self.GoP = int(GoP)
+        self.bitrate = bitrate # In bps (or Mbps?) 
+        self.IP_ratio = IP_ratio # Size of P-frame / Size of I-frame
+        self.packet_size = packet_size # in Byte
 
 
 class Event: 
@@ -70,13 +83,13 @@ class Queue:
         self.packet_list = []
         
         
-def initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_packet_size, 
-                              max_time, exp_size, exp_time, sim_time, debug): 
+def initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_time, 
+                              exp_size, exp_time, sim_time, debug): 
 
     # Initialize event calendar to track all packets etc.
     event_calendar = []
-    max_size = max_packet_size
-    min_size = np.floor(max_size / 100)
+    
+    min_size = 1 # np.floor(max_size / 100)
     # Generate all background packet arrivals in each queue
     for q in range(queues):
         
@@ -97,10 +110,7 @@ def initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_packet_size,
             inter_arr_time = np.random.exponential(exp_time)    
             curr_time += inter_arr_time 
             
-            if new_size > max_size:
-                new_size = max_size
-                
-            elif new_size < min_size:
+            if new_size < min_size:
                 new_size = min_size
             
             if curr_time < sim_time:
@@ -145,38 +155,58 @@ def initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_packet_size,
 
 
 
-def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size, 
-         exp_time, sim_time, debug):
+def main(serving_bitrate, n_queues, max_time, exp_size, exp_time, sim_time,
+         sim_par, debug):
+    
+    print(sim_par.__dict__)
     
     tic = time.perf_counter()      
     
-    # Folder with packet traces 
-    file_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Trace" + '\\'
-    file_to_simulate = file_folder + "trace_APP10.csv"
+    vr_timestamps = []
+    vr_sizes = []
     
-    # Load into dataframe
-    sim_data = pd.read_csv(file_to_simulate, encoding='utf-16-LE')  
-    # Packet timestamp count starts at zero 
-    sim_data['time'] = sim_data['time'].apply(lambda x: x - sim_data['time'][0])
-    
-    # Adjust timestamps to match frame generation time for simulation
-    # TODO: Is this needed???
-    # fps = int(np.ceil(sim_data["frame"].iloc[-1] / sim_data["time"].iloc[-1]))
-    # frame_time = 1 / fps    
-    # sim_data['time'] = sim_data['frame'] * frame_time 
-    
-    vr_timestamps = sim_data['time'].values
-    vr_sizes = sim_data['size'].values 
-    
-    if debug[0]:
-        test_number = debug[1]
+    # Use real video data
+    if sim_par.use_pcap == True: 
+        # Folder with packet traces 
+        file_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Trace" + '\\'
+        file_to_simulate = file_folder + "trace_APP10.csv"
         
-        vr_timestamps = sim_data['time'][0:test_number].values
-        print("vr_timestamps", vr_timestamps)
+        # Load into dataframe
+        sim_data = pd.read_csv(file_to_simulate, encoding='utf-16-LE')  
+        # Packet timestamp count starts at zero 
+        sim_data['time'] = sim_data['time'].apply(lambda x: x - sim_data['time'][0])
         
-        vr_sizes = sim_data['size'][0:test_number].values 
-        print("vr_sizes", vr_sizes)
+        # Adjust timestamps to match frame generation time for simulation
+        # TODO: Is this needed???
+        # fps = int(np.ceil(sim_data["frame"].iloc[-1] / sim_data["time"].iloc[-1]))
+        # frame_time = 1 / fps    
+        # sim_data['time'] = sim_data['frame'] * frame_time 
         
+        vr_timestamps = sim_data['time'].values
+        vr_sizes = sim_data['size'].values 
+        
+        if debug[0]:
+            test_number = debug[1]
+            
+            vr_timestamps = sim_data['time'][0:test_number].values
+            print("vr_timestamps", vr_timestamps)
+            
+            vr_sizes = sim_data['size'][0:test_number].values 
+            print("vr_sizes", vr_sizes)
+    
+    # Generate own packet stream from simulation parameters 
+    else: 
+        
+        FPS = sim_par.fps
+        GoP = sim_par.GoP
+        n_periods = round(sim_time * FPS / GoP)
+        bitrate = sim_par.bitrate # In bps (or Mbps?) 
+        IP_ratio = sim_par.IP_ratio # Size of P-frame / Size of I-frame
+        packet_size = sim_par.packet_size # in Byte
+        
+        # TODO: Consider using generated frame sequence directly as input???
+        # Only Timestamps and Sizes needed for one GoP, then cycle for sim_time
+    
     if n_queues < 1: 
         print('Warning: Number of queues cannot be less than 1!' + \
               '\nPlease change the number of queues in the main() arguments!')
@@ -188,9 +218,8 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
     
     tic = time.perf_counter()    
     event_calendar, total_vr_packets = \
-        initialise_event_calendar(vr_timestamps, vr_sizes, queues, 
-                                  max_packet_size, max_time, exp_size, 
-                                  exp_time, sim_time, debug)
+        initialise_event_calendar(vr_timestamps, vr_sizes, queues, max_time, 
+                                  exp_size, exp_time, sim_time, debug)
         
     toc = time.perf_counter()        
     print(f"Initializing Event Calendar: {toc-tic:0.4f} seconds")
@@ -317,12 +346,16 @@ def main(serving_bitrate, n_queues, max_packet_size, max_time, exp_size,
     print(f"Finished Event Simulation: {toc-tic:0.4f} seconds")
 
     print("Final VR packets:", vr_packet_counter)
-
+    
+    return vr_timestamps_end
 
 if __name__ == "__main__":
 
-    main(serving_bitrate=100000000, n_queues=5, max_packet_size=1500, max_time=0.02,
-         exp_size=500, exp_time=0.005, sim_time=10, debug=[False,3])
+    sim_par = Sim_Par(use_pcap = True, fps = 30, GoP = 6, bitrate = 10000000, 
+                      IP_ratio = 0.2, packet_size = 1500)    
+    
+    main(serving_bitrate=100000000, n_queues=5, max_time=0.02, exp_size=500, 
+         exp_time=0.005, sim_time=1, sim_par=sim_par, debug=[False,3])
 
 
 
