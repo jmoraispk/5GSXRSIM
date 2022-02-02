@@ -83,12 +83,14 @@ speed = 3
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
 folders_to_simulate = []
-for i in range(1,2):
+seeds_to_simulate = []
+for i in range(1,10):
     folders_to_simulate.append(f"SEED{i}_omni")   
+    seeds_to_simulate.append(i)
     # , "Sim_SEED3", "Sim_SEED4"]
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
-# print(folders_to_simulate)
+print("Seeds to simulate:", seeds_to_simulate)
 # raise SystemExit
 
 freq_idxs = [0]
@@ -211,8 +213,8 @@ for param in sim_params:
     # Continue the execution
     # print('Initialising variables...') 
     # print('Using the', sp.scheduler, 'scheduler')    
-    print(f'\nOutput folder: \n{sp.stats_dir}')
-    print(f'\nSimulating: {output_str}\n')
+    # print(f'\nOutput folder: \n{sp.stats_dir}')
+    print(f'\nSimulating: {output_str}')
     # -------------------------------- START --------------------------------
       
     # Setup Application Traffic Model
