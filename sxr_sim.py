@@ -72,7 +72,8 @@ Ideas:
 # # %%
 
 # parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks" + '\\'
-parent_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+# parent_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+parent_folder = os.getcwd() + r"\\Matlab\\TraceGeneration\\"#  + "\\"
 #seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
 seed = 1
@@ -82,13 +83,13 @@ speed = 3
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
 folders_to_simulate = []
-for i in range(0,30):
-    folders_to_simulate.append(f"SEED{i}_omni")
-    
+for i in range(1,2):
+    folders_to_simulate.append(f"SEED{i}_omni")   
     # , "Sim_SEED3", "Sim_SEED4"]
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
-print(folders_to_simulate)
-raise SystemExit
+
+# print(folders_to_simulate)
+# raise SystemExit
 
 freq_idxs = [0]
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
@@ -238,7 +239,9 @@ for param in sim_params:
     # Do this for every function from here onwards that uses the buffer??? 
     if sp.use_pcap:         
         # PCAP input parameters & files
-        pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Traces" 
+        # pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Traces" 
+        pcap_folder = os.getcwd() + "\\PCAP\Traces" 
+
         pcap_parameters = "\\trace_APP100_0.6\\" + \
                           "SEED1 - 10Q - 70.0% Load\\"
         final_trace = "trace_APP100_0.6_0.0-16.0s.csv"
