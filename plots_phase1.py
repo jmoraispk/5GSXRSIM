@@ -86,7 +86,8 @@ ttis = np.arange(trim_ttis[0], trim_ttis[1])
 x_vals = ttis * TTI_dur_in_secs
 
 # From the simulated UEs, which UEs do we want to plot?
-ues = [i for i in range(4)]
+n_ues = 4
+ues = [i for i in range(n_ues)]
 
 
 #----------------------
@@ -122,7 +123,8 @@ VARS_NAME_LOAD = ['sp',                       #  0
                   'packets_in_buffer',        # 19
                   'bits_in_buffer',           # 20  
                   'active_ues',               # 21
-                  'ue_priority'               # 22
+                  'ue_priority',              # 22                  
+                  'n_prbs_unused'             # 23
                   '']
 
 # Variable names that can be computed from the loaded and trimmed variables
@@ -177,8 +179,8 @@ file_sets = []
 
 # TODO
 # stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Meeting\40 - Same' + '\\'
-stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats' + \
-                "\Scheduling Study\APP25-BW50-LAT20_Burst" + '\\'
+stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Queue_Sim' + '\\' # + \
+                # "\Scheduling Study\APP25-BW50-LAT20_Burst" + '\\'
 
 for comb in combinations:
 
@@ -187,9 +189,12 @@ for comb in combinations:
     #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
 
     stats_dir_end = \
-        r'Sim_SEED2_APPBIT-25_BW-50_LAT-20_LEN-16s_pf_Offset-true_Burst-Zheng-0.75' + '\\' 
+        r'SEED1_omni_BW-100_E2E-LAT-100_LEN-4.0s_M-LWDF_PCAP-True_Offset-1.0' + '\\' 
     
-    print(f'Stats Folder: \n{stats_folder}')
+    # stats_dir_end = \
+    #     r'SEED1_omni_APPBIT-100_BW-100_LAT-RAN-10_LEN-16.0s_EDD_Offset-True_PCAP-False' + '\\' 
+     
+    # print(f'Stats Folder: \n{stats_folder}')
     print(f'Simulation: \n{stats_dir_end}')
     
     stats_dir = stats_folder + stats_dir_end
@@ -219,15 +224,19 @@ for file_set in file_sets:
     # Test save_plot
     save_plots = False
     saveformat = 'png' # supported: 'png', 'svg', 'pdf'
-    base_plots_folder = 'Zheng - Plots\\Scheduling Study\\Constant\\' 
+    base_plots_folder = 'Zheng - Plots\\Queue_Sim\\Scheduling Study\\' 
     # base_plots_folder = 'Plots\\' 
 
     # TODO: plot idx
     idxs_to_plot = [10.7, 10.2, 10.9, 14.2]
-    idxs_to_plot = [14.2]
-    idxs_to_plot = [10.7]
+    idxs_to_plot = [19]
+    # idxs_to_plot = [10.7, 19]
     
     # For the very first run and they don't exist, initialise
+    
+    trim_ttis = [int(4000 * 0), int(4000 * 16)]
+    ttis = np.arange(trim_ttis[0], trim_ttis[1])
+    x_vals = ttis * TTI_dur_in_secs
     
     try:
         sim_data_loaded
@@ -422,6 +431,9 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     
     18.1 -> Nr of packets with something left to send for each UE. [diff plot]
     18.2 -> Total bits left to send in buffer for each UE. [diff plot]
+    
+    19   -> Resource Utilization
+    
     """
     
     """ 

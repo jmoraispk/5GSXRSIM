@@ -54,11 +54,12 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # Use pcap trace or not
-        self.use_pcap = True # Have it here just in case it might be useful
+        self.use_pcap = not True # Have it here just in case it might be useful
         
         # TTIs to simulate -> min. 1000/TTIs_per_batch size
         # Has to be 'int', if multiplying with float -> int/float type error
-        self.sim_TTIs = int(4000 * 1)
+        # Has to be multiple of 1000, as coeffs are always loaded for 1000!!!
+        self.sim_TTIs = int(4000 * 4)
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -167,10 +168,17 @@ class Simulation_parameters:
         
         
         # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
-        self.scheduler = 'Frametype' 
+        # self.scheduler = 'Frametype' 
         self.scheduler = 'M-LWDF'
-        self.scheduler = 'PF'
+        # self.scheduler = 'PF'
+        # self.scheduler = 'EDD'
         
+        # Delay type - ['RAN', 'E2E']
+        # TODO: For PF there is special implementation!!!
+        # Use M-LWDF/EDD/Frametype with RAN
+        # Use M-LWDF/EDD/Frametype with E2E
+        self.delay_type = 'RAN'
+        # self.delay_type = 'E2E' 
 
         # Scheduler parameters
         self.scheduler_param_c = 10
@@ -270,8 +278,8 @@ class Simulation_parameters:
         # self.pcap_dir = self.curr_path + '\\PCAP\\Trace\\'  
         
         # Stats folder
-        self.stats_dir = self.curr_path + '\\Stats\\Scheduling Study\\' + \
-            f'APP{application_bitrate}-BW{bw}-LAT{lat_budget}_Burst\\'
+        self.stats_dir = self.curr_path + '\\Stats\\Queue_Sim\\'
+            # f'APP{application_bitrate}-BW{bw}-LAT{lat_budget}_Burst\\'
  
         # Plots folder
         self.plots_dir = self.curr_path + '\\Plots\\'
@@ -317,15 +325,23 @@ class Simulation_parameters:
         
         # Space the I frames across the GoP for the existant UEs
         # Set here instead of in sxr_sim
-        self.uniformly_space_UE_I_frames = True 
+        self.uniformly_space_UE_I_frames = True        
+        
+        # Only used for pcap traces to space out different users 
+        # Between 0 and 1
+        self.space_UE_frames = float(1)
+        
         # Burstiness of packet arrival
         self.burstiness_param = float(0.5)
         # Dispersion model (original from Joao, new from Zheng or even more 
         # realistic FIFO queue model)
         # ['Joao', 'Zheng', 'Queue']
-        self.burstiness_model = 'Joao'
-        self.burstiness_model = 'Zheng'
-        # self.burstiness_model = 'Queue'
+        if self.use_pcap:            
+            self.burstiness_model = 'Queue'
+        else: 
+            self.burstiness_model = 'Joao'
+            # self.burstiness_model = 'Zheng'        
+
         
         # Note: until the TODO in the end of simulation parameters is solved, 
         #       this should be set to False. Otherwise we fall into the 
@@ -426,7 +442,8 @@ class Simulation_parameters:
         #           "3GPP can be respected.")
         #     ut.stop_execution()
         
-        ut.parse_input(self.scheduler, ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']) 
+        ut.parse_input(self.scheduler, ['PF', 'M-LWDF', 'EXP/PF', 'Frametype',
+                                        'EDD']) 
         
                 
     def compute_vars_simulation(self, bw):
@@ -494,6 +511,7 @@ class Simulation_parameters:
         self.n_total_instances = vars_dict['n_total_builders'][0][0]
         
         # Number of Coefficients
+        #np.array([1, 1, 1, 1, 1, 1, 1, 1])
         self.n_ue_coeffs = \
             vars_dict['rx_ant_numel'][self.sim_freq_idx].astype(int)
         self.n_bs_coeffs = \

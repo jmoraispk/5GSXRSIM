@@ -6,10 +6,11 @@ Created on Sat May 16 09:42:34 2020
 """
 
 # Imports of standard Python Libraries
-# import time
 import numpy as np
 import itertools
 import time
+import pandas as pd
+import os
 
 # Own code imports
 import sls
@@ -17,55 +18,33 @@ import utils as ut
 import application_traffic as at
 import simulation_parameters as sim_par
 
-# %% 
+
 # Run it in a cell separate for now  
 # Different traces for different video qualities/bitrates
 
-# init_pcap = True
+"""
+init_pcap = not True # No need for init anymore with pre-modified pcap_traces
 # def init_pcap_file():
-
+if init_pcap:
 #####
-pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Trace" + '\\'
-pcap_to_simulate = pcap_folder + "trace_APP10.csv"
-# Inputs: 
-tti_dur = 0.00025
-total_ttis = 4000
-burst_param = 0.5
-# Burstiness model (New from Zheng or even more realistic FIFO queue model)
-# ['Joao', 'Zheng', 'Queue']
-burst_model = 'Zheng'
-# burst_model = 'Queue'
-pcap_file = at.PCAP_File(pcap_to_simulate, tti_dur, total_ttis, burst_param, 
+    pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Trace" + '\\'
+    pcap_to_simulate = pcap_folder + "trace_APP10.csv"
+    # Inputs: 
+    tti_dur = 0.00025
+    total_ttis = 4000
+    burst_param = 0.5
+    # Burstiness model (New from Zheng or even more realistic FIFO queue model)
+    # ['Joao', 'Zheng', 'Queue']
+    burst_model = 'Zheng'
+    # burst_model = 'Queue' -> already modified traces
+    pcap_file = at.PCAP_File(pcap_to_simulate, tti_dur, total_ttis, burst_param, 
                          burst_model)     
 #####
 
 #     return pcap_file
 # if init_pcap:    
 #     pcap_file = init_pcap_file()
-
-# %%
-
-# parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks" + '\\'
-parent_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Matlab\TraceGeneration" + '\\'
-#seed = int(ut.get_input_arg(1)) # 1
-#speed = int(ut.get_input_arg(2))
-seed = 1
-speed = 3
-
-
-# folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
-# folders_to_simulate = ["SEED1_SPEED1_point_centre"]
-folders_to_simulate = ["Sim_SEED2"] # , "Sim_SEED3", "Sim_SEED4"]
-folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
-
-freq_idxs = [0]
-# csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
-csi_periodicities = [5]
-
-# Put to [None] when not looping users, and the user_list is manually set below
-# users = [1,2,4,6,8] 
-users = [None]
-users = [1]
+"""
 
 """
 Zheng 
@@ -90,16 +69,49 @@ Ideas:
     
 
 """
+# # %%
+
+# parent_folder = r"C:\Users\Morais\Documents\SXR_Project\SXRSIMv3\Matlab\TraceGeneration\CyclicTracks" + '\\'
+parent_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Matlab\TraceGeneration" + '\\'
+#seed = int(ut.get_input_arg(1)) # 1
+#speed = int(ut.get_input_arg(2))
+seed = 1
+speed = 3
+
+
+# folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
+# folders_to_simulate = ["SEED1_SPEED1_point_centre"]
+folders_to_simulate = []
+for i in range(0,30):
+    folders_to_simulate.append(f"SEED{i}_omni")
+    
+    # , "Sim_SEED3", "Sim_SEED4"]
+folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
+print(folders_to_simulate)
+raise SystemExit
+
+freq_idxs = [0]
+# csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
+csi_periodicities = [5]
+
+# Put to [None] when not looping users, and the user_list is manually set below
+# users = [1,2,4,6,8] 
+users = [None]
+# users = [4]
+
 # application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
-application_bitrates = [25]
+application_bitrates = [100]
 # bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
 bandwidths = [50] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
-latencies = [20]
+# Check whether RAN or E2E-frame latency scheduling is used!!!
+latencies = [50]
+# E2E_lat = [100]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
                                     users, bandwidths, latencies))
+
 # itertools.product does: 
 #   [[1st element of 1st list, ..., 1st of last list], 
 #    [1st element of 1st list, ..., 2nd element of last list], 
@@ -162,26 +174,44 @@ for param in sim_params:
         
     # print('Done setting Simulation Parameters!')
     
-    sim_dur = int(sp.sim_TTIs / 4000)
+    sim_dur = round(sp.sim_TTIs / 4000, 2)
     
     # Take care of the output
     include_timestamp = False 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split(' ')[0]
     output_stats_folder = '' #SPEED7' + '\\'
-    output_str = f'{seed_str}_' + \
-                 f'APPBIT-{application_bitrate}_' + \
-                 f'BW-{bw}_LAT-{lat_budget}_' + \
-                 f'LEN-{sim_dur}s_{sp.scheduler}_' + \
-                 f'Offset-{sp.uniformly_space_UE_I_frames}_' + \
-                 f'Burst-{sp.burstiness_model}-{sp.burstiness_param}'
-                          # TODO: f'PCAP-{pcap_to_simulate}'   
+    if sp.use_pcap: 
+        # if sp.delay_type == 'E2E':
+        output_str = f'{seed_str}_' + \
+                     f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
+                     f'LEN-{sim_dur}s_{sp.scheduler}_' + \
+                     f'PCAP-{sp.use_pcap}_' + \
+                     f'Offset-{sp.space_UE_frames}'
+        # elif sp.delay_type == 'RAN':
+        #     output_str = f'{seed_str}_' + \
+        #                  f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
+        #                  f'LEN-{sim_dur}s_{sp.scheduler}_' + \
+        #                  f'PCAP-{sp.use_pcap}_' + \
+        #                  f'Offset-{sp.space_UE_frames}'
+    else:       
+        output_str = f'{seed_str}_' + \
+                     f'APPBIT-{application_bitrate}_' + \
+                     f'BW-{bw}_LAT-{sp.delay_type}-{lat_budget}_' + \
+                     f'LEN-{sim_dur}s_{sp.scheduler}_' + \
+                     f'Offset-{sp.uniformly_space_UE_I_frames}_' + \
+                     f'PCAP-{sp.use_pcap}'
+                     # f'UEs-{users}_' + \
+                         
+                 # f'Burst-{sp.burstiness_model}-{sp.burstiness_param}'
+                          # TODO: 
                  # SPEED-{sp.speed_idx} USERS-{users}_'FREQ-{freq_idx}_' + \
     # output_str = output_stats_folder + output_str
     
     # Continue the execution
     # print('Initialising variables...') 
     # print('Using the', sp.scheduler, 'scheduler')    
-    
+    print(f'\nOutput folder: \n{sp.stats_dir}')
+    print(f'\nSimulating: {output_str}\n')
     # -------------------------------- START --------------------------------
       
     # Setup Application Traffic Model
@@ -189,6 +219,8 @@ for param in sim_params:
     # cam_buffers = [] # we assume cameras are wired.
     packet_sequences_DL = [0] * sp.n_phy
     # Compute offsets to space out user I frames.
+    pcap_file_ues = [0] * sp.n_phy
+    pcap_output_ues = [0] * sp.n_phy
     
     # TODO: How to implement offset with PCAP, if even possible / makes sense?
     if sp.uniformly_space_UE_I_frames:
@@ -201,30 +233,58 @@ for param in sim_params:
     else:
         I_frame_offsets = [0] * sp.n_phy    
         
-    for ue in range(0, sp.n_phy): # start at 1 for debug!!!
-        # Generate frame sequences
+    
+    # TODO: Implement it as option that can be set in sim_par
+    # Do this for every function from here onwards that uses the buffer??? 
+    if sp.use_pcap:         
+        # PCAP input parameters & files
+        pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Traces" 
+        pcap_parameters = "\\trace_APP100_0.6\\" + \
+                          "SEED1 - 10Q - 70.0% Load\\"
+        final_trace = "trace_APP100_0.6_0.0-16.0s.csv"
+        trace_to_simulate = pcap_folder + pcap_parameters + final_trace        
+        pcap_to_simulate = pd.read_csv(trace_to_simulate, encoding='utf-16 LE', 
+                                       index_col=False)
+        print('\nPCAP Trace to simulate:\n', pcap_parameters.strip("\\"))       
+        tic = time.perf_counter()        
+
+        for ue in range(0, sp.n_phy): # start at 1 for debug!!!
+            # Generate frame sequences
         
-        # TODO: Implement it as option that can be set in sim_par
-        # Do this for every function from here onwards that uses the buffer??? 
-        if sp.use_pcap: 
-            
             # At start of simulation, create packet sequence with all packets
             # arriving within the first TTI, i.e. the first 0.25 ms       
             tti_duration = sp.TTI_duration.total_seconds()  
             curr_tti = 0 
-
+            # Initialize pcap objects for each UE with modified traces
+            # Inputs: 
+            pcap_file_ues[ue] = at.PCAP_File(pcap_to_simulate, tti_duration, 
+                                    sim_dur, sp.sim_TTIs, sp.burstiness_param, 
+                                    sp.burstiness_model, sp.space_UE_frames,
+                                    ue, sp.n_phy)
+                        
+            pcap_output_ues[ue] = np.zeros(pcap_file_ues[ue].total_packets)     
+            
+            # if ue == 3: raise SystemExit
             # Create packet sequence      
             packet_sequences_DL[ue] = \
-                at.gen_pcap_sequence(pcap_file, curr_tti)
-            
+                at.gen_pcap_sequence(pcap_file_ues[ue], curr_tti)
+        
+        toc = time.perf_counter()        
+        print(f"Init PCAP time: {toc-tic:0.4f} seconds.")
+        
+        # Create np.array to save output of all buffers 
+        # -> Easier to use further for pcap traces
+        # Or/Also: Save outputs as pickle        
+        for ue in range(0, sp.n_phy): 
             # From the packet sequences, initialise the Buffers:
             # Buffers for each user, physically located at the BSs        
             user_buffers.append(at.PCAP_Buffer(packet_sequences_DL[ue], 
-                                               sp.delay_threshold,
-                                               output_str,
-                                               sp.stats_dir))
+                                               sp.delay_threshold, 
+                                               sp.delay_type,
+                                               output_str, sp.stats_dir, ue))
                
-        else: 
+    else: 
+        for ue in range(0, sp.n_phy):
             frame_sequence_DL = at.gen_frame_sequence(sp.I_size_DL,
                                                   sp.GoP,
                                                   sp.IP_ratio,
@@ -252,8 +312,8 @@ for param in sim_params:
             # From the packet sequences, initialise the Buffers:
             # Buffers for each user, physically located at the BSs        
             user_buffers.append(at.Buffer(packet_sequences_DL[ue], 
-                                          sp.delay_threshold))            
-    
+                                          sp.delay_threshold, sp.delay_type))            
+
     # Merge user and camera buffers in general variable buffers.
     buffers = user_buffers # + cam_buffers
     # raise SystemExit 
@@ -348,6 +408,10 @@ for param in sim_params:
     estimated_SINR = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
     realised_SINR = ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
     
+    # TODO: Check wasted resources per scheduling tti
+    n_prbs_unused = ut.make_py_list(2, [sp.sim_TTIs])
+
+    
     # This tells which direction the beam is pointed, in which polarisation 
     beams_used = ut.make_py_list(4, [sp.sim_TTIs, sp.n_ue, sp.n_layers, 2])
     
@@ -387,15 +451,15 @@ for param in sim_params:
     # during scheduling_tti TTIs.
     curr_schedule = {}
     
-    print(f'Output folder: \n{sp.stats_dir}')
-    print(f'Simulating: \n{output_str}')
+    # print(f'\nOutput folder: \n{sp.stats_dir}')
+    # print(f'\nSimulating: {output_str}\n')
     # print('--------- Starting simulation ---------') 
     
     
     # raise SystemExit     
     
     # Loop for every TTI
-    for tti in range(0, 10): # sp.sim_TTIs): 
+    for tti in range(0, sp.sim_TTIs): #  1000): # 
         # Note: tti is the index of the TTI. The time value of the TTI is 
         #       given by tti_timestamp. This is done such that we don't have 
         #       to carry +-1 everywhere we go.
@@ -406,7 +470,7 @@ for param in sim_params:
             else:
                 print(f"TTI: {tti}")
         # TTIs    
-        if tti % 16000 == 0 or tti == sp.sim_TTIs - 1:
+        if tti % 4000 == 0 or tti == sp.sim_TTIs - 1:
             print(f"TTI: {tti}")
         
         # If necessary, load new set of coefficients
@@ -691,10 +755,30 @@ for param in sim_params:
                            n_transport_blocks, realised_bits, olla, 
                            sp.use_olla, sp.bler_target, sp.olla_stepsize, 
                            blocks_with_errors, realised_SINR, 
-                           sp.TTI_dur_in_secs, realised_bitrate_total, 
-                           beams_used, sig_pow_per_prb, mcs_used, 
-                           sp.save_per_prb_variables, experienced_signal_power)
-
+                           sp.TTI_dur_in_secs, sp.time_to_send,	 
+                           realised_bitrate_total, beams_used, sig_pow_per_prb, 
+                           mcs_used, sp.save_per_prb_variables, 
+                           experienced_signal_power)
+        
+        # TODO: Calculate efficiency of scheduling 
+        if curr_schedule['DL'] != []: 
+            est_bitrate_tti = curr_schedule['DL'][0].est_bitrate / 1e6
+            # unused_bitrate = est_bitrate_tti - sum(realised_bitrate_total[tti])
+            bitrate_per_prb = est_bitrate_tti / 10 
+            
+            non_sched_UEs = np.where(np.array(scheduled_UEs[0]) == 0)
+            other_buffers_empty = True
+            for l in range(len(non_sched_UEs[0])): 
+                other_buffers_empty *= buffers[non_sched_UEs[0][l]].is_empty
+            
+            if other_buffers_empty == False:
+                n_prbs_unused[tti] = 10 - int(np.ceil(sum(realised_bitrate_total
+                                              [tti] / bitrate_per_prb)))
+            else: 
+                n_prbs_unused[tti] = 0
+        else:
+            n_prbs_unused[tti] = 0
+              
         if sp.debug:
             print(f'----------Done measuring tti {tti} ---------------------')
             for ue in range(sp.n_ue):
@@ -726,6 +810,7 @@ for param in sim_params:
         # ####################################################################
         
     # print('End of tti loop.')    
+    # raise SystemExit()
     # One final queue update, in order to account for all the packets that were
     # sent last tti
     for ue in range(sp.n_ue):
@@ -734,14 +819,21 @@ for param in sim_params:
             if sp.use_pcap: 
                 buffers[ue].update_head_of_queue_delay(tti, tti_duration)
                         
-                print(buffers[ue].pdr_info[30:60])
-                
-                buffers[ue].create_pdr_csv(output_str, sp.stats_dir)
-                
-                
+                # print(buffers[ue].pdr_info[30:60])                                
             else: 
-                buffers[ue].update_head_of_queue_delay(t)
-    
+                buffers[ue].update_head_of_queue_delay(t)    
+                
+        if sp.use_pcap:
+            pcap_output_str = f'{final_trace.split("_")[0]}_' + \
+                              f'{final_trace.split("_")[1]}_' + \
+                              f'{final_trace.split("_")[2]} - ' + \
+                              f'{sim_dur}s_UE{ue}.csv'
+            pcap_output_folder = pcap_parameters.split("\\")[2]
+            pcap_output_path = sp.stats_dir + "\\PCAP\\" + output_str + \
+                               f'\\{pcap_output_folder}'
+                
+            buffers[ue].create_pdr_csv(pcap_output_str, pcap_output_path)
+            
     # print(f'------ Done simulating for {output_str} ------')
     print(f'Time enlapsed: {round(time.time() - t_0)} secs.')
     
@@ -760,9 +852,7 @@ for param in sim_params:
             sp.stats_path = sp.stats_dir + output_str + f"_{time_sim_end}" + "\\"
         else:
             sp.stats_path = sp.stats_dir + output_str + "\\"
-        
-        
-        
+                
         # Write which stats file was produced last, for practical reasons, 
         # e.g.in case we want to analyse plots of it right away.
         with open('last_stats_folder.txt', 'w') as fh:
@@ -802,13 +892,13 @@ for param in sim_params:
         ut.save_var_pickle(realised_bitrate_total, sp.stats_path, globals_dict)
         ut.save_var_pickle(n_transport_blocks, sp.stats_path, globals_dict)    
         ut.save_var_pickle(blocks_with_errors, sp.stats_path, globals_dict)        
-        ut.save_var_pickle(beams_used, sp.stats_path, globals_dict)
-        ut.save_var_pickle(olla, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(beams_used, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(olla, sp.stats_path, globals_dict)
         ut.save_var_pickle(mcs_used, sp.stats_path, globals_dict)
         ut.save_var_pickle(real_dl_interference, sp.stats_path, globals_dict)
         ut.save_var_pickle(est_dl_interference, sp.stats_path, globals_dict)
         ut.save_var_pickle(scheduled_UEs, sp.stats_path, globals_dict)
-        ut.save_var_pickle(su_mimo_setting, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(su_mimo_setting, sp.stats_path, globals_dict)
         ut.save_var_pickle(channel, sp.stats_path, globals_dict)
         ut.save_var_pickle(experienced_signal_power, sp.stats_path, globals_dict)
         
@@ -819,11 +909,13 @@ for param in sim_params:
         
         # If we are debugging GoBs and we need the power of each CSI beam
         # (is none when sp.save_power_per_CSI_beam is False)
-        ut.save_var_pickle(power_per_beam, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(power_per_beam, sp.stats_path, globals_dict)
         ut.save_var_pickle(bits_in_buffer, sp.stats_path, globals_dict)
         ut.save_var_pickle(packets_in_buffer, sp.stats_path, globals_dict)
         ut.save_var_pickle(active_UEs, sp.stats_path, globals_dict)
         ut.save_var_pickle(ue_priority, sp.stats_path, globals_dict)
+
+        ut.save_var_pickle(n_prbs_unused, sp.stats_path, globals_dict)
 
         # ut.save_var_pickle(su_mimo_bitrates, sp.stats_path, globals_dict)
 

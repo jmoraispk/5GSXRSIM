@@ -3,7 +3,8 @@
 /Plots/
 /Zheng - Plots/
 /Videos/
-/Stats/
+/Stats/*
+!/Stats/new/
 /Results/
 /Results Phase 2/
 /Instance_logs/
@@ -11,14 +12,15 @@
 /Instance_logs2/
 /Instance_logs3/
 /Testing/
-/PCAP/
 /Zheng - Plots/
 /__pycache__/
 /PCAP/__pycache__/
-/PCAP/PCAP_output/
+/PCAP/* 
+!/PCAP/Traces/
 /.idea/
 /.pylint.d/
 /Matlab/*
+!/Matlab/TraceGeneration/
 *.asm
 *.asv
 *.pylint.d
@@ -32,7 +34,6 @@
 *.txt
 test.py
 *.png
-*.csv
 *.pcap
 *.mp4
 __init__.py

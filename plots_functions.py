@@ -217,7 +217,8 @@ def get_vars_to_load(idx, vars_to_load_names):
                  16: [7], 16.1: [7], 16.2: [],
                  17: [], 17.01: [7,15], 17.02: [7,15], 17.03: [7,15], 
                  17.11: [7,15], 17.12: [7,15], 17.13: [7,15],
-                 18.1: [19], 18.2:[20]
+                 18.1: [19], 18.2:[20], 
+                 19: [23]
                  }
     
     # Always add 'sp' variable and return list of var names.
@@ -270,7 +271,8 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     17: [33,34], 17.01: [33,34,35,36], 17.02: [33,34,35,36], 
                     17.03: [33,34,35,36], 17.11: [35,36], 17.12: [35,36],
                     17.13: [35,36],
-                    18.1: [], 18.2: []
+                    18.1: [], 18.2: [],
+                    19: []
                     }
             
     return [vars_to_compute_names[i] for i in compute_dict[idx]]
@@ -306,7 +308,7 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
     
     # Note: always trim an empty variable and not all variables need triming!
     
-    vars_to_not_trim = ['sp', 'buffers']
+    vars_to_not_trim = ['sp', 'buffers', 'n_prbs_unused']
     
     # Within the variables to trim, which have per layer information that
     # require further trimming (e.g. to select one layer or single-layer mode):
@@ -314,7 +316,7 @@ def trim_sim_data(sim_data_loaded, sim_data_trimmed, all_load_var_names,
                           'olla', 'su_mimo_setting', 'channel', 
                           'scheduled_UEs', 'packets_in_buffer', 
                           'bits_in_buffer', 'su_mimo_bitrates', 
-                          'ue_priority']
+                          'ue_priority', 'n_prbs_unused']
     
     # Convert to NumPy arrays and trim to obtain only the useful parts
     for f in range(len(files)):
@@ -1070,10 +1072,10 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][16]],
                          x_axis_label=x_label_time, y_axis_label='Power [dBW]',
                          savefig=save_fig, filename=file_name, 
-                         ylim=[(y_min, y_max), (y_min, y_max), (y_min, y_max),
-                               (y_min, y_max)],
-                         linewidths=[0.5,0.5,0.5,0.5], 
-                         width=7.8, height=4.8, size=2,
+                         # ylim=[(y_min, y_max), (y_min, y_max), (y_min, y_max),
+                         #       (y_min, y_max)],
+                         # linewidths=[0.5,0.5,0.5,0.5], 
+                         # width=7.8, height=4.8, size=2,
                          saveformat=save_format, same_axs=(False)) 
                          # use_legend=True, legend_loc="upper right")
             # print(np.mean(sim_data_trimmed[f][16]),'dBW')
@@ -2489,3 +2491,12 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                          # same_axs=False,
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
+            
+        if plot_idx == 19:
+            total_prbs_unused = sum(sim_data_trimmed[f][23])
+            print(f"unused PRBs Total: {total_prbs_unused}")
+            print(f"per TTI: {round(total_prbs_unused / n_ttis, 3)}" + \
+                  f" - {round((total_prbs_unused / n_ttis) * 10, 2)}%\n" + \
+                  f"Utilization: {round(100-(total_prbs_unused / n_ttis) * 10, 2)}%")
+            
+            

@@ -55,6 +55,60 @@ def pf_scheduler(avg_thrput, curr_expected_bitrate):
     return curr_expected_bitrate / avg_thrput
 
 
+def RAN_scheduler(curr_delay, delay_threshold):
+    """
+    Parameters
+    ----------
+    avg_thrput : weighted over many ttis
+    curr_expected_bitrate : bitrate estimated as achievable for the curr tti
+    lat : current delay of the packet at the head of the queue
+    delta : upper limit of packet loss rate 
+            (0: NO PACKET CAN BE LOST!, 1: who cares)
+            Note: it was made to differentiate between several QoS.
+            So, if all users have the same priority, there's no weight from
+            it, and can be considered a constant.
+
+    Returns
+    -------
+    Returns the priority for a given user computed with the Maximum-Largest
+    Weighted Delay First Scheduler.
+    """
+    
+    
+    priority = curr_delay
+    
+    return priority
+
+
+def E2E_scheduler(avg_thrput, curr_expected_bitrate, 
+                    curr_delay, delay_threshold, delta):
+    """
+    Parameters
+    ----------
+    avg_thrput : weighted over many ttis
+    curr_expected_bitrate : bitrate estimated as achievable for the curr tti
+    lat : current delay of the packet at the head of the queue
+    delta : upper limit of packet loss rate 
+            (0: NO PACKET CAN BE LOST!, 1: who cares)
+            Note: it was made to differentiate between several QoS.
+            So, if all users have the same priority, there's no weight from
+            it, and can be considered a constant.
+
+    Returns
+    -------
+    Returns the priority for a given user computed with the Maximum-Largest
+    Weighted Delay First Scheduler.
+    """
+    
+    # Is it natural log or log10?
+    a = -np.log(delta) / delay_threshold
+    
+    priority = a * curr_delay * (pf_scheduler(avg_thrput, 
+                                             curr_expected_bitrate))
+    
+    return priority
+
+
 def MLWDF_scheduler(avg_thrput, curr_expected_bitrate, 
                     curr_delay, delay_threshold, delta):
     """
@@ -84,7 +138,6 @@ def MLWDF_scheduler(avg_thrput, curr_expected_bitrate,
     return priority
 
 
-# Yet to be used by the scheduler and properly implemented within traffic generation
 def frametype_scheduler(avg_thrput, curr_expected_bitrate, 
                         curr_delay, delay_threshold, buffer, delta=0.1):
     """
@@ -201,13 +254,16 @@ def scheduler(scheduler_choice, avg_throughput_ue, estimated_bitrate,
                                    scheduler_param_delta)
         
     elif scheduler_choice == 'Frametype':
-      priority = frametype_scheduler(avg_throughput_ue, 
-                                     estimated_bitrate, 
-                                     buffer_head_of_queue_delay, 
-                                     delay_threshold,
-                                     buffer,
-                                     scheduler_param_delta)    
+        priority = frametype_scheduler(avg_throughput_ue, 
+                                      estimated_bitrate, 
+                                      buffer_head_of_queue_delay, 
+                                      delay_threshold,
+                                      buffer,
+                                      scheduler_param_delta)    
    
+    elif scheduler_choice == 'EDD':
+        priority = buffer_head_of_queue_delay
+              
     elif scheduler_choice == 'EXP/PF':
         priority = exp_pf_scheduler(avg_throughput_ue, 
                                     estimated_bitrate,
@@ -542,7 +598,7 @@ def calc_SINR(tx_pow, ch_pow_gain, interference, noise_power):
     
     sinr_linear = sig_pow / (noise_power + interference)
     
-    return 10 * np.log10(sinr_linear) - 35 # TODO
+    return 10 * np.log10(sinr_linear) - 30 # 32.5 # TODO: Switch down to 32.5!
 
     # return 8
     # sinr_random = np.random.normal(5, 3)
@@ -2039,8 +2095,9 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                    info_bits_table, buffers, n_transport_blocks, realised_bits, 
                    olla, use_olla, bler_target, olla_stepsize, 
                    blocks_with_errors, realised_SINR, TTI_dur_in_secs, 
-                   realised_bitrate_total, beams_used, sig_pow_per_prb, 
-                   mcs_used, save_per_prb_variables, experienced_signal_power):
+                   time_to_send, realised_bitrate_total, beams_used, 
+                   sig_pow_per_prb, mcs_used, save_per_prb_variables, 
+                   experienced_signal_power):
     
     for entry in curr_schedule[slot_type]:
         if debug:
@@ -2167,7 +2224,8 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                     # buffer
                     realised_bits[tti][entry.ue][entry.layer_idx] += tb.size
                     
-                    buffers[entry.ue].remove_bits(tb.size, tb.start_idx)
+                    buffers[entry.ue].remove_bits(tti, TTI_dur_in_secs, 
+                                          time_to_send, tb.size, tb.start_idx)
                     suc_or_fail = 'success'
                     
                 else:
