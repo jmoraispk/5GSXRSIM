@@ -14,9 +14,7 @@
 /Testing/
 /Zheng - Plots/
 /__pycache__/
-/PCAP/__pycache__/
 /PCAP/*
-PCAP/pcap_zheng.py
 !/PCAP/Traces/
 /.idea/
 /.pylint.d/
