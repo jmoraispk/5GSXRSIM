@@ -475,7 +475,7 @@ for param in sim_params:
             else:
                 print(f"TTI: {tti}")
         # TTIs    
-        if tti % 4000 == 0 or tti == sp.sim_TTIs - 1:
+        if tti % 8000 == 0 or tti == sp.sim_TTIs - 1:
             print(f"TTI: {tti}")
         
         # If necessary, load new set of coefficients
