@@ -105,10 +105,10 @@ users = [None]
 # application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
 application_bitrates = [100]
 # bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
-bandwidths = [50] # MHz
+bandwidths = [150] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
 # Check whether RAN or E2E-frame latency scheduling is used!!!
-latencies = [50]
+latencies = [60]
 # E2E_lat = [100]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
@@ -244,9 +244,9 @@ for param in sim_params:
         # pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Traces" 
         pcap_folder = os.getcwd() + "\\PCAP\Traces" 
 
-        pcap_parameters = "\\trace_APP100_0.6\\" + \
-                          "SEED1 - 10Q - 70.0% Load\\"
-        final_trace = "trace_APP100_0.6_0.0-16.0s.csv"
+        pcap_parameters = "\\trace_APP100_0.6\\" + "SEED1 - 10Q - 70.0% Load\\"
+        trace_parameter = pcap_parameters.split('\\')[1] 
+        final_trace = f"{trace_parameter}_0.0-16.0s.csv"
         trace_to_simulate = pcap_folder + pcap_parameters + final_trace        
         pcap_to_simulate = pd.read_csv(trace_to_simulate, encoding='utf-16 LE', 
                                        index_col=False)
@@ -891,36 +891,36 @@ for param in sim_params:
         
         # Pickle all results 
         ut.save_var_pickle(sp, sp.stats_path, globals_dict)
-        ut.save_var_pickle(buffers, sp.stats_path, globals_dict)        
+        # ut.save_var_pickle(buffers, sp.stats_path, globals_dict)        
         ut.save_var_pickle(estimated_SINR, sp.stats_path, globals_dict)
         ut.save_var_pickle(realised_SINR, sp.stats_path, globals_dict)
         ut.save_var_pickle(realised_bitrate_total, sp.stats_path, globals_dict)
-        ut.save_var_pickle(n_transport_blocks, sp.stats_path, globals_dict)    
-        ut.save_var_pickle(blocks_with_errors, sp.stats_path, globals_dict)        
+        # ut.save_var_pickle(n_transport_blocks, sp.stats_path, globals_dict)    
+        # ut.save_var_pickle(blocks_with_errors, sp.stats_path, globals_dict)        
         # ut.save_var_pickle(beams_used, sp.stats_path, globals_dict)
         # ut.save_var_pickle(olla, sp.stats_path, globals_dict)
         ut.save_var_pickle(mcs_used, sp.stats_path, globals_dict)
-        ut.save_var_pickle(real_dl_interference, sp.stats_path, globals_dict)
-        ut.save_var_pickle(est_dl_interference, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(real_dl_interference, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(est_dl_interference, sp.stats_path, globals_dict)
         ut.save_var_pickle(scheduled_UEs, sp.stats_path, globals_dict)
         # ut.save_var_pickle(su_mimo_setting, sp.stats_path, globals_dict)
         ut.save_var_pickle(channel, sp.stats_path, globals_dict)
-        ut.save_var_pickle(experienced_signal_power, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(experienced_signal_power, sp.stats_path, globals_dict)
         
         # Variables that take the most memory: they are always saved,
         # but when sp.save_per_prb_variables is False, they are None
-        ut.save_var_pickle(sig_pow_per_prb, sp.stats_path, globals_dict)        
-        ut.save_var_pickle(channel_per_prb, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(sig_pow_per_prb, sp.stats_path, globals_dict)        
+        # ut.save_var_pickle(channel_per_prb, sp.stats_path, globals_dict)
         
         # If we are debugging GoBs and we need the power of each CSI beam
         # (is none when sp.save_power_per_CSI_beam is False)
         # ut.save_var_pickle(power_per_beam, sp.stats_path, globals_dict)
-        ut.save_var_pickle(bits_in_buffer, sp.stats_path, globals_dict)
-        ut.save_var_pickle(packets_in_buffer, sp.stats_path, globals_dict)
-        ut.save_var_pickle(active_UEs, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(bits_in_buffer, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(packets_in_buffer, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(active_UEs, sp.stats_path, globals_dict)
         ut.save_var_pickle(ue_priority, sp.stats_path, globals_dict)
 
-        ut.save_var_pickle(n_prbs_unused, sp.stats_path, globals_dict)
+        # ut.save_var_pickle(n_prbs_unused, sp.stats_path, globals_dict)
 
         # ut.save_var_pickle(su_mimo_bitrates, sp.stats_path, globals_dict)
 

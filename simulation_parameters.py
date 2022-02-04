@@ -54,7 +54,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # Use pcap trace or not
-        self.use_pcap = not True # Have it here just in case it might be useful
+        self.use_pcap = True # Have it here just in case it might be useful
         
         # TTIs to simulate -> min. 1000/TTIs_per_batch size
         # Has to be 'int', if multiplying with float -> int/float type error
@@ -171,7 +171,7 @@ class Simulation_parameters:
         # self.scheduler = 'Frametype' 
         self.scheduler = 'M-LWDF'
         # self.scheduler = 'PF'
-        # self.scheduler = 'EDD'
+        self.scheduler = 'EDD'
         
         # Delay type - ['RAN', 'E2E']
         # TODO: For PF there is special implementation!!!
