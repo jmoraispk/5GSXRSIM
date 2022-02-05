@@ -245,8 +245,8 @@ for param in sim_params:
         pcap_folder = os.getcwd() + "\\PCAP\Traces" 
 
         pcap_parameters = "\\trace_APP100_0.6\\" + "SEED1 - 10Q - 70.0% Load\\"
-        trace_parameter = pcap_parameters.split('\\')[1] 
-        final_trace = f"{trace_parameter}_0.0-16.0s.csv"
+        trace_parameters = pcap_parameters.split('\\')[1] 
+        final_trace = f"{trace_parameters}_0.0-16.0s.csv"
         trace_to_simulate = pcap_folder + pcap_parameters + final_trace        
         pcap_to_simulate = pd.read_csv(trace_to_simulate, encoding='utf-16 LE', 
                                        index_col=False)
@@ -835,7 +835,7 @@ for param in sim_params:
                               f'{sim_dur}s_UE{ue}.csv'
             pcap_output_folder = pcap_parameters.split("\\")[2]
             pcap_output_path = sp.stats_dir + "\\PCAP\\" + output_str + \
-                               f'\\{pcap_output_folder}'
+                               f'\\{pcap_output_folder}\\{trace_parameters}'
                 
             buffers[ue].create_pdr_csv(pcap_output_str, pcap_output_path)
             
