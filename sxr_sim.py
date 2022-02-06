@@ -84,7 +84,7 @@ speed = 3
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
 folders_to_simulate = []
 seeds_to_simulate = []
-for i in range(1,10):
+for i in range(1,21):
     folders_to_simulate.append(f"SEED{i}_omni")   
     seeds_to_simulate.append(i)
     # , "Sim_SEED3", "Sim_SEED4"]
@@ -105,7 +105,7 @@ users = [None]
 # application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
 application_bitrates = [100]
 # bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
-bandwidths = [150] # MHz
+bandwidths = [125] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
 # Check whether RAN or E2E-frame latency scheduling is used!!!
 latencies = [60]
