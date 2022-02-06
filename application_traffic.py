@@ -303,7 +303,7 @@ def gen_pcap_sequence(pcap_file, curr_tti, max_size=0):
 
 class PCAP_Buffer:
     def __init__(self, pcap_packet_sequence, packet_delay_threshold, 
-                 delay_type, file_name, file_folder, ue):
+                 delay_type, file_name, file_folder, ue, scheduler):
         """
         The only functions in this class that should be used outside of the
         class are: 
@@ -314,7 +314,7 @@ class PCAP_Buffer:
         """
 
         self.ue = ue
-        
+        self.scheduler = scheduler
         # Track latency at the head of the queue
         self.delay_type = delay_type
         self.head_of_queue_lat = ut.timestamp(0)                
@@ -397,12 +397,12 @@ class PCAP_Buffer:
     
     def update_head_of_queue_delay(self, tti, tti_duration):
         """ 
-        Update the latency of the first packet in the buffer
-        
+        Update the latency of the first packet in the buffer        
         Updated method of calculating remaining RAN latency budget
+        Add method to calculate E2E frame level latency 
         """
-        self.delay_type 
         curr_time = (tti + 1) * tti_duration 
+        
         if self.delay_type == 'RAN':
             if self.pcap_seq.index != []: # Check if buffer is empty
                 RAN_lat = curr_time - self.pcap_seq.timestamps[0]
@@ -412,17 +412,13 @@ class PCAP_Buffer:
             return    
         
         elif self.delay_type == 'E2E':
-            if self.pcap_seq.index != []: # Check if buffer is empty
+            if self.pcap_seq.index != []:
                 # Calculate already experienced E2E delay of head of queue
-                # E2E latency starts from time of frame-generation + offset
-                packet_gen_time = self.pcap_seq.frames[0] * (1 / \
-                              self.pcap_file.pcap_FPS) + self.pcap_file.offset
-                E2E_lat = self.pcap_seq.timestamps[0] - packet_gen_time                    
-                self.head_of_queue_lat = ut.timestamp(E2E_lat)        
-                # if 100 < tti < 200:
-                #     print(self.ue, E2E_lat)
-                # if tti > 200: raise SystemExit
-                
+                # E2E latency starts from time of frame-generation (+ offset)
+                packet_gen_time = (self.pcap_seq.frames[0] * (1 / \
+                              self.pcap_file.pcap_FPS)) + self.pcap_file.offset
+                E2E_lat = curr_time - packet_gen_time                    
+                self.head_of_queue_lat = ut.timestamp(E2E_lat)              
             else: 
                 self.head_of_queue_lat = ut.timestamp(0)
             return    
@@ -432,10 +428,6 @@ class PCAP_Buffer:
                   "packet latencies: 'RAN' or 'E2E'!")
             raise SystemExit
             
-        # except IndexError:
-        #     print(tti, self.pcap_seq.index)
-        #     print(self.pcap_seq.timestamps)
-        
 
     def get_I_packets_info(self):
         """        
@@ -591,142 +583,50 @@ class PCAP_Buffer:
         Discards packets until their latencies are within what's achievable.
         Note: the latency of the head will determine if packets are discarded
         or not, therefore, be sure to update it before.
-        
-        Updates the drop rate of the frame it belonged to.
-        Add something to control the PDR during the simulation maybe?
-                    
+                      
+      
         """
-        lat = self.head_of_queue_lat.total_seconds() 
-        while not self.is_empty and (lat > self.delay_threshold):
-            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # TODO: CHECK TTIs:
-            # 9300+ until 9507+ (UE0 - 4s)
-            # 25195+ until 26316+ (UE0 - 16s)
-            # 25030+ until 26655+ (UE3 - 16s)
-            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            
-            # if 9300 < tti < 9510:
-                # if self.ue == 0:
-                # self.delay_threshold:
-            #       print(self.ue, lat, self.delay_threshold)
-            # if tti > 9510: raise SystemExit
-            
-            # discard packet    
-            self.drop_packet()
-            
-            # update how delayed is the packet in front
-            self.update_head_of_queue_delay(tti, tti_duration)
         
+        curr_time = tti * tti_duration
+        index_late_packets = -1 
         
-        # old
-        """
-        if self.delay_type == 'RAN':
-            curr_time = tti * tti_duration
-            index_late_packets = -1 
-            
+        # Pure proportional fair does not drop any packets at BS
+        if self.scheduler == 'PF': return 
+        
+        # RAN packet latency based
+        elif self.delay_type == 'RAN':            
             for index, timestamp in enumerate(self.pcap_seq.timestamps):            
                 if curr_time - timestamp > self.delay_threshold: 
                     index_late_packets += 1                   
-                    
-            if index_late_packets >= 0:            
-                
-                index = index_late_packets + 1
-                del self.pcap_seq.index[:index]
-                del self.pcap_seq.frames[:index]
-                del self.pcap_seq.sizes[:index]
-                del self.pcap_seq.frametypes[:index]
-                del self.pcap_seq.timestamps[:index]
-                            
-                # Update bit tracker
-                self.bits_left = self.pcap_seq.sizes.copy()
-            
-            else: pass # print("No packets to drop")
-        # TODO
-        elif self.delay_type == 'E2E':
-            # if self.scheduler == 'PF': return
-            # else:
-            # curr_time = tti * tti_duration
-            # index_late_packets = -1                 
-            index_late_packets = []                 
-
+              
+        # E2E frame latency based 
+        elif self.delay_type == 'E2E':           
             for index, timestamp in enumerate(self.pcap_seq.timestamps):   
                 frame_gen_time = self.pcap_seq.frames[index] * (1 / \
-                    self.pcap_seq.pcap_file.pcap_FPS) + self.pcap_seq.pcap_file.offset
-
-                if abs(timestamp - frame_gen_time) > self.delay_threshold:
-                    # if tti > 10:   
-                    #     print(tti, "\n")  
-                    #     print(self.pcap_seq.frames)
-                    #     print(frame_gen_time)
-                    #     print(timestamp)
-                    #     raise SystemExit()
-                    # # print(abs(timestamp - frame_gen_time), self.delay_threshold)
-                      
-                    # # print(self.pcap_seq.frames[index], E2E_deadline, timestamp)
-                    # # raise SystemExit()
-                    # index_late_packets += 1 
-                    index_late_packets.append(index)
+                                     self.pcap_seq.pcap_file.pcap_FPS) + \
+                                         self.pcap_seq.pcap_file.offset
+                if curr_time - frame_gen_time > self.delay_threshold: 
+                    index_late_packets += 1                   
+                    
+        # Discard packets if necessary
+        if index_late_packets >= 0:            
             
-                # if tti > 428: 
-                        # raise SystemExit()
-            if index_late_packets != []:            
-                for i, index in enumerate(index_late_packets):
-                    if i == 0: 
-                    # index = index_late_packets + 1
-                        del self.pcap_seq.index[index]
-                        del self.pcap_seq.frames[index]
-                        del self.pcap_seq.sizes[index]
-                        del self.pcap_seq.frametypes[index]
-                        del self.pcap_seq.timestamps[index]    
-                    else: 
-                        del self.pcap_seq.index[index - i]
-                        del self.pcap_seq.frames[index - i]
-                        del self.pcap_seq.sizes[index - i]
-                        del self.pcap_seq.frametypes[index - i]
-                        del self.pcap_seq.timestamps[index - i]
-                    # del self.pcap_seq.index[0]
-                    # del self.pcap_seq.frames[0]
-                    # del self.pcap_seq.sizes[0]
-                    # del self.pcap_seq.frametypes[0]
-                    # del self.pcap_seq.timestamps[0]
-                
-                # Don't need this function, keep dropped at 0 and only put 
-                # successful to 1
-                # self.increment_dropped_packet_stats()
-                
-                # Update bit tracker
+            index = index_late_packets + 1
+            del self.pcap_seq.index[:index]
+            del self.pcap_seq.frames[:index]
+            del self.pcap_seq.sizes[:index]
+            del self.pcap_seq.frametypes[:index]
+            del self.pcap_seq.timestamps[:index]
+                        
+            # Update bit tracker
             self.bits_left = self.pcap_seq.sizes.copy()
-                
-            # else: pass # print("No packets to drop")
-        
+                    
         # Check if buffer is empty after update
         if self.pcap_seq.index == []:
             self.is_empty = True
-            # if index_late_packets >= 0:            
-                
-            #     index = index_late_packets + 1
-            #     del self.pcap_seq.index[:index]
-            #     del self.pcap_seq.frames[:index]
-            #     del self.pcap_seq.sizes[:index]
-            #     del self.pcap_seq.frametypes[:index]
-            #     del self.pcap_seq.timestamps[:index]
-                
-            #     # Don't need this function, keep dropped at 0 and only put 
-            #     # successful to 1
-            #     # self.increment_dropped_packet_stats()
-                
-            #     # Update bit tracker
-            #     self.bits_left = self.pcap_seq.sizes.copy()
-                
-            # else: pass # print("No packets to drop")
-            
-            # # Check if buffer is empty after update
-            # if self.pcap_seq.index == []:
-            #     self.is_empty = True
-                
-            # return
+          
         return
-        """
+        
         
     def update_queue_time(self, tti, tti_duration):
                 
@@ -734,31 +634,7 @@ class PCAP_Buffer:
         self.update_head_of_queue_delay(tti, tti_duration) # Delay=curr_tti - packet_timestamp!
         self.discard_late_packets(tti, tti_duration) #    
         self.get_I_packets_info()      
-    
-    
-    def get_timestamp(self, packet_idx):
-        
-        # TODO: Adjust for PCAP (if needed)
-        """
-        Returns the timestamp of a certain packet idx in the queue.
-        """
        
-        return 
-    
-    
-    def print_buffer(self, first_x_packets=5):
-        
-        """
-        TODO: Do for PCAP - if even needed
-        Prints some general information about the buffer, like its contents
-        """
-        
-    def print_frame_infos(self, periods=[0]):
-        """
-        TODO: Do for PCAP - if even needed
-        Prints some general information about the frames
-        """
-                     
                 
     def gen_transport_blocks(self, bits_left_in_TBs_total, tb_size, tti):
         """
@@ -806,14 +682,14 @@ class PCAP_Buffer:
                     packet_idx += 1     
                                     
             if curr_tb_size != 0:    
-                list_of_transport_blocks += [(curr_tb_size, 
-                                              self.pcap_seq.index[start_idx])]
+                list_of_transport_blocks += \
+                    [(curr_tb_size, self.pcap_seq.index[start_idx])]
                 start_idx = packet_idx
                                 
         return list_of_transport_blocks
 
     
-    def create_pdr_csv(self, file_name, file_folder):
+    def create_pdr_csv(self, file_name, file_path):
         """
         Call at the end of the simulation
         
@@ -824,14 +700,10 @@ class PCAP_Buffer:
         -------
         None.
 
-        """       
-         
-        output_save_path = file_folder 
-        output_file_name = file_name # f'{file_name}_PDR.csv'
+        """                
     
-        full_file_name = os.path.join(output_save_path, output_file_name)
-        
-        os.makedirs(output_save_path, exist_ok=True)
+        full_file_name = os.path.join(file_path, file_name)        
+        os.makedirs(file_path, exist_ok=True)
 
         # Add UE info to output file - create folder for all UE buffers   
         self.pcap_file.pcap_data.to_csv(full_file_name, encoding='utf-16-LE')

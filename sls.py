@@ -55,60 +55,6 @@ def pf_scheduler(avg_thrput, curr_expected_bitrate):
     return curr_expected_bitrate / avg_thrput
 
 
-def RAN_scheduler(curr_delay, delay_threshold):
-    """
-    Parameters
-    ----------
-    avg_thrput : weighted over many ttis
-    curr_expected_bitrate : bitrate estimated as achievable for the curr tti
-    lat : current delay of the packet at the head of the queue
-    delta : upper limit of packet loss rate 
-            (0: NO PACKET CAN BE LOST!, 1: who cares)
-            Note: it was made to differentiate between several QoS.
-            So, if all users have the same priority, there's no weight from
-            it, and can be considered a constant.
-
-    Returns
-    -------
-    Returns the priority for a given user computed with the Maximum-Largest
-    Weighted Delay First Scheduler.
-    """
-    
-    
-    priority = curr_delay
-    
-    return priority
-
-
-def E2E_scheduler(avg_thrput, curr_expected_bitrate, 
-                    curr_delay, delay_threshold, delta):
-    """
-    Parameters
-    ----------
-    avg_thrput : weighted over many ttis
-    curr_expected_bitrate : bitrate estimated as achievable for the curr tti
-    lat : current delay of the packet at the head of the queue
-    delta : upper limit of packet loss rate 
-            (0: NO PACKET CAN BE LOST!, 1: who cares)
-            Note: it was made to differentiate between several QoS.
-            So, if all users have the same priority, there's no weight from
-            it, and can be considered a constant.
-
-    Returns
-    -------
-    Returns the priority for a given user computed with the Maximum-Largest
-    Weighted Delay First Scheduler.
-    """
-    
-    # Is it natural log or log10?
-    a = -np.log(delta) / delay_threshold
-    
-    priority = a * curr_delay * (pf_scheduler(avg_thrput, 
-                                             curr_expected_bitrate))
-    
-    return priority
-
-
 def MLWDF_scheduler(avg_thrput, curr_expected_bitrate, 
                     curr_delay, delay_threshold, delta):
     """
