@@ -59,7 +59,7 @@ class Simulation_parameters:
         # TTIs to simulate -> min. 1000/TTIs_per_batch size
         # Has to be 'int', if multiplying with float -> int/float type error
         # Has to be multiple of 1000, as coeffs are always loaded for 1000!!!
-        self.sim_TTIs = int(4000 * 4)
+        self.sim_TTIs = int(4000 * 16)
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -174,11 +174,10 @@ class Simulation_parameters:
         self.scheduler = 'EDD'
         
         # Delay type - ['RAN', 'E2E']
-        # TODO: For PF there is special implementation!!!
         # Use M-LWDF/EDD/Frametype with RAN
         # Use M-LWDF/EDD/Frametype with E2E
         self.delay_type = 'RAN'
-        # self.delay_type = 'E2E' 
+        self.delay_type = 'E2E' 
 
         # Scheduler parameters
         self.scheduler_param_c = 10
