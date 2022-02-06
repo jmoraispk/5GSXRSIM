@@ -505,7 +505,7 @@ class PCAP_Buffer:
         
         # time of arrival at UE will be current TTI plus time to send 
         time_to_send = time_to_send.total_seconds() 
-        arrival_time = tti * tti_dur_in_sec # + time_to_send        
+        arrival_time = tti * tti_dur_in_sec + time_to_send        
                 
         for idx in idx_success:
             self.pcap_file.pcap_data["arr_time"][idx] = float(arrival_time)
