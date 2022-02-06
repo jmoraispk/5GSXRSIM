@@ -185,11 +185,11 @@ for param in sim_params:
     output_stats_folder = '' #SPEED7' + '\\'
     if sp.use_pcap: 
         # if sp.delay_type == 'E2E':
-        output_str = f'{seed_str}_' + \
-                     f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
+        output_str = f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
                      f'LEN-{sim_dur}s_{sp.scheduler}_' + \
-                     f'PCAP-{sp.use_pcap}_' + \
                      f'Offset-{sp.space_UE_frames}'
+                     # f'{seed_str}_' + \
+                     # f'PCAP-{sp.use_pcap}_' + \
         # elif sp.delay_type == 'RAN':
         #     output_str = f'{seed_str}_' + \
         #                  f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
@@ -835,6 +835,7 @@ for param in sim_params:
                               f'{sim_dur}s_UE{ue}.csv'
             pcap_output_folder = pcap_parameters.split("\\")[2]
             pcap_output_path = sp.stats_dir + "\\PCAP\\" + output_str + \
+                               f"\\{seed_str}\\" + \
                                f'\\{pcap_output_folder}\\{trace_parameters}'
                 
             buffers[ue].create_pdr_csv(pcap_output_str, pcap_output_path)
@@ -856,7 +857,7 @@ for param in sim_params:
         if include_timestamp:
             sp.stats_path = sp.stats_dir + output_str + f"_{time_sim_end}" + "\\"
         else:
-            sp.stats_path = sp.stats_dir + output_str + "\\"
+            sp.stats_path = sp.stats_dir + output_str + f"\\{seed_str}\\"
                 
         # Write which stats file was produced last, for practical reasons, 
         # e.g.in case we want to analyse plots of it right away.
@@ -920,7 +921,7 @@ for param in sim_params:
         # ut.save_var_pickle(active_UEs, sp.stats_path, globals_dict)
         ut.save_var_pickle(ue_priority, sp.stats_path, globals_dict)
 
-        # ut.save_var_pickle(n_prbs_unused, sp.stats_path, globals_dict)
+        ut.save_var_pickle(n_prbs_unused, sp.stats_path, globals_dict)
 
         # ut.save_var_pickle(su_mimo_bitrates, sp.stats_path, globals_dict)
 
