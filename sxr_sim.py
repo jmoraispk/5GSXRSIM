@@ -214,7 +214,7 @@ for param in sim_params:
     # print('Initialising variables...') 
     # print('Using the', sp.scheduler, 'scheduler')    
     # print(f'\nOutput folder: \n{sp.stats_dir}')
-    print(f'\nSimulating: {output_str}')
+    print(f'\nSimulating: {output_str} - {seed_str}')
     # -------------------------------- START --------------------------------
       
     # Setup Application Traffic Model
