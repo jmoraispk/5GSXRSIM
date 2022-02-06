@@ -37,4 +37,3 @@ test.py
 *.mp4
 __init__.py
 dot_to_png.py
-simulation_parameters.py
