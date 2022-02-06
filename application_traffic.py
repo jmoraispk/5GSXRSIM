@@ -26,8 +26,6 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 
 """
-TODO Zheng
-      
   SEE BELOW!!!:    
   - Should the buffer have a function to sort the packets,
     so that those containing I-frames will be at the front, and the scheduler 
@@ -55,8 +53,7 @@ class PCAP_File:
         # tic = time.perf_counter()
 
         # Save pcap trace in pandas dataframe
-        # TODO: Check encoding type (for queue_sim output!!!)
-        self.pcap_data = pcap_data # pd.read_csv(pcap_trace, encoding='utf-16-LE')
+        self.pcap_data = pcap_data 
         
         # For adjusting timestamps for different users (spacing)
         self.ue = ue
@@ -68,7 +65,7 @@ class PCAP_File:
         self.pcap_GoP = 0
         self.pcap_bitrate = 0
         
-        # TODO: Adjust total packets based on total TTIs
+        # Adjust total packets based on total TTIs simulated
         self.total_packets = 0
         self.sim_dur = sim_dur
         self.tti_duration = tti_duration
@@ -80,7 +77,7 @@ class PCAP_File:
         # Adjust all timestamps 
         self.apply_burstiness(burst_param, burst_model)
         
-        # TODO: Modifty with timeshift for different UEs
+        # Use to modify synchronization of streams between different UEs
         self.ue = ue 
         self.n_ues = n_ues
         
@@ -97,31 +94,29 @@ class PCAP_File:
 
     def adjust_pcap_file(self):
         """        
-        TODO: Some might not be needed with premodified traces (from queue_sim)
+        (Some might not be needed with premodified traces (from queue_sim))
         1. Adjust the types of dataframe to save some memory and execution time
-
-        2. Adjust each packet's timestamp, so for packet 0 time is 0 seconds
-           Add index column for easier indexing and also for saving packet 
-           information later with Frame_info()
            
-        3. Adjust packet sizes to be in bits instead of bytes
+        2. Adjust packet sizes to be in bits instead of bytes
         
-        4. Calculate and save parameters (FPS, bitrate, etc.)
+        3. Calculate and save parameters (FPS, bitrate, etc.)
         
-        5. Cut file until total_ttis
+        4. Cut file until total_ttis
         
         """
         
         # Add index column for easier tracking and saving with Frame_info()  
         self.pcap_data["index"] = self.pcap_data.index
-        # self.pcap_data["index"] += 1 #TODO: Do we want this for anything???   
         
         # Cut file to match simulation duration / total_ttis
         self.pcap_data = self.pcap_data[self.pcap_data['time'] < \
                                         (self.sim_dur * 1.0)]    
+        self.pcap_FPS = (self.pcap_data["frame"].iloc[-1] + 1) / self.sim_dur
+        self.pcap_data = self.pcap_data[self.pcap_data['time'] < \
+                                        ((self.sim_dur * 1.0) - 0.5)]  
         # Change packet times
         """
-        # TODO: done using queue_sim
+        # done using queue_sim
         start_time = self.pcap_data['time'][0]
         self.pcap_data['time'] = self.pcap_data['time'].apply(lambda x: x - 
                                                               start_time)
@@ -130,12 +125,10 @@ class PCAP_File:
         """
         
         # Calculate FPS - Bitrate - GoP
-        self.pcap_FPS = (self.pcap_data["frame"].iloc[-1] + 1) / self.sim_dur
         # self.pcap_GoP = self.pcap_data.loc[(self.pcap_data["frametype"] == True)
         #                     & (self.pcap_data["frame"] > 1)].iloc[0]["frame"]
         
         # Between 0 and 1 -> 0 all the same, 1 max timeshift
-        # TODO: How much timeshift between users is "optimal"???
         param = self.space_UE_frames 
         self.offset = self.ue * (1 / (self.pcap_FPS * self.n_ues)) * param
         self.pcap_data["time"] += self.offset
@@ -146,7 +139,7 @@ class PCAP_File:
                     
         self.pcap_bitrate = sum(self.pcap_data["size"]) / self.sim_dur
         
-        # TODO: Cut file/packets based on timestamps until total_ttis
+        # Cut file/packets based on timestamps until total_ttis
         self.total_packets = self.pcap_data["index"].iloc[-1]
         
         # Add column to collect PDR stats and arrival time at UE
@@ -186,7 +179,6 @@ class PCAP_File:
             raise SystemExit
         elif burstiness_par == 1:
             # a prevention for division by zero  
-            # TODO: is it necessary here??
             burstiness_par = 1 - 1e-9    
         
         if burstiness_model == 'Queue':
@@ -275,17 +267,9 @@ class PCAP_Packet_Sequence:
         self.frametypes = types 
         
         # Take time stamp of generation? or RTP timestamp?
-        self.timestamps = timestamps # timestamp of creation/arrival
-               
-        # Do we need those two? (would have to be updated every queue update!)
-        # length of the sequence -> nr. of packets in this sequence
-        # self.length = len(frames) 
-        # total size of sequence in bits/bytes 
-        # self.total_size = sum(self.sizes)        
-        
-        # self.head_of_queue_lat => calc in buffer! 
-        # TODO: Timestamp = LastTimestamp + Inverval(ms) * 90000 / 1000
-        
+        self.timestamps = timestamps # timestamp of creation/arrival        
+           
+                
     def print_pcap_info(self):
         print(f"The current packet sequence consists of" 
               f"{self.total_size} packets with head of queue delay of" 
@@ -329,8 +313,6 @@ class PCAP_Buffer:
             - update_queue_delay() (should be safe as well...)
         """
 
-        # TODO: Check if used attributes can continue to be used or need to be modified
-        
         self.ue = ue
         
         # Track latency at the head of the queue
@@ -344,23 +326,13 @@ class PCAP_Buffer:
         # To know which packet sequence the buffer will be updated with.
         self.pcap_seq = pcap_packet_sequence
         self.pcap_file = self.pcap_seq.pcap_file # copy for good measure
-            
-        # Period Index - used to know how many periods have passed
-        self.periods_past = 0 # TODO: is this needed???
-        # Shortcut for the number of packets the buffer is currenty holding!
-                
+                            
         # Packet size tracker - tracks the bits left to send in each packet
         # Equal to packet sizes!!! -> use for creating TBs/Removing bits
         self.bits_left = [] 
                 
-        # # Create list to store packet transmissions statistics
-        # self.pdr_info = np.zeros(self.pcap_file.total_packets)
-        # self.init_pdr_info()
-                
-        # self.create_pdr_csv(file_name, file_folder)
                 
         """
-        TODO:
             XX Number of packets containing I-frames in current buffer 
             Or
             Check packet(s) at head of buffer for frame type 
@@ -392,7 +364,6 @@ class PCAP_Buffer:
         """
         Update the back of the queue (adds packets).
         It also adds packets that arrive exactly at the same time as the TTI. 
-        TODO: Adapt function to work with pcap file (or create new one): 
             This function is called before every TTI simulation, the very first
             time it will be "passed", since buffers have been initialized with
             packets arriving in the first TTI duration, after that, new packets
@@ -428,26 +399,30 @@ class PCAP_Buffer:
         """ 
         Update the latency of the first packet in the buffer
         
-        TODO: Update method of calculating remaining RAN latency budget
+        Updated method of calculating remaining RAN latency budget
         """
-        self.delay_type # TODO
+        self.delay_type 
         curr_time = (tti + 1) * tti_duration 
         if self.delay_type == 'RAN':
-        # try:
             if self.pcap_seq.index != []: # Check if buffer is empty
-                lat = curr_time - self.pcap_seq.timestamps[0]
-                self.head_of_queue_lat = ut.timestamp(lat)                
+                RAN_lat = curr_time - self.pcap_seq.timestamps[0]
+                self.head_of_queue_lat = ut.timestamp(RAN_lat)                
             else: 
                 self.head_of_queue_lat = ut.timestamp(0)
             return    
         
         elif self.delay_type == 'E2E':
             if self.pcap_seq.index != []: # Check if buffer is empty
-                lat = curr_time - self.pcap_file.offset - \
-                      (self.pcap_seq.frames[0] * (1 / self.pcap_file.pcap_FPS))
-                      # - self.pcap_file.offset - \
-                # if lat < 0: print(tti, lat)
-                self.head_of_queue_lat = ut.timestamp(lat)        
+                # Calculate already experienced E2E delay of head of queue
+                # E2E latency starts from time of frame-generation + offset
+                packet_gen_time = self.pcap_seq.frames[0] * (1 / \
+                              self.pcap_file.pcap_FPS) + self.pcap_file.offset
+                E2E_lat = self.pcap_seq.timestamps[0] - packet_gen_time                    
+                self.head_of_queue_lat = ut.timestamp(E2E_lat)        
+                # if 100 < tti < 200:
+                #     print(self.ue, E2E_lat)
+                # if tti > 200: raise SystemExit
+                
             else: 
                 self.head_of_queue_lat = ut.timestamp(0)
             return    
@@ -486,26 +461,12 @@ class PCAP_Buffer:
         
         return
     
-    # TODO: not needed??? 
+    
+    # not needed??? 
+    """
     # (Set default as unsuccessful / the other way around)
     # -> If using "dumb" PF - all packets will arrive -> add. info in arr time
     def increment_dropped_packet_stats(self, tti, tti_dur_in_sec, idx_dropped):
-        """
-        
-        Parameters
-        ----------
-        tti : TYPE
-            DESCRIPTION.
-        tti_dur_in_sec : TYPE
-            DESCRIPTION.
-        idx_dropped : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
-        """
         
         # time of arrival at UE will be current TTI plus time to send 
 
@@ -513,17 +474,18 @@ class PCAP_Buffer:
         arrival_time = arrival_tti * tti_dur_in_sec        
         
         for idx in idx_dropped:
-            self.pcap_file.pcap_data["arr_time"][idx] = arrival_time
-            self.pcap_file.pcap_data["success"][idx] = True
+            self.pcap_file.pcap_data["arr_time"][idx] = 0.0
+            self.pcap_file.pcap_data["success"][idx] = False
         
         return
-    
+    """
     
     def increment_success_packet_stats(self, tti, tti_dur_in_sec, 
                                        time_to_send, idx_success):
-        """        
-        Called when packets are fully transmitted from the buffer
-        Add index of successful packets to self.packet_drop_info
+        """
+        Save the arrival time of packets at the UE after successful 
+        transmissions -> Called after removing bits from Buffer
+
         Parameters
         ----------
         tti : TYPE
@@ -543,11 +505,8 @@ class PCAP_Buffer:
         
         # time of arrival at UE will be current TTI plus time to send 
         time_to_send = time_to_send.total_seconds() 
-        arrival_time = tti * tti_dur_in_sec + time_to_send        
-        
-        # print("arrival", arrival_time)
-        # raise SystemExit()
-        
+        arrival_time = tti * tti_dur_in_sec # + time_to_send        
+                
         for idx in idx_success:
             self.pcap_file.pcap_data["arr_time"][idx] = float(arrival_time)
             self.pcap_file.pcap_data["success"][idx] = True
@@ -600,8 +559,6 @@ class PCAP_Buffer:
             del self.pcap_seq.sizes[idx_empty[0]:idx_empty[-1] + 1]
             del self.pcap_seq.frametypes[idx_empty[0]:idx_empty[-1] + 1]
             del self.pcap_seq.timestamps[idx_empty[0]:idx_empty[-1] + 1]
-            # TODO
-            # print(idx_success)
             
             self.increment_success_packet_stats(tti, tti_dur_in_sec, 
                                                 time_to_send, idx_success)
@@ -615,19 +572,53 @@ class PCAP_Buffer:
             
         return
                 
-         
+    def drop_packet(self):
+        
+        del self.pcap_seq.index[0]
+        del self.pcap_seq.frames[0]
+        del self.pcap_seq.sizes[0]
+        del self.pcap_seq.frametypes[0]
+        del self.pcap_seq.timestamps[0]
+                    
+        # Update bit tracker
+        self.bits_left = self.pcap_seq.sizes.copy()
+    
+        if self.pcap_seq.index == []:
+            self.is_empty = True
+    
     def discard_late_packets(self, tti, tti_duration):
         """
         Discards packets until their latencies are within what's achievable.
         Note: the latency of the head will determine if packets are discarded
         or not, therefore, be sure to update it before.
-        TODO: For PCAP
         
         Updates the drop rate of the frame it belonged to.
         Add something to control the PDR during the simulation maybe?
-        
-        # TODO: Increment dropped packets stats!!! 
+                    
+        """
+        lat = self.head_of_queue_lat.total_seconds() 
+        while not self.is_empty and (lat > self.delay_threshold):
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # TODO: CHECK TTIs:
+            # 9300+ until 9507+ (UE0 - 4s)
+            # 25195+ until 26316+ (UE0 - 16s)
+            # 25030+ until 26655+ (UE3 - 16s)
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             
+            # if 9300 < tti < 9510:
+                # if self.ue == 0:
+                # self.delay_threshold:
+            #       print(self.ue, lat, self.delay_threshold)
+            # if tti > 9510: raise SystemExit
+            
+            # discard packet    
+            self.drop_packet()
+            
+            # update how delayed is the packet in front
+            self.update_head_of_queue_delay(tti, tti_duration)
+        
+        
+        # old
         """
         if self.delay_type == 'RAN':
             curr_time = tti * tti_duration
@@ -635,8 +626,8 @@ class PCAP_Buffer:
             
             for index, timestamp in enumerate(self.pcap_seq.timestamps):            
                 if curr_time - timestamp > self.delay_threshold: 
-                    index_late_packets += 1
-            
+                    index_late_packets += 1                   
+                    
             if index_late_packets >= 0:            
                 
                 index = index_late_packets + 1
@@ -645,74 +636,99 @@ class PCAP_Buffer:
                 del self.pcap_seq.sizes[:index]
                 del self.pcap_seq.frametypes[:index]
                 del self.pcap_seq.timestamps[:index]
+                            
+                # Update bit tracker
+                self.bits_left = self.pcap_seq.sizes.copy()
+            
+            else: pass # print("No packets to drop")
+        # TODO
+        elif self.delay_type == 'E2E':
+            # if self.scheduler == 'PF': return
+            # else:
+            # curr_time = tti * tti_duration
+            # index_late_packets = -1                 
+            index_late_packets = []                 
+
+            for index, timestamp in enumerate(self.pcap_seq.timestamps):   
+                frame_gen_time = self.pcap_seq.frames[index] * (1 / \
+                    self.pcap_seq.pcap_file.pcap_FPS) + self.pcap_seq.pcap_file.offset
+
+                if abs(timestamp - frame_gen_time) > self.delay_threshold:
+                    # if tti > 10:   
+                    #     print(tti, "\n")  
+                    #     print(self.pcap_seq.frames)
+                    #     print(frame_gen_time)
+                    #     print(timestamp)
+                    #     raise SystemExit()
+                    # # print(abs(timestamp - frame_gen_time), self.delay_threshold)
+                      
+                    # # print(self.pcap_seq.frames[index], E2E_deadline, timestamp)
+                    # # raise SystemExit()
+                    # index_late_packets += 1 
+                    index_late_packets.append(index)
+            
+                # if tti > 428: 
+                        # raise SystemExit()
+            if index_late_packets != []:            
+                for i, index in enumerate(index_late_packets):
+                    if i == 0: 
+                    # index = index_late_packets + 1
+                        del self.pcap_seq.index[index]
+                        del self.pcap_seq.frames[index]
+                        del self.pcap_seq.sizes[index]
+                        del self.pcap_seq.frametypes[index]
+                        del self.pcap_seq.timestamps[index]    
+                    else: 
+                        del self.pcap_seq.index[index - i]
+                        del self.pcap_seq.frames[index - i]
+                        del self.pcap_seq.sizes[index - i]
+                        del self.pcap_seq.frametypes[index - i]
+                        del self.pcap_seq.timestamps[index - i]
+                    # del self.pcap_seq.index[0]
+                    # del self.pcap_seq.frames[0]
+                    # del self.pcap_seq.sizes[0]
+                    # del self.pcap_seq.frametypes[0]
+                    # del self.pcap_seq.timestamps[0]
                 
                 # Don't need this function, keep dropped at 0 and only put 
                 # successful to 1
                 # self.increment_dropped_packet_stats()
                 
                 # Update bit tracker
-                self.bits_left = self.pcap_seq.sizes.copy()
+            self.bits_left = self.pcap_seq.sizes.copy()
                 
-            else: pass # print("No packets to drop")
-            
-            # Check if buffer is empty after update
-            if self.pcap_seq.index == []:
-                self.is_empty = True
-                
-            return        
-    
-        # TODO
-        elif self.delay_type == 'E2E':
-            # if self.scheduler == 'PF': return
-            # else:
-                curr_time = tti * tti_duration
-                index_late_packets = -1                 
-                
-                for index, timestamp in enumerate(self.pcap_seq.timestamps):   
-                    frame_gen_time = self.pcap_seq.frames[index] * (1/30)
-                    
-                    if abs(timestamp - frame_gen_time) > self.delay_threshold:
-                        # if tti > 10:   
-                        #     print(tti, "\n")  
-                        #     print(self.pcap_seq.frames)
-                        #     print(frame_gen_time)
-                        #     print(timestamp)
-                        #     raise SystemExit()
-                        # # print(abs(timestamp - frame_gen_time), self.delay_threshold)
-                          
-                        # # print(self.pcap_seq.frames[index], E2E_deadline, timestamp)
-                        # # raise SystemExit()
-                        index_late_packets += 1
-                
-                # if tti > 428: 
-                        # raise SystemExit()
-                if index_late_packets >= 0:            
-                    
-                    index = index_late_packets + 1
-                    del self.pcap_seq.index[:index]
-                    del self.pcap_seq.frames[:index]
-                    del self.pcap_seq.sizes[:index]
-                    del self.pcap_seq.frametypes[:index]
-                    del self.pcap_seq.timestamps[:index]
-                    
-                    # Don't need this function, keep dropped at 0 and only put 
-                    # successful to 1
-                    # self.increment_dropped_packet_stats()
-                    
-                    # Update bit tracker
-                    self.bits_left = self.pcap_seq.sizes.copy()
-                    
-                else: pass # print("No packets to drop")
-                
-                # Check if buffer is empty after update
-                if self.pcap_seq.index == []:
-                    self.is_empty = True
-                    
-                return
+            # else: pass # print("No packets to drop")
         
+        # Check if buffer is empty after update
+        if self.pcap_seq.index == []:
+            self.is_empty = True
+            # if index_late_packets >= 0:            
+                
+            #     index = index_late_packets + 1
+            #     del self.pcap_seq.index[:index]
+            #     del self.pcap_seq.frames[:index]
+            #     del self.pcap_seq.sizes[:index]
+            #     del self.pcap_seq.frametypes[:index]
+            #     del self.pcap_seq.timestamps[:index]
+                
+            #     # Don't need this function, keep dropped at 0 and only put 
+            #     # successful to 1
+            #     # self.increment_dropped_packet_stats()
+                
+            #     # Update bit tracker
+            #     self.bits_left = self.pcap_seq.sizes.copy()
+                
+            # else: pass # print("No packets to drop")
+            
+            # # Check if buffer is empty after update
+            # if self.pcap_seq.index == []:
+            #     self.is_empty = True
+                
+            # return
+        return
+        """
         
     def update_queue_time(self, tti, tti_duration):
-        # TODO: These functions need to be modified or written new for PCAP!!!
                 
         self.add_new_packets(tti) # Add packets depending on TTI time
         self.update_head_of_queue_delay(tti, tti_duration) # Delay=curr_tti - packet_timestamp!
@@ -722,7 +738,7 @@ class PCAP_Buffer:
     
     def get_timestamp(self, packet_idx):
         
-        # TODO: Adjust for PCAP
+        # TODO: Adjust for PCAP (if needed)
         """
         Returns the timestamp of a certain packet idx in the queue.
         """
@@ -731,54 +747,18 @@ class PCAP_Buffer:
     
     
     def print_buffer(self, first_x_packets=5):
+        
         """
+        TODO: Do for PCAP - if even needed
         Prints some general information about the buffer, like its contents
         """
         
-        print(f"Cursor A index: {self.cursor_a_idx}, "
-              f"Cursor B index: {self.cursor_b_idx}. "
-              f"Diff: {self.cursor_diff()}")
-        # first_x_packets = self.cursor_diff()
-        print(f"Have past {self.periods_past} periods.", end='')
-        
-        print(f"The buffer is "
-              f"{'empty' if self.is_empty else 'NOT empty'}")
-        if not self.is_empty:
-            print(f"{self.count_non_empty_packets()} "
-                  f"packets in the buffer with bits still to send.")
-        
-            print(f"The head has {self.head_of_queue_lat} of delay.")
-            
-            print(f"\nThe first {first_x_packets} packets:")
-            print("Index   Bits_Left_to_send    Frame    Arrival")
-            
-            
-            for i in range(min(first_x_packets, self.cursor_diff())):
-                packet_idx = self.cursor_a_idx + i
-                if packet_idx >= self.buffer_size:
-                    packet_idx -= self.buffer_size
-                print(
-                    f"{packet_idx:4}"
-                    f"{self.bits_left[packet_idx]:16}"
-                    f"{self.parent_packet_seq.parent_frames[packet_idx]:13}"
-                    f"{'':6}"
-                    f"{self.get_timestamp(packet_idx)}")
-   
-    
     def print_frame_infos(self, periods=[0]):
-        
-        pass 
-        for period in periods:
-            print(f"Period {period}.")
-            frame_idx = 0
-            for frame_info in self.frame_infos[period]:
-                print(f"{'':4} Frame {frame_idx}:")
-                print(f"{'':8} Successful packets: "
-                      f"{frame_info.successful_packets}")
-                print(f"{'':8} Dropped packets: {frame_info.dropped_packets}")
-                print(f"{'':8} Avg. Latency: {frame_info.avg_lat}")
-                frame_idx += 1
-                
+        """
+        TODO: Do for PCAP - if even needed
+        Prints some general information about the frames
+        """
+                     
                 
     def gen_transport_blocks(self, bits_left_in_TBs_total, tb_size, tti):
         """
@@ -788,7 +768,6 @@ class PCAP_Buffer:
         carry.
         The index is the packet start index of that transport block.
         
-        TODO: For PCAP
         """
         list_of_transport_blocks = []
                 
@@ -854,7 +833,7 @@ class PCAP_Buffer:
         
         os.makedirs(output_save_path, exist_ok=True)
 
-        # TODO: Add UE info to output file - create folder for all UE buffers   
+        # Add UE info to output file - create folder for all UE buffers   
         self.pcap_file.pcap_data.to_csv(full_file_name, encoding='utf-16-LE')
         # np.savetxt(full_file_name, self.pdr_info, delimiter=",") #, fmt='%s')
         # if self.ue == 0: 
