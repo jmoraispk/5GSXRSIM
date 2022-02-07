@@ -47,51 +47,115 @@ sim_trace = pd.read_csv(input_trace, encoding='utf-16-LE')
 # Files and folders of simulation output
 stats_path = os.getcwd() + "\\Stats\\Queue_Sim\\PCAP\\"
 
-sim_parameters = 'SEED1_omni_BW-150_RAN-LAT-60_LEN-16.0s_M-LWDF_PCAP-True_Offset-1.0'
-stats_folder = stats_path + sim_parameters + "\\" + queue_parameters + "\\"
+mean_pdr_RAN = []
+mean_pdr_E2E = []
+mean_pdr_Total = []
 
-
-n_ues = 4
-lat_E2E = 100 / 1000 # ms
-
-output_trace = [0] * n_ues 
-for ue in range(n_ues):
-    output_trace_ue = stats_folder + f"{trace_name} - 16.0s_UE{ue}.csv"
-    output_trace[ue] = pd.read_csv(output_trace_ue, encoding='utf-16-LE',
-                                   index_col=0)
-
-# print("Queue:", queue_parameters)
-print("SXR:", sim_parameters)
-
-pdr_RAN = []
-pdr_E2E = []
-pdr_Total = []
-
-for ue in range (n_ues):
+seeds = range(1,2)
+for seed in seeds:
+    sim_parameters = 'BW-150_E2E-LAT-100_LEN-16.0s_EDD_Offset-1.0'
+    # sim_parameters = f'SEED{seed}_omni_BW-150_E2E-LAT-100_LEN-16.0s_M-LWDF_PCAP-True_Offset-1.0'
+    stats_folder = stats_path + sim_parameters + f"\\SEED{seed}_omni\\" + \
+                   queue_parameters + f"\\{trace_name}\\"
+    sim_duration = sim_parameters.split("LEN-")[1].split('s')[0] 
+    n_ues = 4 
+    lat_E2E = 100 / 1000 # ms # DO NOT FORGET TO CHECK THIS VALUE!!!!!
     
-    ue_offset = ue * (1 / (30 * 4))
-    # Do not forget to take into account the offset for different users!!! 
-    dropped_RAN = len(output_trace[ue][(output_trace[ue]["arr_time"] == 0)])
-
-    dropped_E2E = len(output_trace[ue][(
-        output_trace[ue]["arr_time"] > (output_trace[ue]["frame"]*(1/30) + \
-                                        lat_E2E + ue_offset))]) 
-
-    dropped_total = dropped_RAN + dropped_E2E
-    pdr_RAN.append(round(dropped_RAN / len(output_trace[ue]) * 100, 3))  
-    pdr_E2E.append(round(dropped_E2E / len(output_trace[ue]) * 100, 3))  
-    pdr_Total.append(round(dropped_total / len(output_trace[ue]) * 100, 3))  
-
-# pdr_ues = [100 * i for i in pdr_ues]
-
-print(f"\nE2E latency budget: {int(lat_E2E*1000)}ms")
-print(f"Mean RAN PDR: {round(np.mean(pdr_RAN), 2)}%")
-print(f"Mean E2E PDR: {round(np.mean(pdr_E2E), 2)}%")
-print(f"Total PDR per UE: {pdr_Total}%")    
-print(f"Total Mean PDR: {round(np.mean(pdr_Total), 2)}")
+    output_trace = [0] * n_ues 
+    for ue in range(n_ues):
+        output_trace_ue = stats_folder + f"{trace_name} - {sim_duration}s_UE{ue}.csv"
+        output_trace[ue] = pd.read_csv(output_trace_ue, encoding='utf-16-LE',
+                                       index_col=0)
+    
+    # print("Queue:", queue_parameters)
+    print("SXR:", sim_parameters)
+    
+    pdr_RAN = []
+    pdr_E2E = []
+    pdr_Total = []
+    offset = True # sim_parameters
+    for ue in range (n_ues):
+        # Cut off packets until end of simulation time 
+        # output_trace[ue] = output_trace[ue][output_trace[ue]["arr_time"] <= 16]
+        
+        # Do not forget to take into account the offset for different users!!! 
+        if offset: 
+            ue_offset = ue * (1 / (30 * 4))
+        
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # TODO!!! - Sort PDR by I-frames and P-frames!!!!!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                
+        dropped_RAN = len(output_trace[ue][(output_trace[ue]["arr_time"] == 0)])
+        
+        # output_trace[ue] = output_trace[ue][output_trace[ue]["success"] == True]
+        # E2E_delay = output_trace[ue]["arr_time"] - ue_offset - \
+        #                 output_trace[ue]["frame"]*(1/30)
+        # dropped_E2E = E2E_delay
+        # if ue >= 3: raise SystemExit
+        
+        dropped_E2E = len(output_trace[ue][(
+            output_trace[ue]["arr_time"] > (output_trace[ue]["frame"]*(1/30) + \
+                                            lat_E2E + ue_offset))]) 
+        dropped_total = dropped_RAN + dropped_E2E
+        
+        pdr_RAN.append(round(dropped_RAN / len(output_trace[ue]) * 100, 3))  
+        pdr_E2E.append(round(dropped_E2E / len(output_trace[ue]) * 100, 3))  
+        pdr_Total.append(round(dropped_total / len(output_trace[ue]) * 100, 3))  
+                
+    # pdr_ues = [100 * i for i in pdr_ues]
+    
+    mean_seed_pdr_RAN = round(np.mean(pdr_RAN), 3)
+    mean_seed_pdr_E2E = round(np.mean(pdr_E2E), 3)
+    mean_seed_pdr_Total = round(np.mean(pdr_Total), 3)
+    mean_pdr_RAN.append(mean_seed_pdr_RAN)
+    mean_pdr_E2E.append(mean_seed_pdr_E2E)
+    mean_pdr_Total.append(mean_seed_pdr_Total)
+    
+    
+    print(f"E2E latency budget: {int(lat_E2E*1000)}ms\n")
+    
+    print(f"Total RAN PDR per UE: {pdr_RAN}%")    
+    print(f"Total E2E PDR per UE: {pdr_Total}%")    
+    
+    print(f"Mean RAN PDR:    {mean_seed_pdr_RAN}%")
+    print(f"Mean E2E PDR:    {mean_seed_pdr_E2E}%")
+    print(f"Mean Total PDR:  {mean_seed_pdr_Total}")
 
     
+# Calculate confidence intervals! 
 
+z_value = 1.96 # 95% Confidence interval
+
+n_size = len(seeds)
+total_mean_RAN = np.mean(mean_pdr_RAN)
+total_mean_E2E = np.mean(mean_pdr_E2E)
+total_mean_Total = np.mean(mean_pdr_Total)
+
+total_std_RAN = np.std(mean_pdr_RAN)
+total_std_E2E = np.std(mean_pdr_E2E)
+total_std_Total = np.std(mean_pdr_Total)
+
+deviation_RAN = z_value * (total_std_RAN / n_size) 
+deviation_E2E = z_value * (total_std_E2E / n_size) 
+deviation_Total = z_value * (total_std_Total / n_size) 
+
+conf_int_RAN = [total_mean_RAN - deviation_RAN, 
+                total_mean_RAN,
+                total_mean_RAN + deviation_RAN]
+
+conf_int_E2E = [total_mean_E2E - deviation_E2E, 
+                total_mean_E2E,
+                total_mean_E2E + deviation_E2E]
+
+conf_int_Total = [total_mean_Total - deviation_Total, 
+                  total_mean_Total,
+                  total_mean_Total + deviation_Total]
+
+print(f"\n95% Confidence Intervals for sample size {n_size}:")
+print(f"RAN:   {conf_int_RAN}")
+print(f"E2E:   {conf_int_E2E}")
+print(f"Total: {conf_int_Total}")
 
 # %% Adjust output files 
 # Mimicking APP on UE -> packets arriving too late will be dropped 

@@ -706,7 +706,8 @@ class PCAP_Buffer:
         os.makedirs(file_path, exist_ok=True)
 
         # Add UE info to output file - create folder for all UE buffers   
-        self.pcap_file.pcap_data.to_csv(full_file_name, encoding='utf-16-LE')
+        self.pcap_file.pcap_data.to_csv(full_file_name, encoding= 'utf-8') 
+                                        # 'utf-16-LE')
         # np.savetxt(full_file_name, self.pdr_info, delimiter=",") #, fmt='%s')
         # if self.ue == 0: 
         # print("Saved csv: ", full_file_name)
