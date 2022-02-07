@@ -47,19 +47,27 @@ sim_trace = pd.read_csv(input_trace, encoding='utf-16-LE')
 # Files and folders of simulation output
 stats_path = os.getcwd() + "\\Stats\\Queue_Sim\\PCAP\\"
 
+sim_parameters = 'BW-125_RAN-LAT-70_LEN-16.0s_EDD_Offset-1.0'
+
+seeds = range(1,21)
+n_ues = 4 
+
+print("SXR:", sim_parameters)
+print("Seeds:", seeds)
+
+lat_E2E = 100 / 1000 # ms # DO NOT FORGET TO CHECK THIS VALUE!!!!!
+print(f"E2E latency budget: {int(lat_E2E*1000)}ms\n")
+
+    
 mean_pdr_RAN = []
 mean_pdr_E2E = []
 mean_pdr_Total = []
 
-seeds = range(1,2)
 for seed in seeds:
-    sim_parameters = 'BW-150_E2E-LAT-100_LEN-16.0s_EDD_Offset-1.0'
-    # sim_parameters = f'SEED{seed}_omni_BW-150_E2E-LAT-100_LEN-16.0s_M-LWDF_PCAP-True_Offset-1.0'
+
     stats_folder = stats_path + sim_parameters + f"\\SEED{seed}_omni\\" + \
                    queue_parameters + f"\\{trace_name}\\"
     sim_duration = sim_parameters.split("LEN-")[1].split('s')[0] 
-    n_ues = 4 
-    lat_E2E = 100 / 1000 # ms # DO NOT FORGET TO CHECK THIS VALUE!!!!!
     
     output_trace = [0] * n_ues 
     for ue in range(n_ues):
@@ -68,7 +76,6 @@ for seed in seeds:
                                        index_col=0)
     
     # print("Queue:", queue_parameters)
-    print("SXR:", sim_parameters)
     
     pdr_RAN = []
     pdr_E2E = []
@@ -113,32 +120,31 @@ for seed in seeds:
     mean_pdr_Total.append(mean_seed_pdr_Total)
     
     
-    print(f"E2E latency budget: {int(lat_E2E*1000)}ms\n")
     
-    print(f"Total RAN PDR per UE: {pdr_RAN}%")    
-    print(f"Total E2E PDR per UE: {pdr_Total}%")    
+    # print(f"Total RAN PDR per UE: {pdr_RAN}%")    
+    # print(f"Total E2E PDR per UE: {pdr_Total}%")    
     
-    print(f"Mean RAN PDR:    {mean_seed_pdr_RAN}%")
-    print(f"Mean E2E PDR:    {mean_seed_pdr_E2E}%")
-    print(f"Mean Total PDR:  {mean_seed_pdr_Total}")
+    # print(f"Mean RAN PDR:    {mean_seed_pdr_RAN}%")
+    # print(f"Mean E2E PDR:    {mean_seed_pdr_E2E}%")
+    # print(f"Mean Total PDR:  {mean_seed_pdr_Total}")
 
     
 # Calculate confidence intervals! 
 
-z_value = 1.96 # 95% Confidence interval
+z_value = 2.093 # 1.96 # 95% Confidence interval
 
 n_size = len(seeds)
-total_mean_RAN = np.mean(mean_pdr_RAN)
-total_mean_E2E = np.mean(mean_pdr_E2E)
-total_mean_Total = np.mean(mean_pdr_Total)
+total_mean_RAN = round(np.mean(mean_pdr_RAN), 3)
+total_mean_E2E = round(np.mean(mean_pdr_E2E), 3)
+total_mean_Total = round(np.mean(mean_pdr_Total), 3)
 
 total_std_RAN = np.std(mean_pdr_RAN)
 total_std_E2E = np.std(mean_pdr_E2E)
 total_std_Total = np.std(mean_pdr_Total)
 
-deviation_RAN = z_value * (total_std_RAN / n_size) 
-deviation_E2E = z_value * (total_std_E2E / n_size) 
-deviation_Total = z_value * (total_std_Total / n_size) 
+deviation_RAN = round(z_value * (total_std_RAN / n_size), 3) 
+deviation_E2E = round(z_value * (total_std_E2E / n_size), 3) 
+deviation_Total = round(z_value * (total_std_Total / n_size), 3) 
 
 conf_int_RAN = [total_mean_RAN - deviation_RAN, 
                 total_mean_RAN,
@@ -152,7 +158,7 @@ conf_int_Total = [total_mean_Total - deviation_Total,
                   total_mean_Total,
                   total_mean_Total + deviation_Total]
 
-print(f"\n95% Confidence Intervals for sample size {n_size}:")
+print("\n95% Confidence Intervals for PDR [%]")
 print(f"RAN:   {conf_int_RAN}")
 print(f"E2E:   {conf_int_E2E}")
 print(f"Total: {conf_int_Total}")
