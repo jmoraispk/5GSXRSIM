@@ -197,12 +197,10 @@ for param in sim_params:
         #                  f'PCAP-{sp.use_pcap}_' + \
         #                  f'Offset-{sp.space_UE_frames}'
     else:       
-        output_str = f'{seed_str}_' + \
-                     f'APPBIT-{application_bitrate}_' + \
+        output_str = f'APPBIT-{application_bitrate}_' + \
                      f'BW-{bw}_LAT-{sp.delay_type}-{lat_budget}_' + \
                      f'LEN-{sim_dur}s_{sp.scheduler}_' + \
-                     f'Offset-{sp.uniformly_space_UE_I_frames}_' + \
-                     f'PCAP-{sp.use_pcap}'
+                     f'Offset-{sp.uniformly_space_UE_I_frames}'
                      # f'UEs-{users}_' + \
                          
                  # f'Burst-{sp.burstiness_model}-{sp.burstiness_param}'
@@ -285,8 +283,8 @@ for param in sim_params:
             # Buffers for each user, physically located at the BSs        
             user_buffers.append(at.PCAP_Buffer(packet_sequences_DL[ue], 
                                                sp.delay_threshold, 
-                                               sp.delay_type,
-                                               output_str, sp.stats_dir, ue))
+                                               sp.delay_type, output_str, 
+                                               sp.stats_dir, ue, sp.scheduler))
                
     else: 
         for ue in range(0, sp.n_phy):
@@ -765,7 +763,7 @@ for param in sim_params:
                            mcs_used, sp.save_per_prb_variables, 
                            experienced_signal_power)
         
-        # TODO: Calculate efficiency of scheduling 
+        # Calculate efficiency of scheduling 
         if curr_schedule['DL'] != []: 
             est_bitrate_tti = curr_schedule['DL'][0].est_bitrate / 1e6
             # unused_bitrate = est_bitrate_tti - sum(realised_bitrate_total[tti])
@@ -799,10 +797,10 @@ for param in sim_params:
                       f'{real_dl_interference[tti][ue][1]:.2e}].')
                   
         # 11- Update end of tti variables        
-        sls.update_avg_bitrates(tti, sp.n_ue, realised_bitrate_total, # TODO
+        sls.update_avg_bitrates(tti, sp.n_ue, realised_bitrate_total, 
                                 avg_bitrate, schedulable_UEs_dl)
                       
-        # TODO: save buffer status after(?) tti simulation 
+        # Save buffer status after(?) tti simulation 
         # TODO: for pcap as well 
         if not sp.use_pcap:
             for ue in range(sp.n_phy):
@@ -892,7 +890,7 @@ for param in sim_params:
         
         # Pickle all results 
         ut.save_var_pickle(sp, sp.stats_path, globals_dict)
-        # ut.save_var_pickle(buffers, sp.stats_path, globals_dict)        
+        ut.save_var_pickle(buffers, sp.stats_path, globals_dict)        
         ut.save_var_pickle(estimated_SINR, sp.stats_path, globals_dict)
         ut.save_var_pickle(realised_SINR, sp.stats_path, globals_dict)
         ut.save_var_pickle(realised_bitrate_total, sp.stats_path, globals_dict)
