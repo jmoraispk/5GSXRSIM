@@ -845,7 +845,7 @@ for param in sim_params:
     
     
     # Write stats to storage
-    write_stats = 1
+    write_stats = not 1
     if write_stats:
         
         time_sim_end = ut.get_time()

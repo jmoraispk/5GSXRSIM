@@ -48,7 +48,7 @@ sim_trace = pd.read_csv(input_trace, encoding='utf-16-LE')
 # Files and folders of simulation output
 stats_path = os.getcwd() + "\\Stats\\Queue_Sim\\PCAP\\"
 
-sim_parameters = 'BW-200_E2E-LAT-70_LEN-16.0s_PF_Offset-1.0'
+sim_parameters = 'BW-200_RAN-LAT-50_LEN-16.0s_M-LWDF_Offset-1.0'
 
 seeds = range(1,21)
 n_ues = 4 
@@ -73,7 +73,9 @@ for seed in seeds:
     output_trace = [0] * n_ues 
     for ue in range(n_ues):
         output_trace_ue = stats_folder + f"{trace_name} - {sim_duration}s_UE{ue}.csv"
-        output_trace[ue] = pd.read_csv(output_trace_ue, encoding='utf-16-LE',
+        output_trace[ue] = pd.read_csv(output_trace_ue, 
+                                       encoding='utf-8', 
+                                       # encoding='utf-16-LE',
                                        index_col=0)
     
     # print("Queue:", queue_parameters)
@@ -145,17 +147,14 @@ deviation_RAN = round(z_value * (total_std_RAN / n_size), 4)
 deviation_E2E = round(z_value * (total_std_E2E / n_size), 4) 
 deviation_Total = round(z_value * (total_std_Total / n_size), 4) 
 
-conf_int_RAN = [total_mean_RAN - deviation_RAN, 
-                total_mean_RAN,
-                total_mean_RAN + deviation_RAN]
+conf_int_RAN = [total_mean_RAN, deviation_RAN, 
+                round(100 * deviation_RAN / total_mean_RAN, 4)]
 
-conf_int_E2E = [total_mean_E2E - deviation_E2E, 
-                total_mean_E2E,
-                total_mean_E2E + deviation_E2E]
+conf_int_E2E = [total_mean_E2E, deviation_E2E, 
+                round(100 * deviation_E2E / total_mean_E2E, 4)]
 
-conf_int_Total = [total_mean_Total - deviation_Total, 
-                  total_mean_Total,
-                  total_mean_Total + deviation_Total]
+conf_int_Total = [total_mean_Total, deviation_Total, 
+                  round(100 * deviation_Total / total_mean_Total, 4)]
 
 print("95% Confidence Intervals for PDR [%]")
 print(f"RAN:   {conf_int_RAN}")
