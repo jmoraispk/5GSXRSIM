@@ -33,6 +33,7 @@ Scripts to use with pcap traces from output/intput of simulator
 
 """
 # Files and folders of input data
+tic = time.perf_counter()
 
 queue_parameters = "SEED1 - 10Q - 70.0% Load" 
 
@@ -47,7 +48,7 @@ sim_trace = pd.read_csv(input_trace, encoding='utf-16-LE')
 # Files and folders of simulation output
 stats_path = os.getcwd() + "\\Stats\\Queue_Sim\\PCAP\\"
 
-sim_parameters = 'BW-125_RAN-LAT-70_LEN-16.0s_EDD_Offset-1.0'
+sim_parameters = 'BW-200_E2E-LAT-70_LEN-16.0s_PF_Offset-1.0'
 
 seeds = range(1,21)
 n_ues = 4 
@@ -120,7 +121,6 @@ for seed in seeds:
     mean_pdr_Total.append(mean_seed_pdr_Total)
     
     
-    
     # print(f"Total RAN PDR per UE: {pdr_RAN}%")    
     # print(f"Total E2E PDR per UE: {pdr_Total}%")    
     
@@ -130,21 +130,20 @@ for seed in seeds:
 
     
 # Calculate confidence intervals! 
-
 z_value = 2.093 # 1.96 # 95% Confidence interval
 
 n_size = len(seeds)
-total_mean_RAN = round(np.mean(mean_pdr_RAN), 3)
-total_mean_E2E = round(np.mean(mean_pdr_E2E), 3)
-total_mean_Total = round(np.mean(mean_pdr_Total), 3)
+total_mean_RAN = round(np.mean(mean_pdr_RAN), 4)
+total_mean_E2E = round(np.mean(mean_pdr_E2E), 4)
+total_mean_Total = round(np.mean(mean_pdr_Total), 4)
 
 total_std_RAN = np.std(mean_pdr_RAN)
 total_std_E2E = np.std(mean_pdr_E2E)
 total_std_Total = np.std(mean_pdr_Total)
 
-deviation_RAN = round(z_value * (total_std_RAN / n_size), 3) 
-deviation_E2E = round(z_value * (total_std_E2E / n_size), 3) 
-deviation_Total = round(z_value * (total_std_Total / n_size), 3) 
+deviation_RAN = round(z_value * (total_std_RAN / n_size), 4) 
+deviation_E2E = round(z_value * (total_std_E2E / n_size), 4) 
+deviation_Total = round(z_value * (total_std_Total / n_size), 4) 
 
 conf_int_RAN = [total_mean_RAN - deviation_RAN, 
                 total_mean_RAN,
@@ -158,11 +157,12 @@ conf_int_Total = [total_mean_Total - deviation_Total,
                   total_mean_Total,
                   total_mean_Total + deviation_Total]
 
-print("\n95% Confidence Intervals for PDR [%]")
+print("95% Confidence Intervals for PDR [%]")
 print(f"RAN:   {conf_int_RAN}")
 print(f"E2E:   {conf_int_E2E}")
 print(f"Total: {conf_int_Total}")
-
+toc = time.perf_counter()
+print(f"\nTime: {toc-tic:0.4f} seconds.")
 # %% Adjust output files 
 # Mimicking APP on UE -> packets arriving too late will be dropped 
 # (count as dropped even though successfully scheduled and transmitted by RAN)
