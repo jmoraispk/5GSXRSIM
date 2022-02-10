@@ -83,6 +83,69 @@ def MLWDF_scheduler(avg_thrput, curr_expected_bitrate,
     
     return priority
 
+def frametype_EDD_scheduler(curr_delay, buffer):
+    """
+    Parameters
+    ----------
+    avg_thrput : weighted over many ttis
+    curr_expected_bitrate : bitrate estimated as achievable for the curr tti
+    lat : current delay of the packet at the head of the queue
+    buffer : look into buffer and check amount of I-frame packets currently
+             present
+                 
+    delta : upper limit of packet loss rate 
+            (0: NO PACKET CAN BE LOST!, 1: who cares)
+            Note: it was made to differentiate between several QoS.
+            So, if all users have the same priority, there's no weight from
+            it, and can be considered a constant.
+
+    Returns
+    -------
+    Returns the priority for a given user computed essentially with the 
+    M-LWDF Scheduler plus taking into account whether packets belong to an I 
+    or a P-frame, with I-frames having higher priority 
+
+    TODO: Check how to balance the frametype and delay parameter as well as the
+          PF-weight to increase performance (i.e. less I-frame drops)     
+
+    """
+        
+    # TODO
+    delay_priority = curr_delay # * np.log10(pf_scheduler(avg_thrput, 
+                                    #           curr_expected_bitrate))
+            
+    # Weight parameter depending on number of I-frame packets at head of buffer 
+    frame_weight = 0.0
+        
+    if buffer.I_packets == False:
+        frame_weight = 2.0        
+    # Try out different multipliers
+    else: frame_weight = 4.0
+        
+    """
+    elif buffer.num_I_packets == 1:   
+        frame_weight = 1.1
+    elif buffer.num_I_packets == 2:   
+        frame_weight = 1.2
+    elif buffer.num_I_packets == 3:   
+        frame_weight = 1.3 
+    elif buffer.num_I_packets == 4:   
+        frame_weight = 1.4
+    elif buffer.num_I_packets == 5:   
+        frame_weight = 1.5
+    elif buffer.num_I_packets == 6:   
+        frame_weight = 1.6
+    elif buffer.num_I_packets == 7:   
+        frame_weight = 1.7         
+    elif buffer.num_I_packets == 8:   
+        frame_weight = 1.8         
+    elif buffer.num_I_packets == 9:   
+        frame_weight = 1.9     
+    elif buffer.num_I_packets > 9:   
+        frame_weight = 2.0     
+    """
+    return (frame_weight + frame_weight * 1000 * delay_priority)
+
 
 def frametype_scheduler(avg_thrput, curr_expected_bitrate, 
                         curr_delay, delay_threshold, buffer, delta=0.1):
@@ -205,7 +268,10 @@ def scheduler(scheduler_choice, avg_throughput_ue, estimated_bitrate,
                                       buffer_head_of_queue_delay, 
                                       delay_threshold,
                                       buffer,
-                                      scheduler_param_delta)    
+                                      scheduler_param_delta)  
+    elif scheduler_choice == 'Frametype-EDD':
+        priority = frametype_EDD_scheduler(buffer_head_of_queue_delay, 
+                                       buffer)    
    
     elif scheduler_choice == 'EDD':
         priority = buffer_head_of_queue_delay

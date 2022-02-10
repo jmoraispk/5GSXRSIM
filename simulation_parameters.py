@@ -168,7 +168,8 @@ class Simulation_parameters:
         
         
         # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
-        # self.scheduler = 'Frametype' 
+        self.scheduler = 'Frametype' 
+        self.scheduler = 'Frametype-EDD'
         self.scheduler = 'M-LWDF'
         # self.scheduler = 'PF'
         self.scheduler = 'EDD'
@@ -442,7 +443,7 @@ class Simulation_parameters:
         #     ut.stop_execution()
         
         ut.parse_input(self.scheduler, ['PF', 'M-LWDF', 'EXP/PF', 'Frametype',
-                                        'EDD']) 
+                                        'Frametype-EDD', 'EDD']) 
         
                 
     def compute_vars_simulation(self, bw):
