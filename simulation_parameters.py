@@ -178,7 +178,7 @@ class Simulation_parameters:
         # Use M-LWDF/EDD/Frametype with RAN
         # Use M-LWDF/EDD/Frametype with E2E
         self.delay_type = 'RAN'
-        self.delay_type = 'E2E' 
+        # self.delay_type = 'E2E' 
 
         # Scheduler parameters
         self.scheduler_param_c = 10
