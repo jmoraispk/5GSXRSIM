@@ -55,7 +55,7 @@ sim_trace = pd.read_csv(input_trace, encoding='utf-16-LE')
 
 # Files and folders of simulation output
 stats_path = os.getcwd() + "\\Stats\\Queue_Sim\\PCAP\\"
-output_path = os.getcwd() + "\\Stats\\Queue_Sim\\PDR\\" 
+output_path = os.getcwd() + "\\PDR\\" 
 
 sim_parameters = 'BW-150_E2E-LAT-100_LEN-16.0s_EDD_Offset-1.0'
 print("SXR:", sim_parameters)
