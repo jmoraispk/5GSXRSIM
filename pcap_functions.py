@@ -301,7 +301,8 @@ if save_stats:
     pdr_df = pd.DataFrame(dict_2) 
     
     output_folder = output_path + f"{E2E_budget}" + "\\" + \
-        f"{bw}_{lat}_{sync_offset}_{trace_name}" + "\\" + f"{queue_parameters}" 
+            f"{trace_name.strip('trace_')}_{bw}_{lat}_{sync_offset}" + "\\" + \
+                f"{queue_parameters}" 
     output_file = f"{scheduler}.csv"
       
     os.makedirs(output_folder, exist_ok=True)
