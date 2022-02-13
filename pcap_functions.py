@@ -57,7 +57,8 @@ sim_trace = pd.read_csv(input_trace, encoding='utf-16-LE')
 stats_path = os.getcwd() + "\\Stats\\Queue_Sim\\PCAP\\"
 output_path = os.getcwd() + "\\PDR\\" 
 
-sim_parameters = 'BW-150_E2E-LAT-100_LEN-16.0s_EDD_Offset-1.0'
+# TODO: parameters
+sim_parameters = 'BW-125_E2E-LAT-100_LEN-16.0s_M-LWDF_Offset-1.0'
 print("SXR:", sim_parameters)
     
 # Sim parameters to use for naming output stat file
@@ -101,10 +102,8 @@ for seed in seeds:
         # Do not forget to take into account the offset for different users!!! 
         ue_offset = ue * (1 / (30 * 4)) * offset
         
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # TODO!!! - Sort PDR by I-frames and P-frames!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-###############################################################################        
+############################################################################### 
+        # Sort PDR by I-frames and P-frames       
         output_trace_I = output_trace[ue][output_trace[ue]["frametype"] == True]
         output_trace_P = output_trace[ue][output_trace[ue]["frametype"] == False] 
                         
@@ -302,7 +301,8 @@ if save_stats:
     
     output_folder = output_path + f"{E2E_budget}" + "\\" + \
             f"{trace_name.strip('trace_')}_{bw}_{lat}_{sync_offset}" + "\\" + \
-                f"{queue_parameters}" 
+            f"{queue_parameters.split('-')[1].strip()} - " + \
+            f"{queue_parameters.split('-')[2].strip()}" 
     output_file = f"{scheduler}.csv"
       
     os.makedirs(output_folder, exist_ok=True)
