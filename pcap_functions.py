@@ -186,17 +186,17 @@ z_value = 2.093 # 1.96 # 95% Confidence interval
 
 n_size = len(seeds)
 ###############################################################################
-total_mean_RAN = round(np.mean(mean_pdr_RAN), 4)
-total_mean_RAN_I = round(np.mean(mean_pdr_RAN_I), 4)
-total_mean_RAN_P = round(np.mean(mean_pdr_RAN_P), 4)
+total_mean_RAN = round(np.mean(mean_pdr_RAN), 3)
+total_mean_RAN_I = round(np.mean(mean_pdr_RAN_I), 3)
+total_mean_RAN_P = round(np.mean(mean_pdr_RAN_P), 3)
 
-total_mean_E2E = round(np.mean(mean_pdr_E2E), 4)
-total_mean_E2E_I = round(np.mean(mean_pdr_E2E_I), 4)
-total_mean_E2E_P = round(np.mean(mean_pdr_E2E_P), 4)
+total_mean_E2E = round(np.mean(mean_pdr_E2E), 3)
+total_mean_E2E_I = round(np.mean(mean_pdr_E2E_I), 3)
+total_mean_E2E_P = round(np.mean(mean_pdr_E2E_P), 3)
 
-total_mean_Total = round(np.mean(mean_pdr_Total), 4)
-total_mean_Total_I = round(np.mean(mean_pdr_Total_I), 4)
-total_mean_Total_P = round(np.mean(mean_pdr_Total_P), 4)
+total_mean_Total = round(np.mean(mean_pdr_Total), 3)
+total_mean_Total_I = round(np.mean(mean_pdr_Total_I), 3)
+total_mean_Total_P = round(np.mean(mean_pdr_Total_P), 3)
 ###############################################################################
 
 ###############################################################################
@@ -214,40 +214,40 @@ total_std_Total_P = np.std(mean_pdr_Total_P)
 ###############################################################################
 
 ###############################################################################
-deviation_RAN = round(z_value * (total_std_RAN / n_size), 4) 
-deviation_RAN_I = round(z_value * (total_std_RAN_I / n_size), 4) 
-deviation_RAN_P = round(z_value * (total_std_RAN_P / n_size), 4) 
+deviation_RAN = round(z_value * (total_std_RAN / n_size), 3) 
+deviation_RAN_I = round(z_value * (total_std_RAN_I / n_size), 3) 
+deviation_RAN_P = round(z_value * (total_std_RAN_P / n_size), 3) 
 
-deviation_E2E = round(z_value * (total_std_E2E / n_size), 4) 
-deviation_E2E_I = round(z_value * (total_std_E2E_I / n_size), 4) 
-deviation_E2E_P = round(z_value * (total_std_E2E_P / n_size), 4) 
+deviation_E2E = round(z_value * (total_std_E2E / n_size), 3) 
+deviation_E2E_I = round(z_value * (total_std_E2E_I / n_size), 3) 
+deviation_E2E_P = round(z_value * (total_std_E2E_P / n_size), 3) 
 
-deviation_Total = round(z_value * (total_std_Total / n_size), 4) 
-deviation_Total_I = round(z_value * (total_std_Total_I / n_size), 4) 
-deviation_Total_P = round(z_value * (total_std_Total_P / n_size), 4) 
+deviation_Total = round(z_value * (total_std_Total / n_size), 3) 
+deviation_Total_I = round(z_value * (total_std_Total_I / n_size), 3) 
+deviation_Total_P = round(z_value * (total_std_Total_P / n_size), 3) 
 ###############################################################################
 
 ###############################################################################
 conf_int_RAN = [total_mean_RAN, deviation_RAN, 
-                round(100 * deviation_RAN / total_mean_RAN, 4)]
+                round(100 * deviation_RAN / total_mean_RAN, 3)]
 conf_int_RAN_I = [total_mean_RAN_I, deviation_RAN_I, 
-                round(100 * deviation_RAN_I / total_mean_RAN_I, 4)]
+                round(100 * deviation_RAN_I / total_mean_RAN_I, 3)]
 conf_int_RAN_P = [total_mean_RAN_P, deviation_RAN_P, 
-                round(100 * deviation_RAN_P / total_mean_RAN_P, 4)]
+                round(100 * deviation_RAN_P / total_mean_RAN_P, 3)]
 
 conf_int_E2E = [total_mean_E2E, deviation_E2E, 
-                round(100 * deviation_E2E / total_mean_E2E, 4)]
+                round(100 * deviation_E2E / total_mean_E2E, 3)]
 conf_int_E2E_I = [total_mean_E2E_I, deviation_E2E_I, 
-                round(100 * deviation_E2E_I / total_mean_E2E_I, 4)]
+                round(100 * deviation_E2E_I / total_mean_E2E_I, 3)]
 conf_int_E2E_P = [total_mean_E2E_P, deviation_E2E_P, 
-                round(100 * deviation_E2E_P / total_mean_E2E_P, 4)]
+                round(100 * deviation_E2E_P / total_mean_E2E_P, 3)]
 
 conf_int_Total = [total_mean_Total, deviation_Total, 
-                  round(100 * deviation_Total / total_mean_Total, 4)]
+                  round(100 * deviation_Total / total_mean_Total, 3)]
 conf_int_Total_I = [total_mean_Total_I, deviation_Total_I, 
-                  round(100 * deviation_Total_I / total_mean_Total_I, 4)]
+                  round(100 * deviation_Total_I / total_mean_Total_I, 3)]
 conf_int_Total_P = [total_mean_Total_P, deviation_Total_P, 
-                  round(100 * deviation_Total_P / total_mean_Total_P, 4)]
+                  round(100 * deviation_Total_P / total_mean_Total_P, 3)]
 ###############################################################################
 
 ###############################################################################
@@ -273,18 +273,19 @@ print(f"\nTime: {toc-tic:0.4f} seconds.")
 save_stats = 1
 
 if save_stats: 
-    pdr_type = ["RAN-All", "RAN-I", "RAN-P", 
-                "E2E-All", "E2E-I", "E2E-P",
-                "Total-All", "Total-I", "Total-P"] 
-    pdr_stats = [conf_int_RAN[0], conf_int_RAN_I[0], conf_int_RAN_P[0],
-                 conf_int_E2E[0], conf_int_E2E_I[0], conf_int_E2E_P[0],
-                 conf_int_Total[0], conf_int_Total_I[0], conf_int_Total_P[0]] 
-    conf_int = [conf_int_RAN[1], conf_int_RAN_I[1], conf_int_RAN_P[1],
-                conf_int_E2E[1], conf_int_E2E_I[1], conf_int_E2E_P[1],
-                conf_int_Total[1], conf_int_Total_I[1], conf_int_Total_P[1]] 
+    
+    # pdr_type = ["RAN-All", "RAN-I", "RAN-P", 
+    #             "E2E-All", "E2E-I", "E2E-P",
+    #             "Total-All", "Total-I", "Total-P"] 
+    # pdr_stats = [conf_int_RAN[0], conf_int_RAN_I[0], conf_int_RAN_P[0],
+    #              conf_int_E2E[0], conf_int_E2E_I[0], conf_int_E2E_P[0],
+    #              conf_int_Total[0], conf_int_Total_I[0], conf_int_Total_P[0]] 
+    # conf_int = [conf_int_RAN[1], conf_int_RAN_I[1], conf_int_RAN_P[1],
+    #             conf_int_E2E[1], conf_int_E2E_I[1], conf_int_E2E_P[1],
+    #             conf_int_Total[1], conf_int_Total_I[1], conf_int_Total_P[1]] 
          
-    # dictionary of lists  
-    dict_1 = {'PDR-Type': pdr_type, 'PDR': pdr_stats, 'Conf-Int': conf_int}  
+    # # dictionary of lists  
+    # dict_1 = {'PDR-Type': pdr_type, 'PDR': pdr_stats, 'Conf-Int': conf_int}  
     
     dict_2 = {'RAN-All': conf_int_RAN, 
               'RAN-I': conf_int_RAN_I, 
@@ -296,7 +297,7 @@ if save_stats:
               'Total-I': conf_int_Total_I, 
               'Total-P': conf_int_Total_P}
        
-    pdr_df = pd.DataFrame(dict_1)      
+    # pdr_df = pd.DataFrame(dict_1)      
     pdr_df = pd.DataFrame(dict_2) 
     
     output_folder = output_path + f"{E2E_budget}" + "\\" + \
