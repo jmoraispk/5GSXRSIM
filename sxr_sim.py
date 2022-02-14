@@ -92,6 +92,7 @@ folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
 print("Seeds to simulate:", seeds_to_simulate)
 # raise SystemExit
+tic = time.perf_counter()
 
 freq_idxs = [0]
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
@@ -923,5 +924,7 @@ for param in sim_params:
 
         # ut.save_var_pickle(su_mimo_bitrates, sp.stats_path, globals_dict)
 
-        
+
+toc = time.perf_counter()
 print('End of sxr_sim.')
+print('Total Time Elapsed: {int(toc-tic)} seconds.')

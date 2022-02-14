@@ -168,11 +168,11 @@ class Simulation_parameters:
         
         
         # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
-        self.scheduler = 'Frametype' 
-        self.scheduler = 'Frametype-EDD'
-        self.scheduler = 'M-LWDF'
+        # self.scheduler = 'Frametype-EDD'
         # self.scheduler = 'PF'
-        self.scheduler = 'EDD'
+        self.scheduler = 'Frametype' 
+        self.scheduler = 'M-LWDF'
+        # self.scheduler = 'EDD'
         
         # Delay type - ['RAN', 'E2E']
         # Use M-LWDF/EDD/Frametype with RAN
