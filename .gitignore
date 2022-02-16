@@ -37,3 +37,4 @@ test.py
 __init__.py
 dot_to_png.py
 %LOCALAPPDATA%/Microsoft/Windows/SchCache/tsn.tno.nl.sch
+trash.py
