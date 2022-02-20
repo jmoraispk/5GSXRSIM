@@ -99,7 +99,7 @@ freq_idxs = [0]
 csi_periodicities = [5]
 
 # Put to [None] when not looping users, and the user_list is manually set below
-# users = [1,2,4,6,8] 
+# users = [1,2,4,6,8]   
 users = [None]
 # users = [4]
 
@@ -109,7 +109,7 @@ application_bitrates = [100]
 bandwidths = [125] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
 # Check whether RAN or E2E-frame latency scheduling is used!!!
-latencies = [60]
+latencies = [80]
 # E2E_lat = [100]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
@@ -250,9 +250,9 @@ for param in sim_params:
         # pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Traces" 
         pcap_folder = os.getcwd() + "\\PCAP\Traces" 
 
-        pcap_parameters = "\\trace_APP100_0.6\\" + "SEED1 - 10Q - 70.0% Load\\"
+        pcap_parameters = "\\trace_APP100_0.6\\" + "SEED1 - 15Q - 50.0% Load\\"
         trace_parameters = pcap_parameters.split('\\')[1] 
-        final_trace = f"{trace_parameters}_0.0-16.0s.csv"
+        final_trace = f"{trace_parameters}_0.0-17.0s.csv"
         trace_to_simulate = pcap_folder + pcap_parameters + final_trace        
         pcap_to_simulate = pd.read_csv(trace_to_simulate, encoding='utf-16 LE', 
                                        index_col=False)
@@ -772,24 +772,24 @@ for param in sim_params:
                            mcs_used, sp.save_per_prb_variables, 
                            experienced_signal_power)
         
-        # Calculate efficiency of scheduling 
-        if curr_schedule['DL'] != []: 
-            est_bitrate_tti = curr_schedule['DL'][0].est_bitrate / 1e6
-            # unused_bitrate = est_bitrate_tti - sum(realised_bitrate_total[tti])
-            bitrate_per_prb = est_bitrate_tti / 10 
+        # TODO: Calculate efficiency of scheduling 
+        # if curr_schedule['DL'] != []: 
+        #     est_bitrate_tti = curr_schedule['DL'][0].est_bitrate / 1e6
+        #     # unused_bitrate = est_bitrate_tti - sum(realised_bitrate_total[tti])
+        #     bitrate_per_prb = est_bitrate_tti / 10 
             
-            non_sched_UEs = np.where(np.array(scheduled_UEs[0]) == 0)
-            other_buffers_empty = True
-            for l in range(len(non_sched_UEs[0])): 
-                other_buffers_empty *= buffers[non_sched_UEs[0][l]].is_empty
+        #     non_sched_UEs = np.where(np.array(scheduled_UEs[0]) == 0)
+        #     other_buffers_empty = True
+        #     for l in range(len(non_sched_UEs[0])): 
+        #         other_buffers_empty *= buffers[non_sched_UEs[0][l]].is_empty
             
-            if other_buffers_empty == False:
-                n_prbs_unused[tti] = 10 - int(np.ceil(sum(realised_bitrate_total
-                                              [tti] / bitrate_per_prb)))
-            else: 
-                n_prbs_unused[tti] = 0
-        else:
-            n_prbs_unused[tti] = 0
+        #     if other_buffers_empty == False:
+        #         n_prbs_unused[tti] = 10 - int(np.ceil(sum(realised_bitrate_total
+        #                                       [tti] / bitrate_per_prb)))
+        #     else: 
+        #         n_prbs_unused[tti] = 0
+        # else:
+        #     n_prbs_unused[tti] = 0
               
         if sp.debug:
             print(f'----------Done measuring tti {tti} ---------------------')
@@ -935,4 +935,4 @@ for param in sim_params:
 
 tocc = time.perf_counter()
 print('End of sxr_sim.')
-print('Total Time Elapsed: {int(tocc-ticc)} seconds.')
+print(f'Total Time Elapsed: {int((tocc-ticc)/60)} seconds.')
