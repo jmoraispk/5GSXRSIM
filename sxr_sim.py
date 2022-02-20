@@ -186,7 +186,14 @@ for param in sim_params:
     output_stats_folder = '' #SPEED7' + '\\'
     if sp.use_pcap: 
         # if sp.delay_type == 'E2E':
-        output_str = f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
+        if (sp.scheduler == 'Frametype-M-LWDF' or 
+            sp.scheduler == 'Frametype-EDD'):
+            output_str = \
+                f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
+                f'LEN-{sim_dur}s_{sp.scheduler}-{sp.frametype_weight}_' + \
+                f'Offset-{sp.space_UE_frames}'
+        else:
+            output_str = f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
                      f'LEN-{sim_dur}s_{sp.scheduler}_' + \
                      f'Offset-{sp.space_UE_frames}'
                      # f'{seed_str}_' + \
@@ -709,7 +716,8 @@ for param in sim_params:
                                        avg_bitrate, est_su_mimo_bitrate,
                                        ut.get_seconds(sp.delay_threshold), 
                                        sp.scheduler_param_delta, 
-                                       sp.scheduler_param_c)
+                                       sp.scheduler_param_c,
+                                       sp.frametype_weight)
             
             if sp.debug:
                 print(curr_priorities)
