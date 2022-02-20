@@ -304,7 +304,8 @@ def scheduler(scheduler_choice, avg_throughput_ue, estimated_bitrate,
                                              frametype_weight)
         
     elif scheduler_choice == 'Frametype-EDD':
-        priority = frametype_EDD_scheduler(buffer_head_of_queue_delay, buffer)    
+        priority = frametype_EDD_scheduler(buffer_head_of_queue_delay, 
+                                           buffer, frametype_weight)    
    
     elif scheduler_choice == 'EDD':
         priority = buffer_head_of_queue_delay
