@@ -11,9 +11,10 @@ import glob
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
+import warnings
 
 pd.options.mode.chained_assignment = None  # default='warn'
-
+warnings.filterwarnings("ignore")
 """
 Scripts to use with pcap traces from output/intput of simulator
 
@@ -32,33 +33,32 @@ Scripts to use with pcap traces from output/intput of simulator
 
 
 """
+# trace_path = os.getcwd() + "\\PCAP\\Traces\\" # OG traces
+# trace_folder = trace_path + f'\\{trace_name}\\'
+# input_trace = trace_folder + queue_parameters + "\\" + \
+#               f"{trace_name}_0.0-16.0s.csv"              
+# sim_trace = pd.read_csv(input_trace, encoding='utf-16-LE') 
+
 # Files and folders of input data
 tic = time.perf_counter()
 
-seeds = range(1,2)
-n_ues = 4 
+# Files and folders of simulation output
+stats_path = os.getcwd() + "\\Stats\\Queue_Sim\\Tune-RAN\\PCAP\\"
+output_path = os.getcwd() + "\\PDR\\Tune-RAN\\" 
 
+
+seeds = range(1,21)
+n_ues = 4 
 print("Seeds:", seeds)
 
 lat_E2E = 100 / 1000 # ms # DO NOT FORGET TO CHECK THIS VALUE!!!!!
 print(f"E2E latency budget: {int(lat_E2E*1000)}ms\n")
 
-queue_parameters = "SEED1 - 10Q - 70.0% Load" 
-
-trace_path = os.getcwd() + "\\PCAP\\Traces\\" # OG traces
+queue_parameters = "SEED1 - 5Q - 50.0% Load" 
 trace_name = "trace_APP100_0.6"
-trace_folder = trace_path + f'\\{trace_name}\\'
-input_trace = trace_folder + queue_parameters + "\\" + \
-              f"{trace_name}_0.0-16.0s.csv"
-              
-sim_trace = pd.read_csv(input_trace, encoding='utf-16-LE') 
-
-# Files and folders of simulation output
-stats_path = os.getcwd() + "\\Stats\\Queue_Sim\\PCAP\\"
-output_path = os.getcwd() + "\\PDR\\" 
 
 # TODO: parameters
-sim_parameters = 'BW-125_E2E-LAT-100_LEN-16.0s_M-LWDF_Offset-1.0'
+sim_parameters = 'BW-125_RAN-LAT-70_LEN-16.0s_PF_Offset-1.0'
 print("SXR:", sim_parameters)
     
 # Sim parameters to use for naming output stat file
@@ -83,8 +83,8 @@ for seed in seeds:
     for ue in range(n_ues):
         output_trace_ue = stats_folder + f"{trace_name} - {sim_duration}s_UE{ue}.csv"
         output_trace[ue] = pd.read_csv(output_trace_ue, 
-                                       encoding='utf-8', 
-                                       # encoding='utf-16-LE',
+                                        encoding='utf-8', 
+                                        # encoding='utf-16-LE',
                                        index_col=0)
     
     # print("Queue:", queue_parameters)
@@ -310,8 +310,9 @@ if save_stats:
     output_full_name = os.path.join(output_folder, output_file)     
     # saving the dataframe 
     pdr_df.to_csv(output_full_name, encoding='utf-8', index=False) 
-    print(f"Saved - {output_full_name}")    
-    
+    # print(f"Saved:\n{trace_name}\n{queue_parameters}\n{sim_parameters}")    
+    print(f"Saved:\n{output_folder.strip(output_path)}")    
+
 
 # Save all parameters in file name
 # Save all PDR metrics
