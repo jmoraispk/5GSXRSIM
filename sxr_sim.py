@@ -115,7 +115,7 @@ application_bitrates = [100]
 bandwidths = [125] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
 # Check whether RAN or E2E-frame latency scheduling is used!!!
-latencies = [80]
+latencies = [50]
 # E2E_lat = [100]
 
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
@@ -257,9 +257,9 @@ for param in sim_params:
         # pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Traces" 
         pcap_folder = os.getcwd() + "\\PCAP\Traces" 
 
-        pcap_parameters = "\\trace_APP100_0.6\\" + "SEED1 - 15Q - 50.0% Load\\"
+        pcap_parameters = "\\trace_APP100_0.6\\" + "SEED1 - 10Q - 70.0% Load\\"
         trace_parameters = pcap_parameters.split('\\')[1] 
-        final_trace = f"{trace_parameters}_0.0-17.0s.csv"
+        final_trace = f"{trace_parameters}_0.0-16.0s.csv"
         trace_to_simulate = pcap_folder + pcap_parameters + final_trace        
         pcap_to_simulate = pd.read_csv(trace_to_simulate, encoding='utf-16 LE', 
                                        index_col=False)

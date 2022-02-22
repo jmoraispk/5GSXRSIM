@@ -170,12 +170,12 @@ class Simulation_parameters:
         # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
         self.scheduler = 'PF'
         
-        # self.scheduler = 'Frametype-EDD'
-        # self.scheduler = 'Frametype-M-LWDF'
-        self.scheduler = 'Frametype' 
-        self.frametype_weight = 2.0
+        self.scheduler = 'Frametype-EDD'
+        self.scheduler = 'Frametype-M-LWDF'
+        # self.scheduler = 'Frametype' 
+        self.frametype_weight = 1.0
         
-        self.scheduler = 'M-LWDF'
+        # self.scheduler = 'M-LWDF'
         # self.scheduler = 'EDD'
         
         # Delay type - ['RAN', 'E2E']
@@ -282,7 +282,7 @@ class Simulation_parameters:
         # self.pcap_dir = self.curr_path + '\\PCAP\\Trace\\'  
         
         # Stats folder
-        self.stats_dir = self.curr_path + '\\Stats\\Queue_Sim\\'
+        self.stats_dir = self.curr_path + '\\Stats\\Queue_Sim\\Tune-RAN\\'
             # f'APP{application_bitrate}-BW{bw}-LAT{lat_budget}_Burst\\'
  
         # Plots folder

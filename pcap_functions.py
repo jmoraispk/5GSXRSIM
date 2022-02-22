@@ -43,6 +43,7 @@ Scripts to use with pcap traces from output/intput of simulator
 tic = time.perf_counter()
 
 # Files and folders of simulation output
+stats_path = os.getcwd() + "\\Stats\\Queue_Sim\\PCAP\\"
 stats_path = os.getcwd() + "\\Stats\\Queue_Sim\\Tune-RAN\\PCAP\\"
 output_path = os.getcwd() + "\\PDR\\Tune-RAN\\" 
 
@@ -54,11 +55,11 @@ print("Seeds:", seeds)
 lat_E2E = 100 / 1000 # ms # DO NOT FORGET TO CHECK THIS VALUE!!!!!
 print(f"E2E latency budget: {int(lat_E2E*1000)}ms\n")
 
-queue_parameters = "SEED1 - 5Q - 50.0% Load" 
+queue_parameters = "SEED1 - 10Q - 70.0% Load" 
 trace_name = "trace_APP100_0.6"
 
 # TODO: parameters
-sim_parameters = 'BW-125_RAN-LAT-70_LEN-16.0s_PF_Offset-1.0'
+sim_parameters = 'BW-125_RAN-LAT-70_LEN-16.0s_Frametype-M-LWDF-4.0_Offset-1.0'
 print("SXR:", sim_parameters)
     
 # Sim parameters to use for naming output stat file
@@ -252,19 +253,19 @@ conf_int_Total_P = [total_mean_Total_P, deviation_Total_P,
 
 ###############################################################################
 
-print("95% Confidence Intervals for PDR [%]\n")
+# print("95% Confidence Intervals for PDR [%]\n")
 
 print(f"RAN:   {conf_int_RAN}")
-print(f"I:     {conf_int_RAN_I}")
-print(f"P:     {conf_int_RAN_P}\n")
+# print(f"I:     {conf_int_RAN_I}")
+# print(f"P:     {conf_int_RAN_P}\n")
 
 print(f"E2E:   {conf_int_E2E}")
-print(f"I:     {conf_int_E2E_I}")
-print(f"P:     {conf_int_E2E_P}\n")
+# print(f"I:     {conf_int_E2E_I}")
+# print(f"P:     {conf_int_E2E_P}\n")
 
 print(f"Total: {conf_int_Total}")
-print(f"I:     {conf_int_Total_I}")
-print(f"P:     {conf_int_Total_P}\n")
+# print(f"I:     {conf_int_Total_I}")
+# print(f"P:     {conf_int_Total_P}\n")
 
 ###############################################################################
 toc = time.perf_counter()
