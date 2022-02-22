@@ -33,11 +33,6 @@ Scripts to use with pcap traces from output/intput of simulator
 
 
 """
-# trace_path = os.getcwd() + "\\PCAP\\Traces\\" # OG traces
-# trace_folder = trace_path + f'\\{trace_name}\\'
-# input_trace = trace_folder + queue_parameters + "\\" + \
-#               f"{trace_name}_0.0-16.0s.csv"              
-# sim_trace = pd.read_csv(input_trace, encoding='utf-16-LE') 
 
 # Files and folders of input data
 tic = time.perf_counter()
@@ -111,12 +106,6 @@ for seed in seeds:
         dropped_RAN = len(output_trace[ue][(output_trace[ue]["arr_time"] == 0)])
         dropped_RAN_I = len(output_trace_I[(output_trace_I["arr_time"] == 0)])
         dropped_RAN_P = len(output_trace_P[(output_trace_P["arr_time"] == 0)])
-
-        # output_trace[ue] = output_trace[ue][output_trace[ue]["success"] == True]
-        # E2E_delay = output_trace[ue]["arr_time"] - ue_offset - \
-        #                 output_trace[ue]["frame"]*(1/30)
-        # dropped_E2E = E2E_delay
-        # if ue >= 3: raise SystemExit
         
         dropped_E2E = len(output_trace[ue][(
             output_trace[ue]["arr_time"] > (output_trace[ue]["frame"]*(1/30) + \
@@ -174,13 +163,6 @@ for seed in seeds:
     mean_pdr_Total_I.append(mean_seed_pdr_Total_I)
     mean_pdr_Total_P.append(mean_seed_pdr_Total_P)
 ###############################################################################
-    
-    # print(f"Total RAN PDR per UE: {pdr_RAN}%")    
-    # print(f"Total E2E PDR per UE: {pdr_Total}%")    
-    
-    # print(f"Mean RAN PDR:    {mean_seed_pdr_RAN}%")
-    # print(f"Mean E2E PDR:    {mean_seed_pdr_E2E}%")
-    # print(f"Mean Total PDR:  {mean_seed_pdr_Total}")
     
 # Calculate confidence intervals! 
 z_value = 2.093 # 1.96 # 95% Confidence interval
@@ -275,19 +257,6 @@ save_stats = 1
 
 if save_stats: 
     
-    # pdr_type = ["RAN-All", "RAN-I", "RAN-P", 
-    #             "E2E-All", "E2E-I", "E2E-P",
-    #             "Total-All", "Total-I", "Total-P"] 
-    # pdr_stats = [conf_int_RAN[0], conf_int_RAN_I[0], conf_int_RAN_P[0],
-    #              conf_int_E2E[0], conf_int_E2E_I[0], conf_int_E2E_P[0],
-    #              conf_int_Total[0], conf_int_Total_I[0], conf_int_Total_P[0]] 
-    # conf_int = [conf_int_RAN[1], conf_int_RAN_I[1], conf_int_RAN_P[1],
-    #             conf_int_E2E[1], conf_int_E2E_I[1], conf_int_E2E_P[1],
-    #             conf_int_Total[1], conf_int_Total_I[1], conf_int_Total_P[1]] 
-         
-    # # dictionary of lists  
-    # dict_1 = {'PDR-Type': pdr_type, 'PDR': pdr_stats, 'Conf-Int': conf_int}  
-    
     dict_2 = {'RAN-All': conf_int_RAN, 
               'RAN-I': conf_int_RAN_I, 
               'RAN-P': conf_int_RAN_P, 
@@ -313,22 +282,3 @@ if save_stats:
     pdr_df.to_csv(output_full_name, encoding='utf-8', index=False) 
     # print(f"Saved:\n{trace_name}\n{queue_parameters}\n{sim_parameters}")    
     print(f"Saved:\n{output_folder.strip(output_path)}")    
-
-
-# Save all parameters in file name
-# Save all PDR metrics
-# Use one line per type 
-# RAN: (PDR) total - I-frame - P-frame -- (error bar) total - I-frame - P-frame 
-# E2E: (PDR) total - I-frame - P-frame -- (error bar) total - I-frame - P-frame   
-# Total: (PDR) total - I-frame - P-frame -- (error bar) total - I-frame - P-frame   
-  
-
-
-# %% Adjust output files 
-# Mimicking APP on UE -> packets arriving too late will be dropped 
-# (count as dropped even though successfully scheduled and transmitted by RAN)
-
-
-
-
-# %% Plot functions for output pcap traces 
