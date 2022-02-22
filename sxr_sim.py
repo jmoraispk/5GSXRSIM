@@ -186,7 +186,8 @@ for param in sim_params:
     output_stats_folder = '' #SPEED7' + '\\'
     if sp.use_pcap: 
         # if sp.delay_type == 'E2E':
-        if (sp.scheduler == 'Frametype-M-LWDF' or 
+        if (sp.scheduler == 'Frametype' or 
+            sp.scheduler == 'Frametype-M-LWDF' or 
             sp.scheduler == 'Frametype-EDD'):
             output_str = \
                 f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
@@ -935,4 +936,4 @@ for param in sim_params:
 
 tocc = time.perf_counter()
 print('End of sxr_sim.')
-print(f'Total Time Elapsed: {int((tocc-ticc)/60)} seconds.')
+print(f'Total Time Elapsed: {int((tocc-ticc)/60)} minutes.')
