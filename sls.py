@@ -152,8 +152,7 @@ def frametype_MLWDF_scheduler(avg_thrput, curr_expected_bitrate, curr_delay,
     mlwdf_priority = MLWDF_scheduler(avg_thrput, curr_expected_bitrate, 
                                      curr_delay, delay_threshold, delta)
     
-    return frame_weight * mlwdf_priority * pf_scheduler(
-        avg_thrput, curr_expected_bitrate)
+    return frame_weight * mlwdf_priority 
 
 
 def frametype_EDD_scheduler(curr_delay, buffer, frametype_weight):
