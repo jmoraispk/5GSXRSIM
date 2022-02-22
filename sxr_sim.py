@@ -847,6 +847,7 @@ for param in sim_params:
                               f'{final_trace.split("_")[1]}_' + \
                               f'{final_trace.split("_")[2]} - ' + \
                               f'{sim_dur}s_UE{ue}.csv'
+                              # f'{sim_dur}s_UE{ue}.pkl'
             pcap_output_folder = pcap_parameters.split("\\")[2]
             pcap_output_path = sp.stats_dir + "\\PCAP\\" + output_str + \
                                f"\\{seed_str}\\" + \
