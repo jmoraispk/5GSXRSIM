@@ -87,35 +87,15 @@ def MLWDF_scheduler(avg_thrput, curr_expected_bitrate,
 def frametype_scheduler(avg_thrput, curr_expected_bitrate, curr_delay, 
                         delay_threshold, buffer, delta, frametype_weight):
     """
-    Parameters
-    ----------
-    avg_thrput : weighted over many ttis
-    curr_expected_bitrate : bitrate estimated as achievable for the curr tti
-    lat : current delay of the packet at the head of the queue
-    buffer : look into buffer and check amount of I-frame packets currently
-             present
-                 
-    delta : upper limit of packet loss rate 
-            (0: NO PACKET CAN BE LOST!, 1: who cares)
-            Note: it was made to differentiate between several QoS.
-            So, if all users have the same priority, there's no weight from
-            it, and can be considered a constant.
-
-    Returns
-    -------
+    
     Returns the priority for a given user computed essentially with the 
     M-LWDF Scheduler plus taking into account whether packets belong to an I 
     or a P-frame, with I-frames having higher priority 
 
-    TODO: Check how to balance the frametype and delay parameter as well as the
-          PF-weight to increase performance (i.e. less I-frame drops)     
-
     """
     
-    # Is it natural log or log10?
     a = -np.log(delta) / delay_threshold
     
-    # TODO
     delay_priority = a * curr_delay # * np.log10(pf_scheduler(avg_thrput, 
                                     #           curr_expected_bitrate))
             
@@ -157,79 +137,34 @@ def frametype_MLWDF_scheduler(avg_thrput, curr_expected_bitrate, curr_delay,
                               delay_threshold, buffer, frametype_weight, 
                               delta=0.1):
     """
-    Parameters
-    ----------
-    avg_thrput : weighted over many ttis
-    curr_expected_bitrate : bitrate estimated as achievable for the curr tti
-    lat : current delay of the packet at the head of the queue
-    buffer : look into buffer and check amount of I-frame packets currently
-             present
-                 
-    delta : upper limit of packet loss rate 
-            (0: NO PACKET CAN BE LOST!, 1: who cares)
-            Note: it was made to differentiate between several QoS.
-            So, if all users have the same priority, there's no weight from
-            it, and can be considered a constant.
-
-    Returns
-    -------
     Returns the priority for a given user computed essentially with the 
     M-LWDF Scheduler plus taking into account whether packets belong to an I 
     or a P-frame, with I-frames having higher priority 
-
-    TODO: Check how to balance the frametype and delay parameter as well as the
-          PF-weight to increase performance (i.e. less I-frame drops)     
-
     """
-    
-    # Is it natural log or log10?
-    a = -np.log(delta) / delay_threshold
-    
-    # TODO
-    delay_priority = a * curr_delay # * np.log10(pf_scheduler(avg_thrput, 
-                                    #           curr_expected_bitrate))
-            
+     
     # Weight parameter depending on number of I-frame packets at head of buffer 
     frame_weight = 0.0
         
     if buffer.I_packets == False:
         frame_weight = 2.0        
     # Try out different multipliers
-    else: frame_weight = 4.0
+    else: frame_weight = 2.0 * frametype_weight
+    mlwdf_priority = MLWDF_scheduler(avg_thrput, curr_expected_bitrate, 
+                                     curr_delay, delay_threshold, delta)
     
-    return (frame_weight * delay_priority) * pf_scheduler(
+    return frame_weight * mlwdf_priority * pf_scheduler(
         avg_thrput, curr_expected_bitrate)
 
 
 def frametype_EDD_scheduler(curr_delay, buffer, frametype_weight):
     """
-    Parameters
-    ----------
-    avg_thrput : weighted over many ttis
-    curr_expected_bitrate : bitrate estimated as achievable for the curr tti
-    lat : current delay of the packet at the head of the queue
-    buffer : look into buffer and check amount of I-frame packets currently
-             present
-                 
-    delta : upper limit of packet loss rate 
-            (0: NO PACKET CAN BE LOST!, 1: who cares)
-            Note: it was made to differentiate between several QoS.
-            So, if all users have the same priority, there's no weight from
-            it, and can be considered a constant.
 
-    Returns
-    -------
     Returns the priority for a given user computed essentially with the 
     M-LWDF Scheduler plus taking into account whether packets belong to an I 
     or a P-frame, with I-frames having higher priority 
 
-    TODO: Check how to balance the frametype and delay parameter as well as the
-          PF-weight to increase performance (i.e. less I-frame drops)     
-
     """
         
-    # TODO
-    delay_priority = curr_delay 
     # Weight parameter depending on number of I-frame packets at head of buffer 
     frame_weight = 0.0
         
@@ -238,7 +173,7 @@ def frametype_EDD_scheduler(curr_delay, buffer, frametype_weight):
     # Try out different multipliers
     else: frame_weight = 2.0 * frametype_weight
         
-    return frame_weight * delay_priority
+    return frame_weight * curr_delay
 
 def exp_pf_scheduler(avg_thrput, curr_expected_bitrate,
                      curr_delay, c, delay_threshold, all_delays,
