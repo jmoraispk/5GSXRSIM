@@ -494,7 +494,7 @@ class Simulation_parameters:
         # Remaining main parameters
         self.bandwidth = vars_dict['bandwidth'][self.sim_freq_idx][0]
         self.n_prb = vars_dict['n_prb'][self.sim_freq_idx]
-        self.n_phy = vars_dict['n_room'][0][0]
+        self.n_phy = self.sim_n_phy # vars_dict['n_room'][0][0]  # 
         self.n_vir = vars_dict['n_room'][0][1]
         self.n_cam = vars_dict['n_camera_streams'][0][0] * self.n_phy
         self.n_bs = vars_dict['n_tx'][0][0]
@@ -516,9 +516,9 @@ class Simulation_parameters:
         self.n_total_instances = vars_dict['n_total_builders'][0][0]
         
         # Number of Coefficients
-        #np.array([1, 1, 1, 1, 1, 1, 1, 1])
-        self.n_ue_coeffs = \
-            vars_dict['rx_ant_numel'][self.sim_freq_idx].astype(int)
+        # TODO np.array([1, 1, 1, 1, 1, 1, 1, 1])
+        self.n_ue_coeffs = np.array([1, 1, 1, 1, 1, 1, 1, 1])
+            # vars_dict['rx_ant_numel'][self.sim_freq_idx].astype(int)
         self.n_bs_coeffs = \
             vars_dict['tx_ant_numel'][self.sim_freq_idx].astype(int)
 

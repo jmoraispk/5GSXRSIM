@@ -79,14 +79,24 @@ parent_folder = os.getcwd() + r"\\Matlab\\TraceGeneration\\"#  + "\\"
 seed = 1
 speed = 3
 
+# Put to [None] when not looping users, and the user_list is manually set below
+# users = [1,2,4,6,8] 
+users = [None]
+# users = [4]
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
 folders_to_simulate = []
 seeds_to_simulate = []
 for i in range(1,21):
-    folders_to_simulate.append(f"SEED{i}_omni")   
-    seeds_to_simulate.append(i)
+    if (users == [6] or users == [8]):
+        # print(users)
+        folders_to_simulate.append(f"SEED{i}_omni_8")   
+        seeds_to_simulate.append(i)
+        
+    else:    
+        folders_to_simulate.append(f"SEED{i}_omni")   
+        seeds_to_simulate.append(i)
     # , "Sim_SEED3", "Sim_SEED4"]
 folders_to_simulate = [parent_folder + f for f in folders_to_simulate]
 
@@ -97,11 +107,7 @@ ticc = time.perf_counter()
 freq_idxs = [0]
 # csi_periodicities = [4, 8, 20, 40, 80, 200] # in TTIs
 csi_periodicities = [5]
-
-# Put to [None] when not looping users, and the user_list is manually set below
-# users = [1,2,4,6,8]   
-users = [None]
-# users = [4]
+ 
 
 # application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
 application_bitrates = [100]
@@ -143,11 +149,11 @@ for param in sim_params:
         if users == 1:
             user_list = [0]
         if users == 2:
-            user_list = [0, 4]
+            user_list = [0, 1]
         elif users == 4:
-            user_list = [0, 2, 4, 6]
+            user_list = [0, 1, 2, 3] # [0, 2, 4, 6]
         elif users == 6:
-            user_list = [0, 1, 2, 4, 5, 6]
+            user_list = [0, 1, 2, 3, 4, 5]# [0, 1, 2, 4, 5, 6]
         elif users == 8:
             user_list = [0, 1, 2, 3, 4, 5, 6, 7]
         else:
@@ -192,11 +198,11 @@ for param in sim_params:
             output_str = \
                 f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
                 f'LEN-{sim_dur}s_{sp.scheduler}-{sp.frametype_weight}_' + \
-                f'Offset-{sp.space_UE_frames}'
+                f'Offset-{sp.space_UE_frames}_UEs-{users}'
         else:
             output_str = f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
                      f'LEN-{sim_dur}s_{sp.scheduler}_' + \
-                     f'Offset-{sp.space_UE_frames}'
+                     f'Offset-{sp.space_UE_frames}_UEs-{users}'
                      # f'{seed_str}_' + \
                      # f'PCAP-{sp.use_pcap}_' + \
         # elif sp.delay_type == 'RAN':
@@ -209,8 +215,8 @@ for param in sim_params:
         output_str = f'APPBIT-{application_bitrate}_' + \
                      f'BW-{bw}_LAT-{sp.delay_type}-{lat_budget}_' + \
                      f'LEN-{sim_dur}s_{sp.scheduler}_' + \
-                     f'Offset-{sp.uniformly_space_UE_I_frames}'
-                     # f'UEs-{users}_' + \
+                     f'Offset-{sp.uniformly_space_UE_I_frames}_' + \
+                     f'UEs-{users}'
                          
                  # f'Burst-{sp.burstiness_model}-{sp.burstiness_param}'
                           # TODO: 

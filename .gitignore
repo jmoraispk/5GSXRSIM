@@ -38,5 +38,4 @@ __init__.py
 dot_to_png.py
 %LOCALAPPDATA%/Microsoft/Windows/SchCache/tsn.tno.nl.sch
 trash.py
-simulation_parameters.py
-sxr_sim.py
+Matlab/TraceGeneration/renamer.py
