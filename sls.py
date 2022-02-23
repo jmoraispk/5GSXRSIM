@@ -134,8 +134,7 @@ def frametype_scheduler(avg_thrput, curr_expected_bitrate, curr_delay,
 
 
 def frametype_MLWDF_scheduler(avg_thrput, curr_expected_bitrate, curr_delay, 
-                              delay_threshold, buffer, frametype_weight, 
-                              delta=0.1):
+                              delay_threshold, buffer, delta, frameweight):
     """
     Returns the priority for a given user computed essentially with the 
     M-LWDF Scheduler plus taking into account whether packets belong to an I 
@@ -148,11 +147,14 @@ def frametype_MLWDF_scheduler(avg_thrput, curr_expected_bitrate, curr_delay,
     if buffer.I_packets == False:
         frame_weight = 2.0        
     # Try out different multipliers
-    else: frame_weight = 2.0 * frametype_weight
-    mlwdf_priority = MLWDF_scheduler(avg_thrput, curr_expected_bitrate, 
-                                     curr_delay, delay_threshold, delta)
+    else: frame_weight = 2.0 * frameweight
     
-    return frame_weight * mlwdf_priority 
+    a = -np.log(delta) / delay_threshold
+    
+    priority = a * curr_delay * (pf_scheduler(avg_thrput, 
+                                             curr_expected_bitrate))
+    
+    return frame_weight * priority 
 
 
 def frametype_EDD_scheduler(curr_delay, buffer, frametype_weight):
@@ -171,7 +173,7 @@ def frametype_EDD_scheduler(curr_delay, buffer, frametype_weight):
         frame_weight = 2.0 
     # Try out different multipliers
     else: frame_weight = 2.0 * frametype_weight
-        
+    
     return frame_weight * curr_delay
 
 def exp_pf_scheduler(avg_thrput, curr_expected_bitrate,
