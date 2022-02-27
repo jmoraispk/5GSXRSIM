@@ -93,7 +93,7 @@ for seed in seeds:
     pdr_E2E, pdr_E2E_I, pdr_E2E_P = [[] for i in range(3)]
     pdr_Total, pdr_Total_I, pdr_Total_P = [[] for i in range(3)]
     
-    offset = float(sim_parameters.split("-")[-1]) # sim_parameters
+    offset = float(sync_offset.split("-")[-1]) # sim_parameters
     
     for ue in range (n_ues):
         # Cut off packets until end of simulation time 
@@ -273,13 +273,13 @@ if save_stats:
        
     # pdr_df = pd.DataFrame(dict_1)      
     pdr_df = pd.DataFrame(dict_2) 
-    
+    # if n_ues == 4:
     output_folder = output_path + f"{E2E_budget}" + "\\" + \
-            f"{trace_name.strip('trace_')}_{bw}_{lat}_{sync_offset}" + "\\" + \
+            f"{trace_name.strip('trace_')}_{bw}_{lat}_{sync_offset}_UE{n_ues}" + "\\" + \
             f"{queue_parameters.split('-')[1].strip()} - " + \
             f"{queue_parameters.split('-')[2].strip()}" 
     output_file = f"{scheduler}.csv"
-      
+
     os.makedirs(output_folder, exist_ok=True)
     output_full_name = os.path.join(output_folder, output_file)     
     # saving the dataframe 

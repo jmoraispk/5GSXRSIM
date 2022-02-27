@@ -205,7 +205,7 @@ for param in sim_params:
                 output_str = \
                     f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
                     f'LEN-{sim_dur}s_{sp.scheduler}-{sp.frametype_weight}_' + \
-                    f'UE{users}_Offset-{sp.space_UE_frames}'
+                    f'Offset-{sp.space_UE_frames}_UE{users}'
         else:
             if users == None: 
                 output_str = f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
@@ -214,7 +214,8 @@ for param in sim_params:
             else:
                 output_str = f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
 							 f'LEN-{sim_dur}s_{sp.scheduler}_' + \
-							 f'UE{users}_Offset-{sp.space_UE_frames}'
+							 f'Offset-{sp.space_UE_frames}_UE{users}'    
+                     
     else:       
         output_str = f'APPBIT-{application_bitrate}_' + \
                      f'BW-{bw}_LAT-{sp.delay_type}-{lat_budget}_' + \
