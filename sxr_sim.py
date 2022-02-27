@@ -190,6 +190,7 @@ for param in sim_params:
     include_timestamp = False 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split(' ')[0]
     output_stats_folder = '' #SPEED7' + '\\'
+    
     if sp.use_pcap: 
         # if sp.delay_type == 'E2E':
         if (sp.scheduler == 'Frametype' or 
@@ -213,7 +214,6 @@ for param in sim_params:
             else:
                 output_str = f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
                           f'LEN-{sim_dur}s_{sp.scheduler}_' + \
-                          f'UE{users}_Offset-{sp.space_UE_frames}'
                               
                      
                      
