@@ -213,18 +213,8 @@ for param in sim_params:
                          f'Offset-{sp.space_UE_frames}'
             else:
                 output_str = f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
-                          f'LEN-{sim_dur}s_{sp.scheduler}_' + \
-                              
-                     
-                     
-                     # f'{seed_str}_' + \
-                     # f'PCAP-{sp.use_pcap}_' + \
-        # elif sp.delay_type == 'RAN':
-        #     output_str = f'{seed_str}_' + \
-        #                  f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
-        #                  f'LEN-{sim_dur}s_{sp.scheduler}_' + \
-        #                  f'PCAP-{sp.use_pcap}_' + \
-        #                  f'Offset-{sp.space_UE_frames}'
+							 f'LEN-{sim_dur}s_{sp.scheduler}_' + \
+							 f'UE{users}_Offset-{sp.space_UE_frames}'
     else:       
         output_str = f'APPBIT-{application_bitrate}_' + \
                      f'BW-{bw}_LAT-{sp.delay_type}-{lat_budget}_' + \
