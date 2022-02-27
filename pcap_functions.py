@@ -70,8 +70,12 @@ mean_pdr_Total, mean_pdr_Total_I, mean_pdr_Total_P = [[] for i in range(3)]
 
 for seed in seeds:
 
-    stats_folder = stats_path + sim_parameters + f"\\SEED{seed}_omni\\" + \
-                   queue_parameters + f"\\{trace_name}\\"
+    if n_ues <= 4:
+        stats_folder = stats_path + sim_parameters + f"\\SEED{seed}_omni\\" + \
+                       queue_parameters + f"\\{trace_name}\\"
+    else: 
+        stats_folder = stats_path + sim_parameters + f"\\SEED{seed}_omni_8\\" + \
+                       queue_parameters + f"\\{trace_name}\\"
     sim_duration = sim_parameters.split("LEN-")[1].split('s')[0] 
     
     output_trace = [0] * n_ues
