@@ -199,13 +199,13 @@ for param in sim_params:
             if users == None: 
                 output_str = \
                     f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
-                    f'LEN-{sim_dur}s_{sp.scheduler}-{sp.frametype_weight}_' + \
-                    f'Offset-{sp.space_UE_frames}'
+                    f'LEN-{sim_dur}s_{sp.scheduler}_' + \
+                    f'Offset-{sp.space_UE_frames}' # -{sp.frametype_weight}
             else: 
                 output_str = \
                     f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
-                    f'LEN-{sim_dur}s_{sp.scheduler}-{sp.frametype_weight}_' + \
-                    f'Offset-{sp.space_UE_frames}_UE{users}'
+                    f'LEN-{sim_dur}s_{sp.scheduler}_' + \
+                    f'Offset-{sp.space_UE_frames}_UE{users}' # -{sp.frametype_weight}
         else:
             if users == None: 
                 output_str = f'BW-{bw}_{sp.delay_type}-LAT-{lat_budget}_' + \
