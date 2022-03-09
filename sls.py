@@ -156,8 +156,28 @@ def frametype_MLWDF_scheduler(avg_thrput, curr_expected_bitrate, curr_delay,
     
     return frame_weight * priority 
 
+def EDD_scheduler(curr_delay, delay_threshold, buffer):
+    """
 
-def frametype_EDD_scheduler(curr_delay, buffer, frametype_weight):
+    Returns the priority for a given user computed essentially with the 
+    M-LWDF Scheduler plus taking into account whether packets belong to an I 
+    or a P-frame, with I-frames having higher priority 
+
+    """
+    
+    # Check scheduler type
+    
+    if buffer.delay_type == 'RAN': 
+        return curr_delay
+    
+    elif buffer.delay_type == 'E2E':    
+        due_date = buffer.pcap_seq.frames[0] * (1/30) + buffer.pcap_file.offset    
+        priority = 1 / due_date        
+        return priority
+
+
+def frametype_EDD_scheduler(curr_delay, delay_threshold, buffer, 
+                            frametype_weight):
     """
 
     Returns the priority for a given user computed essentially with the 
@@ -174,7 +194,7 @@ def frametype_EDD_scheduler(curr_delay, buffer, frametype_weight):
     # Try out different multipliers
     else: frame_weight = 2.0 * frametype_weight
     
-    return frame_weight * curr_delay
+    return frame_weight * EDD_scheduler(curr_delay, delay_threshold, buffer)
 
 def exp_pf_scheduler(avg_thrput, curr_expected_bitrate,
                      curr_delay, c, delay_threshold, all_delays,
@@ -241,10 +261,12 @@ def scheduler(scheduler_choice, avg_throughput_ue, estimated_bitrate,
         
     elif scheduler_choice == 'Frametype-EDD':
         priority = frametype_EDD_scheduler(buffer_head_of_queue_delay, 
-                                           buffer, frametype_weight)    
+                                           delay_threshold, buffer, 
+                                           frametype_weight)    
    
-    elif scheduler_choice == 'EDD':
-        priority = buffer_head_of_queue_delay
+    elif scheduler_choice == 'EDD':        
+        priority = EDD_scheduler(buffer_head_of_queue_delay, 
+                                 delay_threshold, buffer)  
               
     elif scheduler_choice == 'EXP/PF':
         priority = exp_pf_scheduler(avg_throughput_ue, 
