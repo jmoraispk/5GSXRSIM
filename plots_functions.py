@@ -212,7 +212,7 @@ def get_vars_to_load(idx, vars_to_load_names):
                  10.12: [], 10.13:[1], 
                  11: [15], 11.1: [15], 11.2: [15], 11.3: [4], 11.4: [10,15],
                  13: [14],
-                 14.1: [1], 14.2: [1], 
+                 14.1: [1], 14.2: [1], 14.3: [1],
                  15: [18], 
                  16: [7], 16.1: [7], 16.2: [],
                  17: [], 17.01: [7,15], 17.02: [7,15], 17.03: [7,15], 
@@ -265,7 +265,7 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     10.11: [22,23,27], 10.13: [],                   
                     11: [24], 11.1: [], 11.2: [], 11.3: [25], 11.4: [],
                     13: [],
-                    14.1: [], 14.2: [],
+                    14.1: [], 14.2: [], 14.3: [],
                     15: [28], 
                     16: [29,30], 16.1: [29,30],  16.2: [32],
                     17: [33,34], 17.01: [33,34,35,36], 17.02: [33,34,35,36], 
@@ -1066,20 +1066,23 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
         # TODO: For checking PF      
         # Avg. channel across time (sum over the PRBs, and antenna elements)
         if plot_idx == 0.1:
-            y_min = np.amin(sim_data_trimmed[f][16]) - 5
-            y_max = np.amax(sim_data_trimmed[f][16]) + 5
+            y_min = np.amin(sim_data_trimmed[f][16]) - 2.5
+            y_max = np.amax(sim_data_trimmed[f][16]) + 2.5
 
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][16]],
                          x_axis_label=x_label_time, y_axis_label='Power [dBW]',
                          savefig=save_fig, filename=file_name, 
-                         # ylim=[(y_min, y_max), (y_min, y_max), (y_min, y_max),
-                         #       (y_min, y_max)],
+                          ylim=[(y_min, y_max) for i in range(len(ues))],
                          # linewidths=[0.5,0.5,0.5,0.5], 
                          # width=7.8, height=4.8, size=2,
                          saveformat=save_format, same_axs=(False)) 
                          # use_legend=True, legend_loc="upper right")
             # print(np.mean(sim_data_trimmed[f][16]),'dBW')
-        
+            data = sim_data_trimmed[f][16].transpose()
+            # for ue in ues:
+            #     mean = round(np.mean(data[ue]),3)
+            #     print(f"UE{ue} - {mean} dBW")
+                
         # The two indicies below require the channel_per_prb variable
         # Channel across time for many PRBs
         if plot_idx == 0.2:
@@ -1857,6 +1860,11 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
             avg_pdr_p = round(np.mean(sim_data_computed[f][21]),2)
             avg_pdr_p_std = round(np.std(sim_data_computed[f][21]),2)
             
+            print(f'Avg. PDR: {sim_data_computed[f][17]} ms.')
+            # print(f'Mean {avg_latency_i} ms, STD {avg_latency_i_std} ms.')
+            # print(f'Avg. latency for P frames: {sim_data_computed[f][19]} ms.')
+            # print(f'Mean {avg_latency_p} ms, STD {avg_latency_p_std} ms.')
+            
             print(f'Avg. PDR in total: {avg_pdr} %,')# + \
             #       f' with STD of {avg_pdr_std} %.')            
             # print(f'Avg. drop rate per frames: '
@@ -2173,6 +2181,32 @@ def plot_sim_data(plot_idx, file_set, ues, ttis, x_vals, sim_data_trimmed,
                             dpi=200, bbox_inches='tight')        
                 print(f'Saved: {file_name}')                
             plt.show()
+            
+        # Plot power of each GoB beam
+        if plot_idx == 14.3:
+            packet_seq = [[0] for i in range(n_ues)]             
+            packets_per_tti = [[[0] for i in range(n_ttis)] for j in range(n_ues)]
+            for ue in ues: 
+                packet_seq[ue] = sim_data_trimmed[f][1][ue].pcap_file.packets_per_tti
+            for ue in ues:
+                for i, tti in enumerate(ttis):
+                    if packet_seq[ue][tti][0] == -1:
+                        packets_per_tti[ue][i] = 0
+                    else: 
+                        nr_packets = packet_seq[ue][tti][1] - packet_seq[ue][tti][0]
+                        packets_per_tti[ue][i] = nr_packets + 1
+            
+            x_axis = ttis 
+            fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(20, 20))
+            
+            ax[0][0].bar(x_axis, packets_per_tti[0], label = "UE0")
+            ax[0][1].bar(x_axis, packets_per_tti[1], label = "UE0")
+            ax[1][0].bar(x_axis, packets_per_tti[2], label = "UE0")
+            ax[1][1].bar(x_axis, packets_per_tti[3], label = "UE0")
+
+            
+            
+            
         # Plot power of each GoB beam
         if plot_idx == 15:
             # IDX 18 has powers of each CSI beam for each TTI for each UE.

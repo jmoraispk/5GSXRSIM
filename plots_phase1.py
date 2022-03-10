@@ -65,7 +65,7 @@ always_compute = True
 
 #-------------------------
 
-seeds = [1]
+seeds = [i for i in range(1,2)]
 speeds = [1]
 csi_periodicities = [5]
 app_bitrates= [100]
@@ -75,7 +75,7 @@ latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
 
-trim_ttis = [int(4000 * 0), int(4000 * 16)]
+trim_ttis = [int(4000 * 0), int(4000 * 4)]
 TTI_dur_in_secs = 0.25e-3
 
 ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -179,25 +179,23 @@ file_sets = []
 
 # TODO
 # stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Meeting\40 - Same' + '\\'
-stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\Stats\Queue_Sim' + '\\' # + \
-                # "\Scheduling Study\APP25-BW50-LAT20_Burst" + '\\'
+stats_folder = r'C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3' + \
+               r'\Stats\Queue_Sim\Tune-RAN' + '\\' # + \
 
-for comb in combinations:
 
-    # stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
-    #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
-    #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
+# for comb in combinations:
+for seed in seeds:
+# stats_dir_end = f'SEED{comb[-1]}_SPEED-{comb[0]}_FREQ-{comb[1]}_' + \
+#                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
+#                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
 
     stats_dir_end = \
-        r'SEED1_omni_BW-100_E2E-LAT-100_LEN-4.0s_M-LWDF_PCAP-True_Offset-1.0' + '\\' 
+        'BW-100_E2E-LAT-50_LEN-4.0s_EDD_Offset-1.0' + '\\' 
     
-    # stats_dir_end = \
-    #     r'SEED1_omni_APPBIT-100_BW-100_LAT-RAN-10_LEN-16.0s_EDD_Offset-True_PCAP-False' + '\\' 
-     
     # print(f'Stats Folder: \n{stats_folder}')
     print(f'Simulation: \n{stats_dir_end}')
     
-    stats_dir = stats_folder + stats_dir_end
+    stats_dir = stats_folder + stats_dir_end + f'\\SEED{seed}_omni\\'
     
     # Can't recal what this is for...
     # if use_in_loop:
@@ -228,13 +226,13 @@ for file_set in file_sets:
     # base_plots_folder = 'Plots\\' 
 
     # TODO: plot idx
-    idxs_to_plot = [10.7, 10.2, 10.9, 14.2]
-    idxs_to_plot = [19]
-    # idxs_to_plot = [10.7, 19]
+    # idxs_to_plot = [10.7, 10.2, 10.9, 14.2]
+    # idxs_to_plot = []
+    idxs_to_plot = [18.1, 11.1, 8.1] #, 14.3] #, 18.2, 0.1]
     
     # For the very first run and they don't exist, initialise
     
-    trim_ttis = [int(4000 * 0), int(4000 * 16)]
+    trim_ttis = [int(4000 * 1.0), int(4000 * 1.4)]
     ttis = np.arange(trim_ttis[0], trim_ttis[1])
     x_vals = ttis * TTI_dur_in_secs
     
@@ -410,6 +408,8 @@ X   11.5  -> UEs with bitrate vs signal power (linear) --> quite similar to .4
     
     14.1  -> Packet sequences for each UE. [same plot]
     14.2  -> Packet sequences for each UE. [diff plot]
+    
+    14.3  -> Packet sequence for each UE (PCAP). [diff plot]
     
     15    -> Power of each GoB beam
     
