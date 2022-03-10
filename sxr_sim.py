@@ -262,7 +262,7 @@ for param in sim_params:
         # pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Traces" 
         pcap_folder = os.getcwd() + "\\PCAP\Traces" 
 
-        pcap_parameters = "\\trace_APP100_0.6\\" + "SEED1 - 10Q - 70.0% Load\\"
+        pcap_parameters = "\\trace_APP50_0.6\\" + "SEED1 - 10Q - 70.0% Load\\"
         trace_parameters = pcap_parameters.split('\\')[1] 
         final_trace = f"{trace_parameters}_0.0-16.0s.csv"
         trace_to_simulate = pcap_folder + pcap_parameters + final_trace        
@@ -822,7 +822,6 @@ for param in sim_params:
                                 avg_bitrate, schedulable_UEs_dl)
                       
         # Save buffer status after(?) tti simulation 
-        # TODO: for pcap as well 
         if not sp.use_pcap:
             for ue in range(sp.n_phy):
                 for i in range(len(buffers[ue].bits_left)): 
@@ -831,6 +830,16 @@ for param in sim_params:
                         packets_in_buffer[tti][ue] +=1 
                 # Total bits left to send in buffer (in kByte)
                 bits_in_buffer[tti][ue] = sum(buffers[ue].bits_left[:]) / 8000 
+
+        # TODO: for pcap as well 
+        if sp.use_pcap:
+            for ue in range(sp.n_phy):                
+                # for i in range(len(buffers[ue].bits_left)): 
+                if buffers[ue].bits_left != []: 
+                   # Nr of packets with something left to send
+                   packets_in_buffer[tti][ue] = len(buffers[ue].bits_left)
+                   # Total bits left to send in buffer (in kByte)
+                   bits_in_buffer[tti][ue] = sum(buffers[ue].bits_left) / 8000 
         # ####################################################################
         
     # print('End of tti loop.')    
@@ -867,7 +876,7 @@ for param in sim_params:
     
     
     # Write stats to storage
-    write_stats = not 1
+    write_stats = 1
     if write_stats:
         
         time_sim_end = ut.get_time()
@@ -916,34 +925,34 @@ for param in sim_params:
         ut.save_var_pickle(estimated_SINR, sp.stats_path, globals_dict)
         ut.save_var_pickle(realised_SINR, sp.stats_path, globals_dict)
         ut.save_var_pickle(realised_bitrate_total, sp.stats_path, globals_dict)
-        # ut.save_var_pickle(n_transport_blocks, sp.stats_path, globals_dict)    
-        # ut.save_var_pickle(blocks_with_errors, sp.stats_path, globals_dict)        
-        # ut.save_var_pickle(beams_used, sp.stats_path, globals_dict)
-        # ut.save_var_pickle(olla, sp.stats_path, globals_dict)
+        ut.save_var_pickle(n_transport_blocks, sp.stats_path, globals_dict)    
+        ut.save_var_pickle(blocks_with_errors, sp.stats_path, globals_dict)        
+        ut.save_var_pickle(beams_used, sp.stats_path, globals_dict)
+        ut.save_var_pickle(olla, sp.stats_path, globals_dict)
         ut.save_var_pickle(mcs_used, sp.stats_path, globals_dict)
-        # ut.save_var_pickle(real_dl_interference, sp.stats_path, globals_dict)
-        # ut.save_var_pickle(est_dl_interference, sp.stats_path, globals_dict)
+        ut.save_var_pickle(real_dl_interference, sp.stats_path, globals_dict)
+        ut.save_var_pickle(est_dl_interference, sp.stats_path, globals_dict)
         ut.save_var_pickle(scheduled_UEs, sp.stats_path, globals_dict)
-        # ut.save_var_pickle(su_mimo_setting, sp.stats_path, globals_dict)
+        ut.save_var_pickle(su_mimo_setting, sp.stats_path, globals_dict)
         ut.save_var_pickle(channel, sp.stats_path, globals_dict)
-        # ut.save_var_pickle(experienced_signal_power, sp.stats_path, globals_dict)
+        ut.save_var_pickle(experienced_signal_power, sp.stats_path, globals_dict)
         
         # Variables that take the most memory: they are always saved,
         # but when sp.save_per_prb_variables is False, they are None
-        # ut.save_var_pickle(sig_pow_per_prb, sp.stats_path, globals_dict)        
-        # ut.save_var_pickle(channel_per_prb, sp.stats_path, globals_dict)
+        ut.save_var_pickle(sig_pow_per_prb, sp.stats_path, globals_dict)        
+        ut.save_var_pickle(channel_per_prb, sp.stats_path, globals_dict)
         
         # If we are debugging GoBs and we need the power of each CSI beam
         # (is none when sp.save_power_per_CSI_beam is False)
-        # ut.save_var_pickle(power_per_beam, sp.stats_path, globals_dict)
-        # ut.save_var_pickle(bits_in_buffer, sp.stats_path, globals_dict)
-        # ut.save_var_pickle(packets_in_buffer, sp.stats_path, globals_dict)
-        # ut.save_var_pickle(active_UEs, sp.stats_path, globals_dict)
+        ut.save_var_pickle(power_per_beam, sp.stats_path, globals_dict)
+        ut.save_var_pickle(bits_in_buffer, sp.stats_path, globals_dict)
+        ut.save_var_pickle(packets_in_buffer, sp.stats_path, globals_dict)
+        ut.save_var_pickle(active_UEs, sp.stats_path, globals_dict)
         ut.save_var_pickle(ue_priority, sp.stats_path, globals_dict)
 
         ut.save_var_pickle(n_prbs_unused, sp.stats_path, globals_dict)
 
-        # ut.save_var_pickle(su_mimo_bitrates, sp.stats_path, globals_dict)
+        ut.save_var_pickle(su_mimo_bitrates, sp.stats_path, globals_dict)
 
 
 tocc = time.perf_counter()
