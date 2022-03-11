@@ -729,8 +729,9 @@ for param in sim_params:
                                        ut.get_seconds(sp.delay_threshold), 
                                        sp.scheduler_param_delta, 
                                        sp.scheduler_param_c,
-                                       sp.frametype_weight)
-            
+                                       sp.frametype_weight,
+                                       scheduled_UEs)
+                      
             if sp.debug:
                 print(curr_priorities)
                 print(avg_bitrate[tti])
