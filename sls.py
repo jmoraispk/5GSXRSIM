@@ -171,7 +171,8 @@ def EDD_scheduler(curr_delay, delay_threshold, buffer):
         return curr_delay
     
     elif buffer.delay_type == 'E2E':    
-        due_date = buffer.pcap_seq.frames[0] * (1/30) + buffer.pcap_file.offset    
+        due_date = buffer.pcap_seq.frames[0] * (1/30) + delay_threshold + \
+                   buffer.pcap_file.offset    
         priority = 1 / due_date        
         return priority
 
@@ -1925,7 +1926,8 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
 def compute_priorities(tti, ue_priority, all_delays, buffers, 
                        schedulable_UEs_dl, scheduler_name, avg_bitrate, 
                        est_su_mimo_bitrate, delay_threshold, 
-                       scheduler_param_delta, scheduler_param_c, frametype_w): 
+                       scheduler_param_delta, scheduler_param_c, frametype_w,
+                       scheduled_UEs): 
         
     # Current head of queue delays of all UEs, necessary for scheduling 
     # with a latency-aware scheduler
@@ -1951,10 +1953,60 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
     curr_priorities = sorted([(ue, ue_priority[tti][ue])
                               for ue in schedulable_UEs_dl],
                              key=lambda x: x[1], reverse=True)
+    # TODO: Add Round-Robin Scheduler as Tie-breaker for identical priorities!!
+    # """ Pseudocode:
+    if tti > 50:
+       raise SystemExit()
+
+    priorities = [x[1] for x in curr_priorities]
     
-    return curr_priorities
-
-
+    if not (len(priorities) > 1 and all(x == priorities[0] for x in priorities)):
+        # Only one UE or unidentical priorities
+        print("Prios:", tti, curr_priorities)
+        return curr_priorities
+    elif len(priorities) > 1 and all(x == priorities[0] for x in priorities): 
+        # More than one UE - 
+        # print("\nTTI:", tti, curr_priorities)
+        # raise SystemExit()        
+        last_scheduled_ue = np.where(scheduled_UEs[tti-1])[0]
+        n_ues = len(scheduled_UEs[0])
+        if last_scheduled_ue.size == 0 or last_scheduled_ue[0] == n_ues - 1:
+            # Last scheduled UE3 or no scheduled UEs in last TTI or 
+            # -> sort as usual
+            print("Prios:", tti, curr_priorities)
+            return curr_priorities
+            # print(last_scheduled_ue)
+        else: 
+            # Take next UE that is larger than the previously scheduled UE and 
+            # in the schedulable list
+            # print("last UE:", last_scheduled_ue)
+            new_schedulable_UEs_dl = [
+                x for x in schedulable_UEs_dl if x > last_scheduled_ue[0]]
+            new_scheduled_ue = min(new_schedulable_UEs_dl)
+            # print("new UEs:", new_schedulable_UEs_dl)
+            index_new_ue = [
+                x[0] for x in curr_priorities].index(new_scheduled_ue)
+            curr_priorities[index_new_ue], curr_priorities[0] = \
+                curr_priorities[0], curr_priorities[index_new_ue]
+            # print("new UE:", index_new_ue)
+            # print("new Prios:", curr_priorities)
+            print("Prios:", tti, curr_priorities)
+            return curr_priorities
+            """
+            curr_priorities not all equal: 
+            return curr_priorities
+            elif curr_priorities all equal: 
+                Check which UE was scheduled last TTI
+                if none:
+                    start from UE0
+                else: 
+                    if UE3 scheduled last
+                        curr_priorities = sorted (default from the earliest)
+                    else UE0/1/2 was scheduled last
+                        schedule UE <=> min(schedulable UEs(> last scheduled_ue))   
+            """              
+            
+            
 def mu_mimo_choice(tti, curr_priorities, curr_schedule, serving_BS_dl, 
                    su_mimo_setting, curr_beam_pairs, 
                    min_beam_distance, scheduled_UEs, 
