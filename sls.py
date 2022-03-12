@@ -1953,16 +1953,12 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
     curr_priorities = sorted([(ue, ue_priority[tti][ue])
                               for ue in schedulable_UEs_dl],
                              key=lambda x: x[1], reverse=True)
-    # TODO: Add Round-Robin Scheduler as Tie-breaker for identical priorities!!
-    # """ Pseudocode:
-    if tti > 50:
-       raise SystemExit()
-
+    # Add Round-Robin Scheduler as Tie-breaker for identical priorities!!
     priorities = [x[1] for x in curr_priorities]
     
     if not (len(priorities) > 1 and all(x == priorities[0] for x in priorities)):
         # Only one UE or unidentical priorities
-        print("Prios:", tti, curr_priorities)
+        # print("Prios:", tti, curr_priorities)
         return curr_priorities
     elif len(priorities) > 1 and all(x == priorities[0] for x in priorities): 
         # More than one UE - 
@@ -1973,7 +1969,7 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
         if last_scheduled_ue.size == 0 or last_scheduled_ue[0] == n_ues - 1:
             # Last scheduled UE3 or no scheduled UEs in last TTI or 
             # -> sort as usual
-            print("Prios:", tti, curr_priorities)
+            # print("Prios:", tti, curr_priorities)
             return curr_priorities
             # print(last_scheduled_ue)
         else: 
@@ -1990,7 +1986,7 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
                 curr_priorities[0], curr_priorities[index_new_ue]
             # print("new UE:", index_new_ue)
             # print("new Prios:", curr_priorities)
-            print("Prios:", tti, curr_priorities)
+            # print("Prios:", tti, curr_priorities)
             return curr_priorities
             """
             curr_priorities not all equal: 
