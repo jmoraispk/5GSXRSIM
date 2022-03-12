@@ -82,7 +82,7 @@ speed = 3
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
 users = [None]
-# users = [4]
+users = [1]
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
@@ -112,7 +112,7 @@ csi_periodicities = [5]
 # application_bitrates = [25, 50, 75, 100, 125, 150, 175, 200] # in Mbps
 application_bitrates = [100]
 # bandwidths = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # MHz
-bandwidths = [125] # MHz
+bandwidths = [225] # MHz
 # latencies = [10, 20, 30, 40, 50] # ms
 # Check whether RAN or E2E-frame latency scheduling is used!!!
 latencies = [50]
@@ -262,7 +262,7 @@ for param in sim_params:
         # pcap_folder = r"C:\Zheng Data\TU Delft\Thesis\Thesis Work\GitHub\SXRSIMv3\PCAP\Traces" 
         pcap_folder = os.getcwd() + "\\PCAP\Traces" 
 
-        pcap_parameters = "\\trace_APP50_0.6\\" + "SEED1 - 10Q - 70.0% Load\\"
+        pcap_parameters = "\\trace_APP100_0.6\\" + "SEED1 - 10Q - 70.0% Load\\"
         trace_parameters = pcap_parameters.split('\\')[1] 
         final_trace = f"{trace_parameters}_0.0-16.0s.csv"
         trace_to_simulate = pcap_folder + pcap_parameters + final_trace        
