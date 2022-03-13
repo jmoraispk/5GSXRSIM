@@ -1978,7 +1978,11 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
             # print("last UE:", last_scheduled_ue)
             new_schedulable_UEs_dl = [
                 x for x in schedulable_UEs_dl if x > last_scheduled_ue[0]]
-            new_scheduled_ue = min(new_schedulable_UEs_dl)
+            if new_schedulable_UEs_dl == []:
+                # Only two UEs schedulable, with one of them scheduled last TTI                
+                new_scheduled_ue = min(schedulable_UEs_dl)
+            else:     
+                new_scheduled_ue = min(new_schedulable_UEs_dl)
             # print("new UEs:", new_schedulable_UEs_dl)
             index_new_ue = [
                 x[0] for x in curr_priorities].index(new_scheduled_ue)
