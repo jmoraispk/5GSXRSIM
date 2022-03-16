@@ -125,12 +125,12 @@ class PCAP_File:
         """
         
         # Calculate FPS - Bitrate - GoP
-        # self.pcap_GoP = self.pcap_data.loc[(self.pcap_data["frametype"] == True)
-        #                     & (self.pcap_data["frame"] > 1)].iloc[0]["frame"]
+        self.pcap_GoP = self.pcap_data.loc[(self.pcap_data["frametype"] == True)
+                            & (self.pcap_data["frame"] > 1)].iloc[0]["frame"]
         
         # Between 0 and 1 -> 0 all the same, 1 max timeshift
         param = self.space_UE_frames 
-        self.offset = self.ue * (1 / (self.pcap_FPS * self.n_ues)) * param
+        self.offset = self.ue * (self.pcap_GoP / (self.pcap_FPS * self.n_ues)) * param
         self.pcap_data["time"] += self.offset
           
                         

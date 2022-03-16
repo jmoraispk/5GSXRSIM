@@ -100,7 +100,7 @@ for seed in seeds:
         # output_trace[ue] = output_trace[ue][output_trace[ue]["arr_time"] <= 16]
         
         # Do not forget to take into account the offset for different users!!! 
-        ue_offset = ue * (1 / (30 * 4)) * offset
+        ue_offset = ue * (10 / (30 * n_ues)) * offset
         
 ############################################################################### 
         # Sort PDR by I-frames and P-frames       
