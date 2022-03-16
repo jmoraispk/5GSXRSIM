@@ -95,7 +95,7 @@ for seed in seeds:
     
     offset = float(sync_offset.split("-")[-1]) # sim_parameters
     
-    for ue in range (n_ues):
+    for ue in range(n_ues):
         # Cut off packets until end of simulation time 
         # output_trace[ue] = output_trace[ue][output_trace[ue]["arr_time"] <= 16]
         
