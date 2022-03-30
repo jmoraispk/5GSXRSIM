@@ -88,8 +88,8 @@ users = [1]
 # folders_to_simulate = ["SEED1_SPEED1_point_centre"]
 folders_to_simulate = []
 seeds_to_simulate = []
-for i in range(1,21):
-    if (users == [6] or users == [8]):
+for i in range(1,2):
+    if (users == [6] or users == [8] or users == [5] or users == [7]):
         # print(users)
         folders_to_simulate.append(f"SEED{i}_omni_8")   
         seeds_to_simulate.append(i)
@@ -150,10 +150,16 @@ for param in sim_params:
             user_list = [0]
         if users == 2:
             user_list = [0, 1]
+        elif users == 3:
+            user_list = [0, 1, 2] 
         elif users == 4:
             user_list = [0, 1, 2, 3] # [0, 2, 4, 6]
+        elif users == 5:
+            user_list = [0, 1, 2, 3, 4]
         elif users == 6:
             user_list = [0, 1, 2, 3, 4, 5]# [0, 1, 2, 4, 5, 6]
+        elif users == 7:
+            user_list = [0, 1, 2, 3, 4, 5, 6]
         elif users == 8:
             user_list = [0, 1, 2, 3, 4, 5, 6, 7]
         else:
