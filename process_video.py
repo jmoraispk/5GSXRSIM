@@ -59,13 +59,9 @@ seeds = cli_args.seed
 
 for seed in range(1, seeds + 1):
     for ue in range(n_ues):
-        main(cli_args, ue, n_ues, seed)
-
-        # # Modify original pcap-trace
         
-        # temp_pcap_name = "temp_output.pcap"
-        # pcap_cmd = 'python -m pcap_traces --pcap input_0.pcap --output output_0.pcap > trace_0.csv'.format(
-        #     trace=cli_args.output, output=temp_pcap_name)
+        # Create modified pcap trace with PDR statistics
+        main(cli_args, ue, n_ues, seed)
 
 
         # gst part
@@ -73,7 +69,11 @@ for seed in range(1, seeds + 1):
         gst_cmd = 'gst-launch-1.0 filesrc location="{trace}" ! pcapparse caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96" ! rtph264depay ! decodebin ! filesink location="{output}"'.format(
             trace=cli_args.output, output=temp_video_name)
         result = subprocess.run(gst_cmd, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        
+        print("After YUV conversion") # WORKS FOR SURE UNTIL HERE!!!
+        raise SystemExit()
         os.remove(cli_args.output)
+        
         
         # ffmpeg convert
         
