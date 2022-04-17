@@ -603,7 +603,7 @@ def calc_SINR(tx_pow, ch_pow_gain, interference, noise_power):
     
     sinr_linear = sig_pow / (noise_power + interference)
     
-    return 10 * np.log10(sinr_linear) - 30 # 32.5 # TODO: Switch down to 32.5!
+    return 10 * np.log10(sinr_linear) - 30 # interference
 
     # return 8
     # sinr_random = np.random.normal(5, 3)
