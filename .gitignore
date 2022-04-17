@@ -32,6 +32,8 @@
 *.txt
 test.py
 *.png
+*.mp4
+*.pcap
 __init__.py
 dot_to_png.py
 
