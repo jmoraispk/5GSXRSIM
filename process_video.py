@@ -59,7 +59,7 @@ seeds = cli_args.seed
 
 for seed in range(1, seeds + 1):
     for ue in range(n_ues):
-        main(cli_args, ue, seed)
+        main(cli_args, ue, n_ues, seed)
 
         # # Modify original pcap-trace
         

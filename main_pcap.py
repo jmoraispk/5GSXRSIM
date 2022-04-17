@@ -29,7 +29,7 @@ def _log_packet(packet: Packet, frame_nr: int) -> None:
     print(f"{packet.timestamp:.5f},{packet.size},{packet.rtp_timestamp},{frame_nr},{frame_type}")
 
 
-def main(args: Namespace, ue, seed) -> None:
+def main(args: Namespace, ue, n_ues, seed) -> None:
     """Read and process the PCAP file.
 
     Parameters
@@ -66,12 +66,12 @@ def main(args: Namespace, ue, seed) -> None:
     queues = f"SEED1 - {queue_params} Load"
         
     stats_path = os.getcwd() + "\\Stats\\New_Offset\\New Sensitivity\\PCAP\\"
-    if ue <= 4:
+    if n_ues <= 4:
         stats_folder = stats_path + sim_params + f"\\SEED{seed}_omni\\" + \
-                       queues + f"\\trace_name}\\"
+                       queues + f"\\trace_APP{bitrate}_{burst}\\"
     else: 
-        stats_folder = stats_path + sim_parameters + f"\\SEED{seed}_omni_8\\" + \
-                       queues + f"\\{trace_name}\\"
+        stats_folder = stats_path + sim_params + f"\\SEED{seed}_omni_8\\" + \
+                       queues + f"\\trace_APP{bitrate}_{burst}\\"
                        
     # sim_output_trace = 
         
