@@ -170,19 +170,18 @@ class Simulation_parameters:
         # Scheduler - ['PF', 'M-LWDF', 'EXP/PF', 'Frametype']
         self.scheduler = 'PF'
         
-        self.scheduler = 'Frametype-EDD'
-        self.scheduler = 'Frametype-M-LWDF'
-        # self.scheduler = 'Frametype' 
-        self.frametype_weight = 1.0
+        self.frametype_weight = float(5.0)
         
-        # self.scheduler = 'M-LWDF'
-        # self.scheduler = 'EDD'
+        # ~ self.scheduler = 'Frametype-M-LWDF'
+        # ~ self.scheduler = 'M-LWDF'
+        
+        self.scheduler = 'Frametype-EDD'
+        self.scheduler = 'EDD'
+        
         
         # Delay type - ['RAN', 'E2E']
-        # Use M-LWDF/EDD/Frametype with RAN
-        # Use M-LWDF/EDD/Frametype with E2E
         self.delay_type = 'RAN'
-        # self.delay_type = 'E2E' 
+        self.delay_type = 'E2E' 
 
         # Scheduler parameters
         self.scheduler_param_c = 10
@@ -282,7 +281,7 @@ class Simulation_parameters:
         # self.pcap_dir = self.curr_path + '\\PCAP\\Trace\\'  
         
         # Stats folder
-        self.stats_dir = self.curr_path + '\\Stats\\Queue_Sim\\Tune-RAN\\'
+        self.stats_dir = self.curr_path + '\\Stats\\New_Offset\\New Sensitivity\\' # Queue_Sim\\Tune-RAN\\'
             # f'APP{application_bitrate}-BW{bw}-LAT{lat_budget}_Burst\\'
  
         # Plots folder
@@ -333,7 +332,7 @@ class Simulation_parameters:
         
         # Only used for pcap traces to space out different users 
         # Between 0 and 1
-        self.space_UE_frames = float(1)
+        self.space_UE_frames = float(1.0)
         
         # Burstiness of packet arrival
         self.burstiness_param = float(0.5)
