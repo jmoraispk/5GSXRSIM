@@ -64,28 +64,28 @@ for seed in range(1, seeds + 1):
         main(cli_args, ue, n_ues, seed)
 
 
-        # gst part
+        # gstreamer - create uncompressed YUV from pcap for best accuracy
         temp_video_name = "tempvideo.yuv"
         gst_cmd = 'gst-launch-1.0 filesrc location="{trace}" ! pcapparse caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96" ! rtph264depay ! decodebin ! filesink location="{output}"'.format(
             trace=cli_args.output, output=temp_video_name)
         result = subprocess.run(gst_cmd, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         
-        print("After YUV conversion") # WORKS FOR SURE UNTIL HERE!!!
-        raise SystemExit()
         os.remove(cli_args.output)
         
+        print("After YUV conversion") # WORKS FOR SURE UNTIL HERE!!!
+        raise SystemExit()
         
-        # ffmpeg convert
+        # ffmpeg - convert YUV to MP4 to prepare for PSNR measurement
         
         # ADD: IF BITRATE = 50: FULL HD !!!
         #      ELSE: 4K RESOLUTION !!!
         # CHECK VIDEO TIMER!!!!!
         converted_file_name = "converted.mp4"
         if cli_args.bitrate == 50:
-            convert_cmd = 'ffmpeg -s 1920x1080 -i {input} -ss 00:00:00 -c:v libx264 -s:v 1920x1080 -t 00:01:00 {converted}'.format(
+            convert_cmd = 'ffmpeg -s 1920x1080 -i {input} -ss 00:00:00 -c:v libx264 -s:v 1920x1080 {converted}'.format(
             input=temp_video_name,converted=converted_file_name)
         else:     
-            convert_cmd = 'ffmpeg -s 3840x2160 -i {input} -ss 00:00:00 -c:v libx264 -s:v 3840x2160 -t 00:01:00 {converted}'.format(
+            convert_cmd = 'ffmpeg -s 3840x2160 -i {input} -ss 00:00:00 -c:v libx264 -s:v 3840x2160 {converted}'.format(
             input=temp_video_name,converted=converted_file_name)
         result = subprocess.run(convert_cmd, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         os.remove(temp_video_name)
