@@ -32,10 +32,12 @@
 *.txt
 test.py
 *.png
-*.pcap
-*.mp4
 __init__.py
 dot_to_png.py
+
+
+/PSNR/pcap_traces/pcap_traces (old)/
+
 
 %LOCALAPPDATA%/Microsoft/Windows/SchCache/tsn.tno.nl.sch
 trash.py
