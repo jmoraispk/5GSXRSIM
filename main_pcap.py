@@ -41,20 +41,15 @@ def main(args: Namespace, ue, n_ues, seed) -> None:
     """
     
     # E.g.: 'BW-150_E2E-LAT-50_LEN-16.0s_EDD_Offset-1.0_UE4'
-    sim_params = args.params
-        
+    sim_params = args.params        
     # Up to 20 Seeds
-    seed = seed
-    
+    seed = seed    
     # E.g. '10Q - 70.0%'
-    queues = f"SEED1 - {args.queue} Load" # = args.queue
-    
+    queues = f"SEED1 - {args.queue} Load" # = args.queue    
     # E2E Lat: 25/50/100 ms
-    e2e_lat = args.e2e / 1000
-    
+    e2e_lat = args.e2e / 1000    
     # Bitrate: E.g. 100  
-    bitrate = args.bitrate
-    
+    bitrate = args.bitrate    
     #Burstiness: E.g. 0.6
     burst = args.burst
     
@@ -63,9 +58,6 @@ def main(args: Namespace, ue, n_ues, seed) -> None:
     # pcap_file = open(args.pcap, 'rb')
     pcap_reader = pcap.Reader(pcap_file)
     
-    print(sim_params, "\n", seed, "\n", queues, "\n", e2e_lat, "\n", 
-          bitrate, "\n", burst)
-    # queues = f"SEED1 - {queue_params} Load"
         
     stats_path = os.getcwd() + "\\Stats\\New_Offset\\New Sensitivity\\PCAP\\"
     if n_ues <= 4:
@@ -96,6 +88,7 @@ def main(args: Namespace, ue, n_ues, seed) -> None:
     for i, idx in enumerate(success_total):
         pdr_idx[idx] = 1
         
+    print("PDR:", round(100*len(pdr_idx[pdr_idx == 0])/len(pdr_idx), 3), "%")    
 
     output_pcap_file = open(args.output, 'wb')
     output_pcap_writer = pcap.Writer(output_pcap_file)

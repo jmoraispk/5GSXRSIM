@@ -34,6 +34,8 @@ test.py
 *.png
 *.mp4
 *.pcap
+*.yuv
+*.pdf
 __init__.py
 dot_to_png.py
 

@@ -6,14 +6,17 @@ from main_pcap import main
 # import ffmpeg
 import subprocess
 import os
-from ffmpeg_quality_metrics import FfmpegQualityMetrics
+import time
 import pandas as pd
+
+from ffmpeg_quality_metrics import FfmpegQualityMetrics
+
 
 def _parse_args() -> Namespace:
     parser = ArgumentParser(description="Gets a video file and a PCAP from streamed video and dumps PSNR between them")
     
-    # E.g: python process_video.py --params 'BW-150_E2E-LAT-50_LEN-16.0s_EDD_Offset-1.0_UE4' --seed 1 --e2e 50 
-    #      --bitrate 100 --burst 0.6 --queue '10Q - 70.0%' 
+    # E.g: 
+    # python process_video.py --params 'BW-150_E2E-LAT-50_LEN-16.0s_EDD_Offset-1.0_UE4' --seed 1 --e2e 50 --bitrate 100 --burst 0.6 --queue '10Q - 70.0%' 
        
     
     # E.g.: 'BW-150_E2E-LAT-50_LEN-16.0s_EDD_Offset-1.0_UE4'
@@ -49,7 +52,10 @@ def _parse_args() -> Namespace:
 cli_args = _parse_args()
 cli_args.output = "temp.pcap"
 
-og_video = os.getcwd() + f"\\PSNR\\PCAP_FILES\\input_APP{cli_args.bitrate}_16s.mp4" 
+og_video = os.getcwd() + f"\\PSNR\\PCAP_FILES\\input_APP{cli_args.bitrate}.mp4" 
+
+
+tic = time.perf_counter()
 
 
 # PCAP PART: MAIN FROM PCAP-TRACES
@@ -58,6 +64,9 @@ n_ues = int(cli_args.params[-1])
 seeds = cli_args.seed
 
 for seed in range(1, seeds + 1):
+    
+    tic_seed = time.perf_counter()
+
     for ue in range(n_ues):
         
         # Create modified pcap trace with PDR statistics
@@ -72,8 +81,11 @@ for seed in range(1, seeds + 1):
         
         os.remove(cli_args.output)
         
-        print("After YUV conversion") # WORKS FOR SURE UNTIL HERE!!!
-        raise SystemExit()
+        # toc_test = time.perf_counter()
+        # print(f'Time Elapsed: {int(toc_test-tic)} seconds.')
+        
+        # print(f"After YUV conversion, UE{ue}, SEED{seed}") # WORKS FOR SURE UNTIL HERE!!!
+        # raise SystemExit()
         
         # ffmpeg - convert YUV to MP4 to prepare for PSNR measurement
         
@@ -90,6 +102,14 @@ for seed in range(1, seeds + 1):
         result = subprocess.run(convert_cmd, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         os.remove(temp_video_name)
         
+                
+        tocc_test = time.perf_counter()
+        print(f'Time Elapsed: {int(tocc_test-tic)} seconds.')
+        print(f"Finished YUV to MP4 conversion, UE{ue}, SEED{seed}") # WORKS FOR SURE UNTIL HERE!!!
+        # raise SystemExit()
+        
+        
+        
         # ffmpeg get PSNR with shell
         #psnr_file_name='psnr.txt'
         #psnr_cmd = 'ffmpeg -i {modified} -i {original} -lavfi psnr=stats_file={psnr_logfile} -f null -'.format(modified=converted_file_name, original=cli_args.video,psnr_logfile=psnr_file_name)
@@ -100,11 +120,18 @@ for seed in range(1, seeds + 1):
         
         ffqm = FfmpegQualityMetrics(converted_file_name, og_video)
         temp = ffqm.calc(["ssim", "psnr"])
+        df_psnr = pd.DataFrame.from_dict(temp['psnr'])
+        df_ssim = pd.DataFrame.from_dict(temp['ssim'])
+        
         df = pd.DataFrame.from_dict(temp['psnr'])
         os.remove(converted_file_name)
         
-        df.to_csv("psnr.csv",index=False)
-
+        df_psnr.to_csv("psnr.csv",index=False)
+        df_ssim.to_csv("ssim.csv",index=False)
+        
+        print("Finished PSNR Calculation.") 
+        toc_test = time.perf_counter()
+        print(f'SEED{seed} out of {seeds} - UE{ue}, Time Elapsed: {int(toc_test-tic)} seconds.')
 
 
 
