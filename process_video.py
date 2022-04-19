@@ -16,7 +16,7 @@ def _parse_args() -> Namespace:
     parser = ArgumentParser(description="Gets a video file and a PCAP from streamed video and dumps PSNR between them")
     
     # E.g: 
-    # python process_video.py --params 'BW-150_E2E-LAT-50_LEN-16.0s_EDD_Offset-1.0_UE4' --seed 1 --e2e 50 --bitrate 100 --burst 0.6 --queue '10Q - 70.0%' 
+    # python process_video.py --seed 1 --burst 0.6 --e2e 50 --queue '10Q - 70.0%' --bitrate 100 --params 'BW-150_E2E-LAT-50_LEN-16.0s_EDD_Offset-1.0_UE4' 
        
     
     # E.g.: 'BW-150_E2E-LAT-50_LEN-16.0s_EDD_Offset-1.0_UE4'
