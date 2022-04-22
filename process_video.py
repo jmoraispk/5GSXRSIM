@@ -90,6 +90,8 @@ for seed in range(1, seeds + 1):
 
     for ue in range(n_ues):
         
+        print(f'Doing seed {seed} out of {seeds} - UE{ue}')
+        
         # Create modified pcap trace with PDR statistics
         pdr_file = main(cli_args, ue, n_ues, seed)
 
@@ -114,10 +116,10 @@ for seed in range(1, seeds + 1):
         # CHECK VIDEO TIMER!!!!!
         converted_file_name = f"tempmp4_{temp_file_name}.mp4"
         if cli_args.bitrate == 50:
-            convert_cmd = 'ffmpeg -s 1920x1080 -i "{input}" -ss 00:00:00 -c:v libx264 -s:v 1920x1080 "{converted}"'.format(
+            convert_cmd = 'ffmpeg -s 1920x1080 -ss 00:00:00 -i "{input}" -c:v libx264 -preset superfast -crf 23 -s:v 1920x1080 "{converted}"'.format(
             input=temp_video_name,converted=converted_file_name)
         else:     
-            convert_cmd = 'ffmpeg -s 3840x2160 -i "{input}" -ss 00:00:00 -c:v libx264 -s:v 3840x2160 "{converted}"'.format(
+            convert_cmd = 'ffmpeg -s 3840x2160 -ss 00:00:00 -i "{input}" -c:v libx264 -preset superfast -crf 23 -s:v 3840x2160 "{converted}"'.format(
             input=temp_video_name,converted=converted_file_name)
         result = subprocess.run(convert_cmd, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         os.remove(temp_video_name)
@@ -125,7 +127,7 @@ for seed in range(1, seeds + 1):
                 
         tocc_test = time.perf_counter()
         # print(f'Time Elapsed: {int(tocc_test-tic)} seconds.')
-        print(f"Finished YUV to MP4 conversion, UE{ue}, SEED{seed}") # WORKS FOR SURE UNTIL HERE!!!
+        # print(f"Finished YUV to MP4 conversion, UE{ue}, SEED{seed}") # WORKS FOR SURE UNTIL HERE!!!
         # raise SystemExit()
         
         
@@ -166,12 +168,12 @@ for seed in range(1, seeds + 1):
         np.savetxt(output_full_name_psnr, psnr_avg, encoding='utf-8')
         np.savetxt(output_full_name_ssim, ssim_avg, encoding='utf-8')
         
-        print("Finished PSNR Calculation.") 
+        # print("Finished PSNR Calculation.") 
         toc_test = time.perf_counter()
-        print(f'SEED{seed} out of {seeds} - UE{ue}, Time Elapsed: {int(toc_test-tic)} seconds.\n')
+        print(f'Seed {seed} out of {seeds} - UE{ue}, Time Elapsed: {int(toc_test-tic)} seconds.\n')
 
 
 toc_end = time.perf_counter()    
-print(f'Finished All {seeds} Seeds- Total Time Elapsed: {int(toc_end-tic)/60} minutes.')
+print(f'Finished All {seeds} Seeds - Total Time Elapsed: {int(toc_end-tic)/60} minutes.')
 
 
