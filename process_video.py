@@ -143,7 +143,6 @@ for seed in range(1, seeds + 1):
         df_psnr = pd.DataFrame.from_dict(temp['psnr'])
         df_ssim = pd.DataFrame.from_dict(temp['ssim'])
         
-        df = pd.DataFrame.from_dict(temp['psnr'])
         os.remove(converted_file_name)
         
         # TODO: CALCULATE AND SAVE ONLY AVERAGES (PSNR - INF!!!)
