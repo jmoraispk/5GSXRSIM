@@ -80,7 +80,6 @@ n_ues = int(cli_args.params[-1])
 
 seeds = cli_args.seed
 seeds_to_simulate = []
-seeds_to_simulate = []
 for i in range(1, seeds + 1):    
     seeds_to_simulate.append(i)
 print("Seeds to simulate:", seeds_to_simulate, "\n")
