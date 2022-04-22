@@ -87,8 +87,10 @@ def main(args: Namespace, ue, n_ues, seed) -> None:
     
     for i, idx in enumerate(success_total):
         pdr_idx[idx] = 1
-        
-    print("PDR:", round(100*len(pdr_idx[pdr_idx == 0])/len(pdr_idx), 3), "%")    
+    
+    pdr_file = round(100*len(pdr_idx[pdr_idx == 0])/len(pdr_idx), 4)
+    
+    print("PDR:", pdr_file, "%")    
 
     output_pcap_file = open(args.output, 'wb')
     output_pcap_writer = pcap.Writer(output_pcap_file)
@@ -117,5 +119,5 @@ def main(args: Namespace, ue, n_ues, seed) -> None:
     pcap_file.close()
     output_pcap_file.close()
     
-    
+    return pdr_file
     # raise SystemExit()
