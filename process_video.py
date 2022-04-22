@@ -71,7 +71,7 @@ cli_args.output = f"temppcap_{temp_file_name}.pcap"
 
 og_video = os.getcwd() + f"\\PSNR\\PCAP_FILES\\input_APP{cli_args.bitrate}.mp4" 
 
-
+print(f"\nStarting PSNR and SSIM calculations for: \nAPP{bitrate}_{burst} - E2E{e2e_lat} - {sim_params} - {queues}.\n")
 tic = time.perf_counter()
 
 
