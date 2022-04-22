@@ -71,7 +71,7 @@ cli_args.output = f"temppcap_{temp_file_name}.pcap"
 
 og_video = os.getcwd() + f"\\PSNR\\PCAP_FILES\\input_APP{cli_args.bitrate}.mp4" 
 
-print(f"\nStarting PSNR and SSIM calculations for: \nAPP{bitrate}_{burst} - E2E{e2e_lat} - {sim_params} - {queues}.\n")
+print(f"\nStarting PSNR and SSIM calculations for: \nAPP{bitrate}_{burst} - E2E{e2e_lat} - {sim_params} - {queues}.")
 tic = time.perf_counter()
 
 
@@ -79,6 +79,11 @@ tic = time.perf_counter()
 n_ues = int(cli_args.params[-1])
 
 seeds = cli_args.seed
+seeds_to_simulate = []
+seeds_to_simulate = []
+for i in range(1, seeds + 1):    
+    seeds_to_simulate.append(i)
+print("Seeds to simulate:", seeds_to_simulate, "\n")
 
 for seed in range(1, seeds + 1):
     
