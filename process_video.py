@@ -72,6 +72,7 @@ cli_args.output = f"temppcap_{temp_file_name}.pcap"
 og_video = os.getcwd() + f"\\PSNR\\PCAP_FILES\\input_APP{cli_args.bitrate}.mp4" 
 
 print(f"\nStarting PSNR and SSIM calculations for: \nAPP{bitrate}_{burst} - E2E{e2e_lat} - {sim_params} - {queues}.")
+
 tic = time.perf_counter()
 
 
@@ -89,6 +90,8 @@ for seed in range(1, seeds + 1):
     tic_seed = time.perf_counter()
 
     for ue in range(n_ues):
+        
+        tic_ue = time.perf_counter()
         
         print(f'Doing seed {seed} out of {seeds} - UE{ue}')
         
@@ -169,10 +172,12 @@ for seed in range(1, seeds + 1):
         np.savetxt(output_full_name_ssim, ssim_avg, encoding='utf-8')
         
         # print("Finished PSNR Calculation.") 
-        toc_test = time.perf_counter()
-        print(f'Seed {seed} out of {seeds} - UE{ue}, Time Elapsed: {int(toc_test-tic)} seconds.\n')
+        toc_ue = time.perf_counter()
+        print(f'Seed {seed} - UE{ue}, Time Elapsed: {int(toc_ue-tic_ue)} seconds.\n')
 
-
+    toc_seed = time.perf_counter()
+    print(f'Seed {seed} out of {seeds}, Time Elapsed: {int(toc_seed-tic_seed)} seconds.\n')
+    
 toc_end = time.perf_counter()    
 print(f'Finished All {seeds} Seeds - Total Time Elapsed: {int(toc_end-tic)/60} minutes.')
 
