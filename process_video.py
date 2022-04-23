@@ -88,12 +88,14 @@ print("Seeds to simulate:", seeds_to_simulate, "\n")
 for seed in range(1, seeds + 1):
     
     tic_seed = time.perf_counter()
+    
+    print(f'Doing seed {seed} out of {seeds}')
 
     for ue in range(n_ues):
         
         tic_ue = time.perf_counter()
         
-        print(f'Doing seed {seed} out of {seeds} - UE{ue}')
+        print(f'UE{ue}')
         
         # Create modified pcap trace with PDR statistics
         pdr_file = main(cli_args, ue, n_ues, seed)
