@@ -38,6 +38,9 @@ def _parse_args() -> Namespace:
     #Burstiness: E.g. 0.6
     parser.add_argument('--burst', action='store', type=float, required=True, help="Trace Burstiness")
     
+    #Burstiness: E.g. 0.6
+    parser.add_argument('--perframe', action='store', type=bool, required=False, help="Storing PSNR SSIM Per Frame")
+    
     # (Not needed?)    
     # parser.add_argument('--pcap', action='store', type=str, required=True, help="Input PCAP file")
     parser.add_argument('--output', action='store', type=str, required=False, help="Output PCAP file, optional") # this is only kept so pcap-traces module doesnt need modification
@@ -63,6 +66,11 @@ e2e_lat = cli_args.e2e
 bitrate = cli_args.bitrate    
 #Burstiness: E.g. 0.6
 burst = cli_args.burst
+#Store PSNR/SSIM Information Per Frame
+perframe = False
+if cli_args.perframe:
+    print("Saving PSNR SSIM Per Frame")
+    perframe = True
 
 
 temp_file_name = f"APP{bitrate}-{burst}_E2E{e2e_lat}_{sim_params}_{queues}"
@@ -154,25 +162,42 @@ for seed in range(1, seeds + 1):
         
         # TODO: CALCULATE AND SAVE ONLY AVERAGES (PSNR - INF!!!)
         
-        mse_avg = np.mean(df_psnr["mse_avg"]) 
-        psnr_avg = np.array([pdr_file, round(20 * np.log10(255) - 10 * np.log10(mse_avg), 3)])
+        if perframe:
+            psnr_per_frame = df_psnr["psnr_avg"].to_numpy()
+            ssim_per_frame = df_ssim["ssim_avg"].to_numpy()            
+            
+            # TODO: SAVE TO CORRECT OUTPUT PATH
+            output_folder = os.getcwd() + f"\\PSNR\\PSNR-Stats\\{temp_file_name}_Perframe\\SEED{seed}\\UE{ue}\\"
+            output_file_psnr = "psnr_perframe.csv"
+            output_file_ssim = "ssim_perframe.csv"        
         
-        ssim_avg = np.array([pdr_file, round(np.mean(df_ssim["ssim_avg"]), 4)])       
+            os.makedirs(output_folder, exist_ok=True)
+            output_full_name_psnr = os.path.join(output_folder, output_file_psnr) 
+            output_full_name_ssim = os.path.join(output_folder, output_file_ssim)     
+    
+            # saving the dataframe        
+            np.savetxt(output_full_name_psnr, psnr_per_frame, encoding='utf-8')
+            np.savetxt(output_full_name_ssim, ssim_per_frame, encoding='utf-8')        
         
-        
-        # TODO: SAVE TO CORRECT OUTPUT PATH
-        output_folder = os.getcwd() + f"\\PSNR\\PSNR-Stats\\{temp_file_name}\\SEED{seed}\\UE{ue}\\"
-        output_file_psnr = "psnr.csv"
-        output_file_ssim = "ssim.csv"
-
-        os.makedirs(output_folder, exist_ok=True)
-        output_full_name_psnr = os.path.join(output_folder, output_file_psnr) 
-        output_full_name_ssim = os.path.join(output_folder, output_file_ssim)     
-
-        # saving the dataframe        
-        np.savetxt(output_full_name_psnr, psnr_avg, encoding='utf-8')
-        np.savetxt(output_full_name_ssim, ssim_avg, encoding='utf-8')
-        
+        else: 
+            mse_avg = np.mean(df_psnr["mse_avg"]) 
+            psnr_avg = np.array([pdr_file, round(20 * np.log10(255) - 10 * np.log10(mse_avg), 3)])
+            
+            ssim_avg = np.array([pdr_file, round(np.mean(df_ssim["ssim_avg"]), 4)])                   
+            
+            # TODO: SAVE TO CORRECT OUTPUT PATH
+            output_folder = os.getcwd() + f"\\PSNR\\PSNR-Stats\\{temp_file_name}\\SEED{seed}\\UE{ue}\\"
+            output_file_psnr = "psnr.csv"
+            output_file_ssim = "ssim.csv"
+    
+            os.makedirs(output_folder, exist_ok=True)
+            output_full_name_psnr = os.path.join(output_folder, output_file_psnr) 
+            output_full_name_ssim = os.path.join(output_folder, output_file_ssim)     
+    
+            # saving the dataframe        
+            np.savetxt(output_full_name_psnr, psnr_avg, encoding='utf-8')
+            np.savetxt(output_full_name_ssim, ssim_avg, encoding='utf-8')
+            
         # print("Finished PSNR Calculation.") 
         toc_ue = time.perf_counter()
         print(f'Seed {seed} - UE{ue}, Time Elapsed: {int(toc_ue-tic_ue)} seconds.\n')
