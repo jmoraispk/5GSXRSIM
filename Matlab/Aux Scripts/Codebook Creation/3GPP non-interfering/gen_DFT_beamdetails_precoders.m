@@ -1,5 +1,5 @@
-N1 = 4;     % Number of logical antenna elements in hor direction.            
-N2 = 4;     % Number of logical antenna elements in ver direction. 
+N1 = 8;     % Number of logical antenna elements in hor direction.            
+N2 = 8;     % Number of logical antenna elements in ver direction. 
 O1 = 4;     % Oversampling factor in horizontal direction: O1 is always 4.
 O2 = 4;     % Oversampling factor in vertical direction: O2 can be 1 or 4.
 
@@ -17,7 +17,7 @@ el_cut = 1;                % 1: el cut polar plot, 0: az cut.
 Quad_3d_plot = 0;
 debug_gain = 1;
 % precoder = 1:256;
-precoder = 1:256;
+precoder = 1:1024;
 
 
 %%
@@ -25,7 +25,7 @@ precoder = 1:256;
 % precoder = [1, 65, 65+64, 65+64+64];
 % a=16;
 % precoder = [1+a, 5+a, 9+a, 13+a];
-% precoder = 1 : 1 : 256;
+precoder = 1 : 1 : 1024;
 % precoder = [9, 25, 41, 57, 73];
 % precoder = [1, 5, 9, 13];
 % precoder = [2, 6, 10, 14];

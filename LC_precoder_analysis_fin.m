@@ -15,8 +15,8 @@ amp3 = 0.11067447561807642;
 amp4 = 0.09384770753705182;
 
 % Selected precoders
-precod_col_L1 = precoders_matrix(:,58);
-precod_col_L2 = precoders_matrix(:,54);
+precod_col_L1 = precoders_matrix(:,1);
+precod_col_L2 = precoders_matrix(:,5);
 precod_col_L3 = precoders_matrix(:,182);
 precod_col_L4 = precoders_matrix(:,118);
 

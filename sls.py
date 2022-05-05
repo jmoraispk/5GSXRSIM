@@ -1355,9 +1355,10 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             
             created_beam_pair.RPI = [best_beam_pairs[0].RPI,
                                              best_beam_pairs[1].RPI]
-            # Sandra- print(ue)                                
-            # print(created_beam_pair.beam_idx)
-            # print(created_beam_pair.RPI)
+            # Sandra:
+            print(ue)                                
+            print(created_beam_pair.beam_idx)
+            print(created_beam_pair.RPI)
             
         elif n_csi_beams == 3:
             # Power ratio of second and third best beams compared to first, for
@@ -1463,9 +1464,10 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
                                              best_beam_pairs[1].RPI, 
                                              best_beam_pairs[2].RPI,
                                              best_beam_pairs[3].RPI]
-            # Sandra- print(ue)                                
-            # print(created_beam_pair.beam_idx)
-            # print(created_beam_pair.RPI)
+            # Sandra-
+            print(ue)                                
+            print(created_beam_pair.beam_idx)
+            print(created_beam_pair.RPI)
         
         # This is to perform the MRT for the L = 2, 3, 4 beams.        
         if not n_csi_beams == 1:
@@ -1655,6 +1657,8 @@ def su_mimo_setting_bitrate_single_layer(bs, ue, n_prb,
     sinr_db = \
         10 * np.log10(signal_power /   # single layer interference
                       (noise_power + est_dl_interference[tti][ue][0]))
+    # Sandra
+    # print(ue, est_dl_interference[tti][ue][0])
     
     if debug:
         print(f"RSS: {10 * np.log10(signal_power):.2f} dBW")
@@ -2319,7 +2323,7 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
                    olla, use_olla, bler_target, olla_stepsize, 
                    blocks_with_errors, realised_SINR, TTI_dur_in_secs, 
                    realised_bitrate, beams_used, sig_pow_per_prb, 
-                   mcs_used, save_per_prb_sig_pow, experienced_signal_power):
+                   mcs_used, save_per_prb_sig_pow, experienced_signal_power, curr_beam_pairs):
     
     for entry in curr_schedule[slot_type]:
         if debug:

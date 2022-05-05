@@ -573,7 +573,7 @@ def get_vars_to_load(idx, vars_to_load_names):
                  2.3: [2,3], 2.4: [2,3,5,6],
                  3: [11], 3.1: [11], 3.2: [10, 15], 3.3: [10,12], 3.35: [10,12], 
                  3.4: [10,12], 3.45: [10,12], 3.5: [10,12], 3.55: [10,12], 
-                 3.6: [12,13], 3.65: [12,13],
+                 3.6: [12,20], 3.65: [12,20],
                  4.1: [9], 4.2: [9], 4.3: [4,9],
                  5.1: [7], 5.15: [7], 5.2: [7], 5.3: [7], 
                  5.4: [2,7], 5.5: [5,6,7], 5.6: [7], 5.65: [7],
@@ -630,7 +630,7 @@ def get_vars_to_compute(idx, vars_to_compute_names):
                     10.1: [12,14], 10.15: [12,14], 10.2: [12,15], 
                     10.25: [12,15], 10.3: [12,14,15], 10.31: [12,14,15], 
                     10.4: [12,13,14,15], 10.45: [12,13,14,15], 
-                    10.5: [16], 10.55: [16], 10.6: [17], 10.65: [17], 
+                    10.5: [16], 10.55: [16], 10.6: [17], 10.65: [12,17], 
                     10.7: [14,15,16,17,18,19,20,21,22,23], 
                     10.8: [22,27], 10.9: [23,27], 
                     10.11: [22,23,27],
@@ -836,7 +836,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                sim_data_computed[f][v] is None:
                 # IDX 13 is the estimated interference power in Watt
                 sim_data_computed[f][v] = (10 * 
-                                           np.log10(sim_data_trimmed[f][13]))
+                                           np.log10(sim_data_trimmed[f][20]))
             
             # COMPUTE INDEX 9: Beam Formula Simple
             if var_to_compute == 'beam_formula_simple' and \
@@ -879,10 +879,10 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 sim_data_computed[f][12] = np.arange(n_frames)
                 
                 # Generate which of those are I frames:
-                sim_data_computed[f][13] = np.zeros([n_frames, n_ues],
+                sim_data_computed[f][13] = np.zeros([int(n_frames), n_ues],
                                                     dtype=int)
                 sim_data_computed[f][13][0,:] = 1
-                for frame_idx in range(n_frames):
+                for frame_idx in range(int(n_frames)):
                     if frame_idx % GoP == 0:
                         sim_data_computed[f][13][frame_idx,:] = 1
             
@@ -893,10 +893,10 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                                   'avg_pck_drop_rate_per_frame_in_gop'] and \
                sim_data_computed[f][14] is None:
                    
-                sim_data_computed[f][14] = np.zeros([n_frames, n_ues])
+                sim_data_computed[f][14] = np.zeros([int(n_frames), n_ues])
                 
                 for ue in ues:
-                    for per in range(n_periods):
+                    for per in range(int(n_periods)):
                         # Loop over frame indices (fi)
                         for fi in range(GoP):
                             # IDX 1 are the buffers
@@ -912,12 +912,12 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                                   'avg_pck_drop_rate_per_frame_in_gop'] and \
                sim_data_computed[f][15] is None:
                    
-                sim_data_computed[f][15] = np.zeros([n_frames, n_ues])
+                sim_data_computed[f][15] = np.zeros([int(n_frames), n_ues])
                 
                 # Compute packet success percentages, average latencies and 
                 # drop rates
                 for ue in ues:
-                    for per in range(n_periods):
+                    for per in range(int(n_periods)):
                         for frm in range(GoP):
                             
                             f_info = \
@@ -971,7 +971,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
             if var_to_compute == 'avg_pck_drop_rate_per_frame' and \
                sim_data_computed[f][v] is None:
                 # IDX 15 is the avg_packet_drop_rate
-                aux = np.zeros([n_frames, n_ues])
+                aux = np.zeros([int(n_frames), n_ues])
                 aux[:] = sim_data_computed[f][15][:] 
                 
                 # Scale up I frames: (IDX 13 is the I frame indices )
@@ -1609,7 +1609,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
         # Estimated vs Realised interference
         if plot_idx == 3.6:
             plot_for_ues(ues, x_vals, 
-                         [sim_data_trimmed[f][13][:,:,l], sim_data_trimmed[f][12][:,:,l]], 
+                         [sim_data_trimmed[f][20][:,:,l], sim_data_trimmed[f][12][:,:,l]], 
                          x_axis_label=x_label_time, 
                          y_axis_label=['Interference Power [W]'],  
                          y_labels_left=['Estimated', 'Realised'],

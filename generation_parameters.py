@@ -65,7 +65,7 @@ class Generation_parameters:
         # setup is done, any generation can use such builders to compute the
         # channel, it is only required to have the correct path. For that, 
         # see how the variable 'use_existing_builders' works.
-        self.only_setup = True
+        self.only_setup = False
         
         # In case of generating channels in different machines simultaneously,
         # this is used to setup which instances run in each one.
@@ -972,7 +972,7 @@ class Generation_parameters:
         
         # Comment to stop overriding:
         r_table = 1.4
-        r_table = 3
+        r_table = 2.6
         
         # Additional radius for the users to seat around the table 
         r_users_dist = 0.2 
@@ -1138,7 +1138,7 @@ class Generation_parameters:
         #                    simulation duration. If sim_dur is 10, then they 
         #                    start at 30s and 6 minutes, respectively
         segment_start = np.array([[0.5]], dtype=np.double)
-        scenarios = np.array([[LoS]], dtype=np.object)
+        scenarios = np.array([[NLoS]], dtype=np.object)
     
         # So that it's not needed to repeat every row of segment start and 
         # scenarios if it's 0, then there should be as many rows in the 

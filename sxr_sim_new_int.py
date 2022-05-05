@@ -12,7 +12,7 @@ import itertools
 import time
 from tqdm  import tqdm
 # Own code imports
-import sls
+import sls_new_int as sls
 import utils as ut
 import application_traffic as at
 import simulation_parameters as sim_par
@@ -27,8 +27,8 @@ parent_folder = \
 seed = 1
 speed = 3
 
-folders_to_simulate = [f"Scenario2_SEED1_SPEED3_NLOS"]
-# folders_to_simulate = [f"Scenario2_SEED{seed}_SPEED3"]
+# folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
+folders_to_simulate = [f"Scenario2_SEED{seed}_SPEED3"]
 
 folders_to_simulate = [parent_folder + '\\' + f for f in folders_to_simulate]
 
@@ -38,20 +38,25 @@ freq_idxs = [0]
 
 csi_periodicities = [5]
 # Ls = [1, 2, 3, 4]
-Ls = [4]
-
+# Ls = [1, 2, 3, 4]
+Ls = [2]
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
 users = [16]
 
 # rot_factorss = [8, 9, 10, 11, 12, 13, 14, 15]
-adap_rot_factor = True
-rot_factors = [None] # Should be kept as None if adap_rot_factor is True.
-n_layers = [1]
+adap_rot_factor = False
+rot_factors = [10] # Should be kept as None if adap_rot_factor is True.
+n_layers = [2]
+
+# If set to true. follows the new interference estimation mechanism by using a
+# book keeping dictionary of used beams and the corresponding interference.
+# If False, then the previous csi_tti intereference is used.
+book_keeping_interference = True
 
 # Now we usually keep these constant (so we removed them from the file name!):
 application_bitrates = [100] # Mbps
-bandwidths = [250] # 50 MHz
+bandwidths = [400] # MHz
 latencies = [10] # ms
 
 full_rot_set_precoders = np.array([
@@ -156,7 +161,7 @@ for param in sim_params:
     include_timestamp = False 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
-    output_str = f'PLR_RPI_test_NLOS_Scenario2_{sp.scheduling_method}_SEED-{seed}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
+    output_str = f'Rank2test_Scenario2_{sp.scheduling_method}_SEED-{seed}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
                  f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-{L}'
     output_str = output_stats_folder + output_str
     
@@ -337,6 +342,8 @@ for param in sim_params:
         ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
     est_dl_interference = \
         ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
+    est_dl_fin_interference = \
+        ut.make_py_list(3, [sp.sim_TTIs, sp.n_ue, sp.n_layers])
     est_scheduled_layers = \
         ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     scheduled_UEs = \
@@ -345,6 +352,11 @@ for param in sim_params:
         ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue])
     real_scheduled_layers = \
         ut.make_py_list(2, [sp.sim_TTIs, sp.n_ue]) 
+        
+    # These are the book_keeping dictionary tables, they SHOULD NOT BE 
+    # OVERWRITTEN per TTI!!!!!!!!!!!!!!!!!!!!! MAKE SURE OF THIS PLEASE!
+    book_keeping_dict = {}
+    interference_dict = {}
         
     # Optional Variables:
     if sp.save_per_prb_sig_pow:
@@ -407,7 +419,7 @@ for param in sim_params:
     # every tti to assess how many bits got across and are valid for 
     # during scheduling_tti TTIs.
     curr_schedule = {}
-    
+    beam_entry_list = []
     
     print('--------- Starting simulation ---------') 
     
@@ -542,13 +554,6 @@ for param in sim_params:
                 # process is more resource consuming (done inside the function)
     
         # ####################### CSI UPDATE ############################    
-        # 1- b) Update interference measurements for the DL
-            sls.interference_measurements_update(ue_idxs, sp.n_layers, 
-                                                 tti, last_csi_tti, 
-                                                 sp.csi_tti_delay, 
-                                                 est_dl_interference,
-                                                 real_dl_interference)
-            
         # 1- c) Update precoders
         sls.update_all_precoders(tti, tti_relative_with_csi, active_UEs, sp.n_bs, 
                                  curr_beam_pairs, last_csi_tti, 
@@ -557,6 +562,16 @@ for param in sim_params:
                                  power_per_beam, sp.save_power_per_CSI_beam, 
                                  sp.vectorize_GoB, full_rot_set_precoders, 
                                  adap_rot_factor)
+        
+       
+         # 1- b) Update interference measurements for the DL
+        sls.interference_measurements_update(ue_idxs, sp.n_layers, 
+                                                 tti, last_csi_tti, 
+                                                 sp.csi_tti_delay, 
+                                                 est_dl_interference,
+                                                 real_dl_interference)
+            
+        
         
         # From here onwards, we know what precoders are best for each UE, 
         # per layer. This has been verified with LoS simulations, print below
@@ -635,17 +650,27 @@ for param in sim_params:
             if sp.debug:
                 print(f"SU-MIMO bitrates: {su_mimo_bitrates[tti][1:sp.n_phy]}")
             # -------------------------------
-            
+            #Change:29April2022
             # 4- Compute UE priorities (Using Scheduler)
             
             curr_priorities = \
                 sls.compute_priorities(tti, ue_priority, all_delays, buffers, 
-                                       schedulable_UEs_dl, sp.scheduler, 
-                                       avg_bitrate, est_su_mimo_bitrate,
-                                       ut.get_seconds(sp.delay_threshold), 
-                                       sp.scheduler_param_delta, 
-                                       sp.scheduler_param_c)
-
+                                        schedulable_UEs_dl, sp.scheduler, 
+                                        avg_bitrate, est_su_mimo_bitrate,
+                                        ut.get_seconds(sp.delay_threshold), 
+                                        sp.scheduler_param_delta, 
+                                        sp.scheduler_param_c)
+            #The change between above commented code and below is that est_su_
+            #mimo_bitrate is changed to su_mimo_bitrates so that priorities can
+            #be calculated for each of the separate layers of the ue(est_su contains)
+            #only the max bitrate among two layers, su_mimo_bitrates contain both.
+            # curr_priorities = \
+            #     sls.compute_priorities(tti, ue_priority, all_delays, buffers, 
+            #                            schedulable_UEs_dl, sp.scheduler, 
+            #                            avg_bitrate, su_mimo_bitrates,
+            #                            ut.get_seconds(sp.delay_threshold), 
+            #                            sp.scheduler_param_delta, 
+            #                            sp.scheduler_param_c)
             if sp.debug:
                 print(curr_priorities)
                 print(avg_bitrate[tti])
@@ -660,8 +685,34 @@ for param in sim_params:
                                serving_BS_dl, est_scheduled_layers, 
                                curr_beam_pairs, sp.min_beam_distance, 
                                scheduled_UEs, sp.scheduling_method, 
-                               real_scheduled_layers, sp.debug, sp.n_csi_beams)
+                               real_scheduled_layers, sp.debug, sp.n_csi_beams,
+                               sp.n_layers)
+            #-------------------------------------------------------------
             
+            
+            
+            # 5.2- updating the beam precoders, RPI in the book_keeping table
+            (beam_entry) = \
+                sls.interference_book_keeping_update(curr_schedule, 
+                                                     curr_beam_pairs,
+                                                     sp.n_layers,
+                                                     est_scheduled_layers,
+                                                     book_keeping_dict)
+                
+            # 5.1 b) Update interference measurements for the DL
+            sls.interference_measurements_final_update(ue_idxs, sp.n_layers, 
+                                                 tti, last_csi_tti, 
+                                                 sp.csi_tti_delay, 
+                                                 est_dl_fin_interference,
+                                                 real_dl_interference,
+                                                 curr_beam_pairs,
+                                                 curr_schedule,
+                                                 book_keeping_interference,
+                                                 book_keeping_dict,
+                                                 interference_dict,
+                                                 beam_entry)
+            
+            #------------------------------------------------------------
             # -------------------------------
             
             # 6- Power Control
@@ -673,7 +724,7 @@ for param in sim_params:
             
             # 7- Update SINRs, expected bitrates and MCS to use
             
-            sls.final_mcs_update(tti, curr_schedule, est_dl_interference,
+            sls.final_mcs_update(tti, curr_schedule, est_dl_fin_interference,
                                  sp.wideband_noise_power_dl, sp.n_prb, 
                                  sp.TTI_dur_in_secs, sp.freq_compression_ratio, 
                                  estimated_SINR, sp.use_olla, olla,
@@ -685,7 +736,8 @@ for param in sim_params:
         # print(tti)
         # print('here')
         # Phase 3: TTI Simulation
-        sls.tti_simulation(curr_schedule, slot_type, sp.n_prb, sp.debug, 
+        interference_dict = \
+            sls.tti_simulation(curr_schedule, slot_type, sp.n_prb, sp.debug, 
                            coeffs, tti_relative, 
                            sp.intercell_interference_power_per_prb, 
                            sp.noise_power_per_prb_dl, tti, 
@@ -695,7 +747,9 @@ for param in sim_params:
                            blocks_with_errors, realised_SINR, 
                            sp.TTI_dur_in_secs, realised_bitrate, 
                            beams_used, sig_pow_per_prb, mcs_used, 
-                           sp.save_per_prb_sig_pow, experienced_signal_power, curr_beam_pairs)
+                           sp.save_per_prb_sig_pow, experienced_signal_power, 
+                           book_keeping_dict, interference_dict,
+                           beam_entry, beam_entry_list)
         
         if sp.debug:
             print(f'----------Done measuring tti {tti} ---------------------')
@@ -813,6 +867,7 @@ for param in sim_params:
         ut.save_var_pickle(mcs_used, sp.stats_path, globals_dict)
         ut.save_var_pickle(real_dl_interference, sp.stats_path, globals_dict)
         ut.save_var_pickle(est_dl_interference, sp.stats_path, globals_dict)
+        ut.save_var_pickle(est_dl_fin_interference, sp.stats_path, globals_dict)
         ut.save_var_pickle(scheduled_UEs, sp.stats_path, globals_dict)
         ut.save_var_pickle(est_scheduled_layers, sp.stats_path, globals_dict)
         ut.save_var_pickle(channel, sp.stats_path, globals_dict)
