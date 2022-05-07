@@ -110,7 +110,7 @@ class Simulation_parameters:
         # If = 0, co-schedule always, even in the same beam.
         # If = 1, co-schedule if the beams are not be equal.
         # If = 2, don't co-schedule adjacent beams (first diagonal is dist 1.4)
-        self.min_beam_distance = 0.2 # 1 # 2.9 # 4.1
+        self.min_beam_distance = 0.3 # 1 # 2.9 # 4.1
         
         # How many beams should be reported to the BS?
         # If 1, then only the best beam is reported;

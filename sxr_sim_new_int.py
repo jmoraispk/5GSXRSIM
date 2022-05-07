@@ -39,15 +39,15 @@ freq_idxs = [0]
 csi_periodicities = [5]
 # Ls = [1, 2, 3, 4]
 # Ls = [1, 2, 3, 4]
-Ls = [2]
+Ls = [1]
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
 users = [16]
 
 # rot_factorss = [8, 9, 10, 11, 12, 13, 14, 15]
-adap_rot_factor = False
-rot_factors = [10] # Should be kept as None if adap_rot_factor is True.
-n_layers = [2]
+adap_rot_factor = True
+rot_factors = [None] # Should be kept as None if adap_rot_factor is True.
+n_layers = [1]
 
 # If set to true. follows the new interference estimation mechanism by using a
 # book keeping dictionary of used beams and the corresponding interference.

@@ -1362,6 +1362,11 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
             created_beam_pair.RPI = 1
             # print(ue, tti_csi, best_beam_pairs[0].beam_idx )
             # print(created_beam_pair.bs_weights)
+            if not l:
+                curr_beam_pairs[(bs,ue,0,l)] = curr_beam_pairs[(bs,ue,1,l)] = \
+                                                        created_beam_pair
+            else:
+                  curr_beam_pairs[(bs,ue,1,l)] = created_beam_pair                                
             
                 
                 
@@ -2044,7 +2049,8 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim, n_csi_beams):
     #     return beam_distance >= beam_dist_lim
     # else:
     check_orth_beams = abs(np.vdot(bp1.bs_weights, bp2.bs_weights))
-    # print(bp1.beam_idx, bp1.RPI, bp2.beam_idx,bp2.RPI, 'dot product', check_orth_beams)
+    print('precoder1: ', bp1.beam_idx, bp1.RPI, 'precoder2: ', bp2.beam_idx,bp2.RPI, \
+                                  'dot product', check_orth_beams)
         
     if check_orth_beams <= beam_dist_lim:
         return True
@@ -2071,11 +2077,11 @@ def is_compatible_with_schedule(new_entry, schedule, beam_dist_lim, n_csi_beams)
         if are_beam_pairs_compatible(new_entry.beam_pair,
                                      schedule_entry.beam_pair, 
                                      beam_dist_lim, n_csi_beams):
-            # print('çompatible')
+            print('çompatible')
             continue
         else:
             is_compatible = False
-            # print('not çompatible', schedule_entry.ue, new_entry.ue)
+            print('not çompatible', schedule_entry.ue, new_entry.ue)
             break
     
     return is_compatible
