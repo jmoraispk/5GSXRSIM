@@ -944,7 +944,7 @@ class Generation_parameters:
         # rest of the corners go counter-clock wise.
         
         # Room dimensions
-        room_size = [10, 10]
+        room_size = [12, 12]
 
         # The offset from the centre of mass of the head of a user. 
         # The first value is distance in front, the second value is height.
@@ -973,6 +973,7 @@ class Generation_parameters:
         # Comment to stop overriding:
         r_table = 1.4
         r_table = 2.6
+        r_table = 3.2
         
         # Additional radius for the users to seat around the table 
         r_users_dist = 0.2 
@@ -1138,7 +1139,7 @@ class Generation_parameters:
         #                    simulation duration. If sim_dur is 10, then they 
         #                    start at 30s and 6 minutes, respectively
         segment_start = np.array([[0.5]], dtype=np.double)
-        scenarios = np.array([[NLoS]], dtype=np.object)
+        scenarios = np.array([[LoS]], dtype=np.object)
     
         # So that it's not needed to repeat every row of segment start and 
         # scenarios if it's 0, then there should be as many rows in the 
