@@ -186,7 +186,7 @@ for seed in range(1, seeds + 1):
             ssim_avg = np.array([pdr_file, round(np.mean(df_ssim["ssim_avg"]), 4)])                   
             
             # TODO: SAVE TO CORRECT OUTPUT PATH
-            output_folder = os.getcwd() + f"\\PSNR\\PSNR-Stats\\{temp_file_name}\\SEED{seed}\\UE{ue}\\"
+            output_folder = os.getcwd() + f"\\PSNR\\PSNR-Stats-Combs\\{temp_file_name}\\SEED{seed}\\UE{ue}\\"
             output_file_psnr = "psnr.csv"
             output_file_ssim = "ssim.csv"
     
