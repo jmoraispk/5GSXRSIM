@@ -15,8 +15,8 @@ amp3 = 0.11067447561807642;
 amp4 = 0.09384770753705182;
 
 % Selected precoders
-precod_col_L1 = precoders_matrix(:,1);
-precod_col_L2 = precoders_matrix(:,5);
+precod_col_L1 = precoders_matrix(:,7);
+precod_col_L2 = precoders_matrix(:,9);
 precod_col_L3 = precoders_matrix(:,182);
 precod_col_L4 = precoders_matrix(:,118);
 
@@ -24,6 +24,10 @@ precod_col_L4 = precoders_matrix(:,118);
 Fin_w1_L1 = precod_col_L1;
 norm_L1 = ((1/sum(abs(Fin_w1_L1))).*Fin_w1_L1).* 4;
 % norm_L1 = ((1/sum(abs(Fin_w1_L1))).*Fin_w1_L1);
+
+Fin_w1_L2 = precod_col_L2;
+norm_L2 = ((1/sum(abs(Fin_w1_L2))).*Fin_w1_L2).* 4;
+
 
 % Precoder L = 2
 Fin_w1_L2 = (1/(sqrt(1+(amp2 * amp2)))).* ...
@@ -47,7 +51,7 @@ norm_L4 = ((1/sum(abs(Fin_w1_L4))).*Fin_w1_L4).*4;
 % norm_L4 = ((1/sum(abs(Fin_w1_L4))).*Fin_w1_L4);
 
 precod_applied = norm_L1;
-
+% precod_applied = norm_L2;
 qd_3gpp_arr_linear = qd_arrayant('3gpp-3d',...
                               4,...             % 1 element in vertical
                               4,...             % 1 element in horizontal

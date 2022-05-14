@@ -1269,7 +1269,7 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
              # [int(N1)*int(N2)*int(O1)*int(O2)]
             
         # Sandra-
-        print ("l value is:", l)   
+        # print ("l value is:", l)   
         #The below loop is to remove the precoders already selected for rank 1
         #from going to be selected in rank 2(well, just for the initial set, 
         #after this we do criss cross and actual distribution of precoders to ranks.)
@@ -2049,12 +2049,13 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim, n_csi_beams):
     #     return beam_distance >= beam_dist_lim
     # else:
     check_orth_beams = abs(np.vdot(bp1.bs_weights, bp2.bs_weights))
-    print('precoder1: ', bp1.beam_idx, bp1.RPI, 'precoder2: ', bp2.beam_idx,bp2.RPI, \
-                                  'dot product', check_orth_beams)
+    
         
     if check_orth_beams <= beam_dist_lim:
         return True
     else:
+        # print('precoder1: ', bp1.beam_idx, bp1.RPI, 'precoder2: ', bp2.beam_idx,bp2.RPI, \
+        #                           'dot product', check_orth_beams)
         return False
     
        
@@ -2077,11 +2078,11 @@ def is_compatible_with_schedule(new_entry, schedule, beam_dist_lim, n_csi_beams)
         if are_beam_pairs_compatible(new_entry.beam_pair,
                                      schedule_entry.beam_pair, 
                                      beam_dist_lim, n_csi_beams):
-            print('çompatible')
+            # print('çompatible')
             continue
         else:
             is_compatible = False
-            print('not çompatible', schedule_entry.ue, new_entry.ue)
+            # print('not çompatible', schedule_entry.ue, new_entry.ue)
             break
     
     return is_compatible

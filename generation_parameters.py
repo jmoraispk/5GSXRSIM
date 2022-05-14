@@ -944,7 +944,7 @@ class Generation_parameters:
         # rest of the corners go counter-clock wise.
         
         # Room dimensions
-        room_size = [12, 12]
+        room_size = [10, 10]
 
         # The offset from the centre of mass of the head of a user. 
         # The first value is distance in front, the second value is height.
@@ -971,9 +971,9 @@ class Generation_parameters:
             r_table = 1.5
         
         # Comment to stop overriding:
-        r_table = 1.4
+        #r_table = 1.4
         r_table = 2.6
-        r_table = 3.2
+        #r_table = 5
         
         # Additional radius for the users to seat around the table 
         r_users_dist = 0.2 

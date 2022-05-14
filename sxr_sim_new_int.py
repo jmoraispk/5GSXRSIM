@@ -28,7 +28,7 @@ seed = 1
 speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
-folders_to_simulate = [f"Scenario2_SEED{seed}_SPEED3"]
+folders_to_simulate = [f"Scenario2_SEED1_SPEED3"]
 
 folders_to_simulate = [parent_folder + '\\' + f for f in folders_to_simulate]
 
@@ -39,14 +39,14 @@ freq_idxs = [0]
 csi_periodicities = [5]
 # Ls = [1, 2, 3, 4]
 # Ls = [1, 2, 3, 4]
-Ls = [1]
+Ls = [2]
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
-users = [16]
+users = [8]
 
 # rot_factorss = [8, 9, 10, 11, 12, 13, 14, 15]
-adap_rot_factor = True
-rot_factors = [None] # Should be kept as None if adap_rot_factor is True.
+adap_rot_factor = False
+rot_factors = [10] # Should be kept as None if adap_rot_factor is True.
 n_layers = [1]
 
 # If set to true. follows the new interference estimation mechanism by using a
@@ -136,6 +136,8 @@ for param in sim_params:
         # when there were only 4 ues
         user_list = [i for i in range(16)]
     
+    user_list = [0, 5, 10, 15]
+    user_list = [1, 3, 5, 7, 9, 11, 13, 15]
     folder_idx = folders_to_simulate.index(sim_folder)
 
     print('------ Setting up simulation parameters  ------')
@@ -158,10 +160,10 @@ for param in sim_params:
     print('Done setting Simulation Parameters!')
     
     # Take care of the output
-    include_timestamp = False 
+    include_timestamp = True 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
-    output_str = f'Rank2test_Scenario2_{sp.scheduling_method}_SEED-{seed}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
+    output_str = f'Scenario2_{sp.scheduling_method}_SEED-{seed}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
                  f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-{L}'
     output_str = output_stats_folder + output_str
     

@@ -41,7 +41,7 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
                  y_labels_left='', y_labels_right='', y_axis_fonts=[],
                  xlim=[], ylim_left=[], ylim_right=[],
                  no_ticks_left=[], no_ticks_right=[],
-                 tight_x_axis=False, tight_y_axis=False, 
+                 tight_x_axis=True, tight_y_axis=True, 
                  fill=False, fill_var='', fill_color='grey', fill_label='',
                  use_legend=False, legend_inside=False, legend_loc="center",
                  ncols=1, size=1, width=6.4, 
@@ -785,7 +785,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 # TTIs of 1 GoP, interval over which to average the bit rate
                 rolling_int = int(GoP / f_sp.FPS / f_sp.TTI_dur_in_secs)
 
-                for ue in ues:
+                for ue in range(n_ues):
                     for l_i in range(n_layers):
                         sim_data_computed[f][v][rolling_int-1:,ue,l_i] = \
                             ut.moving_average(sim_data_trimmed[f][4][:,ue,l_i], 
@@ -895,7 +895,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                    
                 sim_data_computed[f][14] = np.zeros([int(n_frames), n_ues])
                 
-                for ue in ues:
+                for ue in range(n_ues):
                     for per in range(int(n_periods)):
                         # Loop over frame indices (fi)
                         for fi in range(GoP):
@@ -916,7 +916,7 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 
                 # Compute packet success percentages, average latencies and 
                 # drop rates
-                for ue in ues:
+                for ue in range(n_ues):
                     for per in range(int(n_periods)):
                         for frm in range(GoP):
                             
@@ -1077,13 +1077,13 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                 
                 # Keep the formula constant if the next value is 0
                 for tti in range(n_ttis):
-                    for ue in ues:
+                    for ue in range(n_ues):
                         if sim_data_computed[f][v][tti, ue] == 0:
                             sim_data_computed[f][v][tti, ue] = \
                                 sim_data_computed[f][v][tti-1, ue]
                     
                 # address first zeros too
-                for ue in ues:
+                for ue in range(n_ues):
                     if sim_data_computed[f][v][0, ue] == 0:
                         # find next non-zero value
                         # idx = ut.first_nonzero(beam_formula, invalid_val=-1):
