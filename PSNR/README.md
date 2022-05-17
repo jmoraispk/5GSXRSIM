@@ -41,3 +41,16 @@ To compare PSNR (using ffmpeg in Docker):
 ```bash
 $ docker run --rm -ti -v $(pwd):/video jrottenberg/ffmpeg:latest -i /video/output_0.mp4 -i /video/input_0.mp4 -lavfi psnr=stats_file=/video/psnr_logfile.txt -f null -
 ```
+
+
+To calculate PSNR and SSIM from PDR Output:
+
+```bash
+$ python process_video.py --seed 20 --burst 0.6 --e2e 50 --queue '10Q - 70.0%' --bitrate 100 --params 'BW-150_E2E-LAT-50_LEN-16.0s_EDD_Offset-1.0_UE4'
+```
+
+
+
+
+
+
