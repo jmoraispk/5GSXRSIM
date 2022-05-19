@@ -74,7 +74,7 @@ for seeds in seeds_list:
         
         # From the simulated UEs, which UEs do we want to plot?
         ues = [i for i in range(16)] #[5,9]
-        ues = [0, 5, 10, 15] 
+        # ues = [0, 5, 10, 15] 
         
         
         #----------------------
@@ -180,7 +180,7 @@ for seeds in seeds_list:
             #                 f'USERS-{comb[4]}_ROTFACTOR-{comb[7]}_LAYERS-1_COPH-1_L-1' + '\\'
             
             # stats_dir_end = r'Scenario1_MU_SEED3_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-None_LAYERS-1_COPH-1_L-1_Adaptive' + '\\'
-            stats_dir_end = r'Scenario2_MU_SEED-1_FREQ-0_CSIPER-5_USERS-4_ROTFACTOR-10_LAYERS-1_COPH-1_L-1_2022-05-09_23h00m41s' + '\\'
+            stats_dir_end = r'Scenario2_MU_SEED-1_FREQ-0_CSIPER-5_USERS-16_ROTFACTOR-10_LAYERS-1_COPH-1_L-2_2022-05-20_00h24m23s' + '\\'
             print(f'\nDoing for: {stats_dir_end}')
             
             stats_dir = stats_folder + stats_dir_end
@@ -420,7 +420,7 @@ for seeds in seeds_list:
                                    3.1, 3.2, 3.3, 3.4, 3.45, 3.5, 3.55, 3.6, 3.65, 4.1, 
                                    4.2, 4.3, 5.1, 5.15, 5.2, 5.3, 5.4, 5.5, 5.6, 5.65, 
                                    7.1, 7.2, 7.3, 7.35, 7.4, 7.5, 9.1, 9.2, 9.3, 9.4,
-                                   10.1, 10.15, 10.2, 10.25, 10.3, 10.31, 10.4, 10.45, 
+                                   10.1, 10.15, 10.2, 10.25, 10.3, 10.31, 10.4, 10.45, 10.65,11.1,  
                                    10.5, 10.6, 10.7, 10.8, 10.9, 10.11, 11, 11.1, 11.2,
                                    11.3, 13, 14.1, 14.2, 15, 16, 16.1, 16.2]
         
@@ -439,7 +439,8 @@ for seeds in seeds_list:
             # idxs_to_plot = [16.1, 16.2, 18.1]
             idxs_to_plot = [1, 1.1, 11.3, 11.1, 10.2, 10.6, 10.45,10.65]
             idxs_to_plot = all_plots_available
-            idxs_to_plot = [10.65]
+            # idxs_to_plot = [0.1, 1, 2, 3.45, 4.2, 5.4, 7.4, 10.45, 18.1]
+            idxs_to_plot = [1, 1.1, 10.65, 7.1, 2.3, 2, 11.1]
             # Test save_plot
             save_plots = False
             saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
