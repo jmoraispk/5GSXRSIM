@@ -38,14 +38,15 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
                  x_axis_label='', 
                  y_axis_label=[''],
                  title='', linewidths='', tune_opacity=False, opacity=[],
-                 y_labels_left='', y_labels_right='', y_axis_fonts=[],
+                 y_labels_left='', y_labels_right='', y_axis_fonts=[], 
+                 axes_tick_font_size=13,
                  xlim=[], ylim_left=[], ylim_right=[],
                  no_ticks_left=[], no_ticks_right=[],
                  tight_x_axis=True, tight_y_axis=True, 
                  fill=False, fill_var='', fill_color='grey', fill_label='',
                  use_legend=False, legend_inside=False, legend_loc="center",
-                 ncols=1, size=1, width=6.4, 
-                 height=4.8, same_axs=False, n1=-1, n2=-1,
+                 ncols=1, size=1, width=30.0, 
+                 height=10.0, same_axs=False, n1=-1, n2=-1,
                  plot_type_left='line', plot_type_right='line', 
                  savefig=False, filename='', saveformat='pdf'):
     """
@@ -285,6 +286,8 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
                 
         ax1_handle = axs[idx]
         
+        ax1_handle.tick_params(axis = 'both', which = 'major', labelsize = axes_tick_font_size)
+        
         # Select x_data
         if x_vals.ndim == 1:
             x_data = x_vals
@@ -437,9 +440,13 @@ def plot_for_ues(ue_list, x_vals, y_vals_left, y_vals_right=[],
         
         # Set fonts of axis if specified:
         if y_axis_fonts:
+            lab = ax1_handle.xaxis.get_label()
+            lab.set_fontsize(y_axis_fonts[0])
             lab = ax1_handle.yaxis.get_label()
-            lab.set_fontsize(y_axis_fonts[0])            
+            lab.set_fontsize(y_axis_fonts[0])                        
             if double_plot:
+                lab = ax1_handle.xaxis.get_label()
+                lab.set_fontsize(y_axis_fonts[0])
                 lab = ax2_handle.yaxis.get_label()
                 lab.set_fontsize(y_axis_fonts[1])
         
@@ -2094,7 +2101,15 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             plot_for_ues(ues, x_vals, [sim_data_trimmed[f][15]],
                          savefig=save_fig, filename=file_name, 
                          saveformat=save_format)
-                    
+        
+
+        # Scheduled layers of each UE: each UE is 1 when it is scheduled and 0 when it is not 
+        if plot_idx == 11.11:
+            plot_for_ues(ues, x_vals, [sim_data_trimmed[f][19]],
+                         savefig=save_fig, filename=file_name, 
+                         saveformat=save_format)
+            
+            
         # Scheduled UEs: each UE is 1 when it is scheduled and 0 when it is not 
         #                [same axis]
         if plot_idx == 11.2:

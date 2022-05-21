@@ -13,6 +13,7 @@ import numpy as np
 
 import utils as ut
 import plots_functions as plt_func
+# import plot_functions_16_ue as plt_func
 
 
 """
@@ -53,7 +54,7 @@ seeds_list = [1]
 speeds = [3]
 csi_periodicities = [5]
 app_bitrates= [100]
-users = [4]
+users = [16]
 bandwidths = [400] #50 MHz
 latencies = [10]
 freq_idxs = [0]
@@ -440,7 +441,8 @@ for seeds in seeds_list:
             idxs_to_plot = [1, 1.1, 11.3, 11.1, 10.2, 10.6, 10.45,10.65]
             idxs_to_plot = all_plots_available
             # idxs_to_plot = [0.1, 1, 2, 3.45, 4.2, 5.4, 7.4, 10.45, 18.1]
-            idxs_to_plot = [1, 1.1, 10.65, 7.1, 2.3, 2, 11.1]
+            idxs_to_plot = [2.4, 1, 1.1, 10.65, 7.1, 2.3, 2, 11.1]
+            # idxs_to_plot = [2]
             # Test save_plot
             save_plots = False
             saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
