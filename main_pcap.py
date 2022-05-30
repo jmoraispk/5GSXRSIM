@@ -6,6 +6,7 @@ import random
 import os
 import pandas as pd
 import numpy as np
+import platform
 
 from dpkt import pcap
 
@@ -40,6 +41,9 @@ def main(args: Namespace, ue, n_ues, seed) -> None:
         Command line arguments
     """
     
+    # Check OS
+    current_os = platform.system()
+    
     # E.g.: 'BW-150_E2E-LAT-50_LEN-16.0s_EDD_Offset-1.0_UE4'
     sim_params = args.params        
     # Up to 20 Seeds
@@ -53,19 +57,38 @@ def main(args: Namespace, ue, n_ues, seed) -> None:
     #Burstiness: E.g. 0.6
     burst = args.burst
     
-    og_pcap = os.getcwd() + f"\\PSNR\\PCAP_FILES\\input_APP{bitrate}_16s.pcap"
+    
+    if current_os == 'Windows':
+        og_pcap = os.getcwd() + f"\\PSNR\\PCAP_FILES\\input_APP{bitrate}_16s.pcap"
+    
+    elif current_os == 'Linux':
+        og_pcap = os.getcwd() + f"/PSNR/PCAP_FILES/input_APP{bitrate}_16s.pcap"
+
     pcap_file = open(og_pcap, 'rb') 
     # pcap_file = open(args.pcap, 'rb')
     pcap_reader = pcap.Reader(pcap_file)
     
+    if current_os == 'Windows':    
+        stats_path = os.getcwd() + "\\Stats\\New_Offset\\New Sensitivity\\PCAP\\"
+    elif current_os == 'Linux':
+        stats_path = os.getcwd() + "/Stats/New_Offset/New Sensitivity/PCAP/"
         
-    stats_path = os.getcwd() + "\\Stats\\New_Offset\\New Sensitivity\\PCAP\\"
     if n_ues <= 4:
-        stats_folder = stats_path + sim_params + f"\\SEED{seed}_omni\\" + \
+        if current_os == 'Windows': 
+            stats_folder = stats_path + sim_params + f"\\SEED{seed}_omni\\" + \
                        queues + f"\\trace_APP{bitrate}_{burst}\\"
+        elif current_os == 'Linux':
+            stats_folder = stats_path + sim_params + f"/SEED{seed}_omni/" + \
+                       queues + f"/trace_APP{bitrate}_{burst}/"
+            
     else: 
-        stats_folder = stats_path + sim_params + f"\\SEED{seed}_omni_8\\" + \
+        if current_os == 'Windows': 
+            stats_folder = stats_path + sim_params + f"\\SEED{seed}_omni_8\\" + \
                        queues + f"\\trace_APP{bitrate}_{burst}\\"
+        elif current_os == 'Linux':
+            stats_folder = stats_path + sim_params + f"/SEED{seed}_omni_8/" + \
+                   queues + f"/trace_APP{bitrate}_{burst}/"
+            
                        
                        
     trace_file = stats_folder + f"trace_APP{bitrate}_{burst} - 16.0s_UE{ue}.csv"

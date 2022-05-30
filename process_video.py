@@ -9,6 +9,7 @@ import os
 import time
 import pandas as pd
 import numpy as np
+import platform
 
 from ffmpeg_quality_metrics import FfmpegQualityMetrics
 
@@ -73,12 +74,20 @@ if cli_args.perframe:
     perframe = True
 
 
+# Check OS
+current_os = platform.system()
+print("\nOS:", current_os, platform.release())
+
+
 temp_file_name = f"APP{bitrate}-{burst}_E2E{e2e_lat}_{sim_params}_{queues}"
 
 cli_args.output = f"temppcap_{temp_file_name}.pcap"
 
-og_video = os.getcwd() + f"\\PSNR\\PCAP_FILES\\input_APP{cli_args.bitrate}.mp4" 
+if current_os == 'Windows':
+    og_video = os.getcwd() + f"\\PSNR\\PCAP_FILES\\input_APP{cli_args.bitrate}.mp4" 
 
+elif current_os == 'Linux':
+    og_video = os.getcwd() + f"/PSNR/PCAP_FILES/input_APP{cli_args.bitrate}.mp4" 
 print(f"\nStarting PSNR and SSIM calculations for: \nAPP{bitrate}_{burst} - E2E{e2e_lat} - {sim_params} - {queues}.")
 
 tic = time.perf_counter()
@@ -167,7 +176,13 @@ for seed in range(1, seeds + 1):
             ssim_per_frame = df_ssim["ssim_avg"].to_numpy()            
             
             # TODO: SAVE TO CORRECT OUTPUT PATH
-            output_folder = os.getcwd() + f"\\PSNR\\PSNR-Stats\\{temp_file_name}_Perframe\\SEED{seed}\\UE{ue}\\"
+            
+            if current_os == 'Windows':
+                output_folder = os.getcwd() + f"\\PSNR\\PSNR-Stats\\{temp_file_name}_Perframe\\SEED{seed}\\UE{ue}\\"
+
+            elif current_os == 'Linux':
+                output_folder = os.getcwd() + f"/PSNR/PSNR-Stats/{temp_file_name}_Perframe/SEED{seed}/UE{ue}/"
+
             output_file_psnr = "psnr_perframe.csv"
             output_file_ssim = "ssim_perframe.csv"        
         
@@ -186,7 +201,11 @@ for seed in range(1, seeds + 1):
             ssim_avg = np.array([pdr_file, round(np.mean(df_ssim["ssim_avg"]), 4)])                   
             
             # TODO: SAVE TO CORRECT OUTPUT PATH
-            output_folder = os.getcwd() + f"\\PSNR\\PSNR-Stats-Combs\\{temp_file_name}\\SEED{seed}\\UE{ue}\\"
+            if current_os == 'Windows':
+                output_folder = os.getcwd() + f"\\PSNR\\PSNR-Stats-Combs\\{temp_file_name}\\SEED{seed}\\UE{ue}\\"
+            elif current_os == 'Linux':
+                output_folder = os.getcwd() + f"/PSNR/PSNR-Stats-Combs/{temp_file_name}/SEED{seed}/UE{ue}/"
+
             output_file_psnr = "psnr.csv"
             output_file_ssim = "ssim.csv"
     
