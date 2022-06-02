@@ -946,7 +946,10 @@ def compute_sim_data(plot_idx, l, ues, ttis,
                             except ZeroDivisionError:
                                 print('Error!!!!')
                                 print('Solve this error if it occurs again.')
-                        
+                    
+                
+                
+                
             # COMPUTE INDEX 16: Average Packet Latency across all frames
             if var_to_compute == 'avg_pck_lat_per_frame' and \
                sim_data_computed[f][v] is None:
@@ -977,21 +980,51 @@ def compute_sim_data(plot_idx, l, ues, ttis,
             # COMPUTE INDEX 17: Average Packet Drop Rate across all frames
             if var_to_compute == 'avg_pck_drop_rate_per_frame' and \
                sim_data_computed[f][v] is None:
-                # IDX 15 is the avg_packet_drop_rate
-                aux = np.zeros([int(n_frames), n_ues])
-                aux[:] = sim_data_computed[f][15][:] 
+                  packets_sent_full = np.zeros(n_ues)
+                  dropped_packets_full = np.zeros(n_ues)
+                  total_packets_full = np.zeros(n_ues)
+                  pdr = np.zeros(n_ues)
+                  for ue in range(n_ues):
+                    for per in range(int(n_periods)):
+                        for frm in range(GoP):
+                            
+                            f_info = \
+                                sim_data_trimmed[f][1][ue].frame_infos[per][frm]
+                            packets_sent_full[ue] += f_info.successful_packets
+                            dropped_packets_full[ue] += f_info.dropped_packets
+                           
+                            
+                            # print('UE:', ue, 'Period:', per, \
+                            #       'GoP-Frame', frm,\
+                            #       'Total packets:',total_packets)
+                                
+                            frame_idx = per * GoP + frm
+                    total_packets_full[ue] = \
+                                packets_sent_full[ue] + dropped_packets_full[ue] 
+                    pdr[ue] = dropped_packets_full[ue] / total_packets_full[ue] * 100
+                  
+                  try:
+                        sim_data_computed[f][v] = pdr
+                                    
+                  except ZeroDivisionError:
+                                print('Error!!!!')
+                                print('Solve this error if it occurs again.')    
+                   
+                # # IDX 15 is the avg_packet_drop_rate
+                # aux = np.zeros([int(n_frames), n_ues])
+                # aux[:] = sim_data_computed[f][15][:] 
                 
-                # Scale up I frames: (IDX 13 is the I frame indices )
-                aux[sim_data_computed[f][13], :] *= 1 / f_sp.IP_ratio
+                # # Scale up I frames: (IDX 13 is the I frame indices )
+                # aux[sim_data_computed[f][13], :] *= 1 / f_sp.IP_ratio
                 
-                # Don't try to understand this math... Basically we needed to 
-                # weigh the number of packets of each frame and divide by the 
-                # number of frames.
-                b = (1 / f_sp.IP_ratio) * ((GoP - 1) * f_sp.IP_ratio + 1)
+                # # Don't try to understand this math... Basically we needed to 
+                # # weigh the number of packets of each frame and divide by the 
+                # # number of frames.
+                # b = (1 / f_sp.IP_ratio) * ((GoP - 1) * f_sp.IP_ratio + 1)
                 
-                sim_data_computed[f][v] = \
-                    np.round(np.sum(aux, 0) / 
-                             (len(sim_data_computed[f][12]) * b / GoP), 2)
+                # sim_data_computed[f][v] = \
+                #     np.round(np.sum(aux, 0) / 
+                #              (len(sim_data_computed[f][12]) * b / GoP), 2)
                     
             # COMPUTE INDEX 18-23: 
             if var_to_compute in ['avg_pck_lat_per_I_frame',
@@ -2015,7 +2048,7 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             s_std = f'{avg_pdr_std}'
             
             print('Done for folder: ' + stats_folder + '. Result: ' + s)
-            
+            print(sim_data_computed[f][17])
             # append to a file the var above!
             with open(results_filename + '.csv', "a") as myfile:
                 myfile.write(s + '\n')

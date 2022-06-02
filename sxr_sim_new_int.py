@@ -24,11 +24,11 @@ parent_folder = \
 
 # seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
-seed = 1
+seed = 5
 speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
-folders_to_simulate = [f"Scenario2_SEED1_SPEED3"]
+folders_to_simulate = [f"Scenario2_SEED{seed}_SPEED3"]
 
 folders_to_simulate = [parent_folder + '\\' + f for f in folders_to_simulate]
 
@@ -39,16 +39,18 @@ freq_idxs = [0]
 csi_periodicities = [5]
 # Ls = [1, 2, 3, 4]
 # Ls = [1, 2, 3, 4]
-Ls = [2]
+Ls = [2, 3, 4]
+# Ls = [4]
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
-users = [8]
+users = [16]
 
 # rot_factorss = [8, 9, 10, 11, 12, 13, 14, 15]
 adap_rot_factor = False
-rot_factors = [10] # Should be kept as None if adap_rot_factor is True.
+rot_factors = [2] # Should be kept as None if adap_rot_factor is True.
 n_layers = [1]
-
+gamma = [0.2, 0.4, 0.6, 0.8]
+# gamma = [0.6, 0.8]
 # If set to true. follows the new interference estimation mechanism by using a
 # book keeping dictionary of used beams and the corresponding interference.
 # If False, then the previous csi_tti intereference is used.
@@ -97,7 +99,7 @@ full_rot_set_precoders = np.array([
 sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
                                     csi_periodicities, application_bitrates,
                                     users, bandwidths, latencies, n_layers,
-                                    rot_factors, Ls))
+                                    rot_factors, Ls, gamma))
 
 # Feel free to check the parameter combinations before running the simulation
 # for param in sim_params:
@@ -116,6 +118,7 @@ for param in sim_params:
     n_layers = param[7]
     rot_factor = param[8]    
     L  = param[9]
+    gamma = param[10]
     
     if users != None:
         if users == 1:
@@ -136,8 +139,8 @@ for param in sim_params:
         # when there were only 4 ues
         user_list = [i for i in range(16)]
     
-    user_list = [0, 5, 10, 15]
-    user_list = [1, 3, 5, 7, 9, 11, 13, 15]
+    # user_list = [0, 5, 10, 15]
+    # user_list = [1, 3, 5, 7, 9, 11, 13, 15]
     folder_idx = folders_to_simulate.index(sim_folder)
 
     print('------ Setting up simulation parameters  ------')
@@ -149,7 +152,7 @@ for param in sim_params:
     # Initialise the simulation parameters
     sp = sim_par.Simulation_parameters(sim_folder, freq_idx, csi_periodicity,
                                        application_bitrate, user_list, bw, 
-                                       lat_budget, n_layers, rot_factor, L)
+                                       lat_budget, n_layers, rot_factor, L, gamma)
     # NOTE: 
         # a) users will subset the generated users;
         # b) bw will use the frequency samples of the generated bandwidht
@@ -160,11 +163,11 @@ for param in sim_params:
     print('Done setting Simulation Parameters!')
     
     # Take care of the output
-    include_timestamp = True 
+    include_timestamp = False 
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'Scenario2_{sp.scheduling_method}_SEED-{seed}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
-                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-{L}'
+                 f'USERS-{users}_ROTFACTOR-{rot_factor}_LAYERS-{n_layers}_COPH-1_L-{L}_Gamma-{gamma}_BW-{bw}'
     output_str = output_stats_folder + output_str
     
     # Continue the execution
@@ -431,6 +434,9 @@ for param in sim_params:
         # Note: tti is the index of the TTI. The time value of the TTI is 
         #       given by tti_timestamp. This is done such that we don't have 
         #       to carry +-1 everywhere we go.
+        
+        # if tti == 2591:
+        #     print('reached')
         
         if sp.debug:
             if tti % sp.csi_period == 0:

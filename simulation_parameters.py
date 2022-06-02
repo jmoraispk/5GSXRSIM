@@ -17,11 +17,11 @@ import utils as ut
 class Simulation_parameters:
     def __init__(self, folder_to_load, freq_idx, csi_periodicity, 
                  application_bitrate, user_list, bw, lat_budget, 
-                 n_layers, rot_factor, L):
+                 n_layers, rot_factor, L, gamma):
 
         # 1- Init General Variables (General parameters and Vari)
         self.set_simulation_param(freq_idx, csi_periodicity, user_list, 
-                                  n_layers, rot_factor, L)
+                                  n_layers, rot_factor, L, gamma)
         
         # 2- Init IO parameters (which folders to write to, and so on)
         self.set_io_param(folder_to_load)
@@ -36,7 +36,7 @@ class Simulation_parameters:
         self.compute_application_traffic_vars()
 
     def set_simulation_param(self, freq_idx, csi_periodicity, user_list, 
-                             n_layers, rot_factor, L):
+                             n_layers, rot_factor, L, gamma):
         # ################# Mode 1: General Parameters  #######################
         # Note: everything will be zero-indexed from now on, because now we
         #       are in Python land
@@ -54,7 +54,7 @@ class Simulation_parameters:
         self.debug_su_mimo_choice = 0
         
         # TTIs to simulate
-        self.sim_TTIs = int(4000 * 8)
+        self.sim_TTIs = int(4000 * 16)
         
         # TTIs per batch
         self.TTIs_per_batch = 1000 # min 200
@@ -110,7 +110,7 @@ class Simulation_parameters:
         # If = 0, co-schedule always, even in the same beam.
         # If = 1, co-schedule if the beams are not be equal.
         # If = 2, don't co-schedule adjacent beams (first diagonal is dist 1.4)
-        self.min_beam_distance = 0.35 # 1 # 2.9 # 4.1
+        self.min_beam_distance = gamma # 1 # 2.9 # 4.1
         
         # How many beams should be reported to the BS?
         # If 1, then only the best beam is reported;
@@ -320,6 +320,7 @@ class Simulation_parameters:
         self.FPS = 30
         # P frame size to (divided by) I frame size ratio [on average]
         self.IP_ratio = 0.20
+        # self.IP_ratio = 1
         # P frame std for the gaussian around the IP_ratio [%]
         self.P_std = 0
         

@@ -1515,15 +1515,13 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
                     created_beam_pair_rank2_op2.RPI = [1, amp1_beam3_rank2] 
                 
         elif n_csi_beams == 3:
-            if n_layers == 1:
-                    # Power ratio of second and third best beams compared to first, for
-                    # finding the RPI.
+            
+            if not l:  
+                 # print('ue', ue, best_beam_pairs[0].beam_idx, best_beam_pairs[1].beam_idx)
+                 #SAVING OPTION1 BEAMS
                  pow_ratio_1 = best_beam_pairs[1].ch_power_gain / best_beam_pairs[0].ch_power_gain
                  amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
-                                    key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
-                    
-                    # if not amp1:
-                    #     amp1 = pow_ratio_1
+                                key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
                     
                  pow_ratio_2 = best_beam_pairs[2].ch_power_gain / best_beam_pairs[0].ch_power_gain
                  amp2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
@@ -1536,49 +1534,159 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
                  best_beam_pairs[0].RPI = 1
                  best_beam_pairs[1].RPI = amp1
                  best_beam_pairs[2].RPI = amp2
-                    # best_beam_pairs[1].RPI = pow_ratio_1
-                    # best_beam_pairs[2].RPI = pow_ratio_2
                     
-                    # Linear combination of 3 best beams using RPI.
-                 Fin_w1 = np.add(codebook_subset[:, best_beam_relative_idxs[0]], 
-                      (amp1 * codebook_subset[:, best_beam_relative_idxs[1]]))
                     
-                 Fin_w = np.add(Fin_w1,(amp2 * codebook_subset[:, best_beam_relative_idxs[2]]))
-                 Fin_w = (1/np.sqrt(1+(amp1 * amp1)+(amp2 * amp2)))*(Fin_w)
                     
-                    # Normalising the precoder
+                 Fin_w_op1_temp = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), \
+                       (amp1 * (codebook_subset[:, best_beam_relative_idxs[1]])))
+                     
+                 Fin_w_op1 = np.add(Fin_w_op1_temp,(amp2 * codebook_subset[:, best_beam_relative_idxs[2]]))
+                    
+                 Fin_w_op1 = (1/np.sqrt(1+(amp1 * amp1)+(amp2 * amp2)))*(Fin_w_op1)
+                 
                     # Fin_w = (1/sum(abs(Fin_w))) * Fin_w
                     
-                 created_beam_pair = Beam_pair()
+                 created_beam_pair_op1 = Beam_pair()
+                 created_beam_pair_op1.beam_idx = [best_beam_pairs[0].beam_idx,
+                                                   best_beam_pairs[1].beam_idx,
+                                                   best_beam_pairs[2].beam_idx]
                     
-                    # Save the selected precoder colm index and relative power index
-                    # for future orthogonality checks for co-scheduling.
-                 created_beam_pair.beam_idx = [best_beam_pairs[0].beam_idx,
-                                                     best_beam_pairs[1].beam_idx, 
-                                                     best_beam_pairs[2].beam_idx]
-                    
-                 created_beam_pair.RPI = [best_beam_pairs[0].RPI,
-                                                     best_beam_pairs[1].RPI, 
+                 created_beam_pair_op1.RPI = [best_beam_pairs[0].RPI,
+                                                     best_beam_pairs[1].RPI,
                                                      best_beam_pairs[2].RPI]
-            else:
-                pass
+                # Sandra- print(ue)                                
+                # print(created_beam_pair.beam_idx)
+                # print(created_beam_pair.RPI)
+                
+            
+            codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs_temp]
+            
+            distribute_var_beam_idx[l,0] = int(best_beam_pairs[0].beam_idx)
+            distribute_var_beam_idx[l,1] = int(best_beam_pairs[1].beam_idx)
+            distribute_var_beam_idx[l,2] = int(best_beam_pairs[2].beam_idx)
+            
+            distribute_var_relative_beam_idx[l,0] = int((np.where(q_idxs_temp == \
+                                        best_beam_pairs[0].beam_idx))[0][0])
+                
+            distribute_var_relative_beam_idx[l,1] = int((np.where(q_idxs_temp == \
+                                        best_beam_pairs[1].beam_idx))[0][0])
+                
+            distribute_var_relative_beam_idx[l,2] = int((np.where(q_idxs_temp == \
+                                        best_beam_pairs[2].beam_idx))[0][0])
+                
+            distribute_var_ch_power_gain[l, 0] = best_beam_pairs[0].ch_power_gain
+            distribute_var_ch_power_gain[l, 1] = best_beam_pairs[1].ch_power_gain
+            distribute_var_ch_power_gain[l, 2] = best_beam_pairs[2].ch_power_gain
+            
+            # created_beam_pair[l] = Beam_pair()
+            created_beam_pair_rank1_op2 = Beam_pair()
+            created_beam_pair_rank2_op2 = Beam_pair()
+                
+            if l:
+                #First we need to create the LC precoder, for that we need to
+                #find the RPI of the second beams of respective ranks.
+                
+                # We need to perform the RPI check here and then alott the
+                # 3rd beam to the next set and then 4th beam to the other set.
+               
+                # RPI of beam 3 when compared to rank 1 set
+                pow_ratio_beam3_setrank1 = distribute_var_ch_power_gain[1, 0] / \
+                                        distribute_var_ch_power_gain[0, 0]
+                amp1_beam3_rank1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - \
+                                                    pow_ratio_beam3_setrank1))]
+                
+                # RPI of beam 3 when compared to rank 2 set
+                pow_ratio_beam3_setrank2 = distribute_var_ch_power_gain[1, 0] / \
+                                        distribute_var_ch_power_gain[0,1]
+                amp1_beam3_rank2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - \
+                                                    pow_ratio_beam3_setrank2))]
+                
+                
+                # RPI of beam 4 when compared to rank 1 set    
+                pow_ratio_beam4_setrank1 = distribute_var_ch_power_gain[1, 1] / \
+                                        distribute_var_ch_power_gain[0, 0]
+                amp1_beam4_rank1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - \
+                                                    pow_ratio_beam4_setrank1))]
+                    
+                # RPI of beam 4 when compared to rank 2 set
+                pow_ratio_beam4_setrank2 = distribute_var_ch_power_gain[1, 0] / \
+                                        distribute_var_ch_power_gain[0, 1]
+                amp1_beam4_rank2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - \
+                                                    pow_ratio_beam4_setrank2))]
+                
+                    
+                    
+                if pow_ratio_beam3_setrank1 > pow_ratio_beam3_setrank2:
+                    
+                    #LC precoder for Rank1
+                    Fin_w_rank1_op2 = np.add((codebook_subset[:, \
+                                    distribute_var_relative_beam_idx[0,0]]), \
+                                    (amp1_beam3_rank1 * \
+                        (codebook_subset[:, distribute_var_relative_beam_idx[1,0]])))
+                    
+                    Fin_w_rank1_op2 = (1/np.sqrt(1+(amp1_beam3_rank1 * \
+                                    amp1_beam3_rank1))) * (Fin_w_rank1_op2)
+                    
+                    #LC precoder for Rank2
+                    Fin_w_rank2_op2 = np.add((codebook_subset[:, \
+                                            distribute_var_relative_beam_idx[0,1]]), \
+                       (amp1_beam4_rank2 * (codebook_subset[:, distribute_var_relative_beam_idx[1,1]])))
+                    
+                    Fin_w_rank2_op2 = (1/np.sqrt(1+(amp1_beam4_rank2 * amp1_beam4_rank2))) * \
+                                                                (Fin_w_rank2_op2)
+                    
+                    
+                    created_beam_pair_rank1_op2.beam_idx = [distribute_var_beam_idx[0,0],
+                                                     distribute_var_beam_idx[1,0]]
+                    created_beam_pair_rank2_op2.beam_idx = [distribute_var_beam_idx[0,1],
+                                                     distribute_var_beam_idx[1,1]]
+                        
+                    created_beam_pair_rank1_op2.RPI = [1, amp1_beam3_rank1]      
+                    created_beam_pair_rank2_op2.RPI = [1, amp1_beam4_rank2]                                  
+                else:
+                    Fin_w_rank1_op2 = np.add((codebook_subset[:, \
+                                    int(distribute_var_relative_beam_idx[0,0])]), \
+                                    (amp1_beam4_rank1 * (codebook_subset[:, \
+                                    int(distribute_var_relative_beam_idx[1,1])])))
+                    
+                    Fin_w_rank1_op2 = (1/np.sqrt(1+(amp1_beam4_rank1 * amp1_beam4_rank1))) * \
+                                                                (Fin_w_rank1_op2)
+                    
+                    #LC precoder for Rank2
+                    Fin_w_rank2_op2 = np.add((codebook_subset[:, \
+                                  int(distribute_var_relative_beam_idx[0,1])]), \
+                                 (amp1_beam3_rank2 * \
+                                 (codebook_subset[:, int(distribute_var_relative_beam_idx[1,0])])))
+                    
+                    Fin_w_rank2_op2 = (1/np.sqrt(1+(amp1_beam3_rank2 * \
+                                        amp1_beam3_rank2))) * (Fin_w_rank2_op2)
+                        
+                    
+                    created_beam_pair_rank1_op2.beam_idx = [distribute_var_beam_idx[0,0],
+                                                     distribute_var_beam_idx[1,1]]
+                    created_beam_pair_rank2_op2.beam_idx = [distribute_var_beam_idx[0,1],
+                                                     distribute_var_beam_idx[1,0]]
+                        
+                    created_beam_pair_rank1_op2.RPI = [1, amp1_beam4_rank1]      
+                    created_beam_pair_rank2_op2.RPI = [1, amp1_beam3_rank2] 
+          
                     
         elif n_csi_beams == 4:
-            if n_layers == 1:
-                    # Power ratio of second, third and fourth best beams compared to 
-                    # first, for finding the RPI.
+            
+            if not l:  
+                 # print('ue', ue, best_beam_pairs[0].beam_idx, best_beam_pairs[1].beam_idx)
+                 #SAVING OPTION1 BEAMS
                  pow_ratio_1 = best_beam_pairs[1].ch_power_gain / best_beam_pairs[0].ch_power_gain
                  amp1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
-                                    key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
-                    
-                    # if not amp1:
-                    #     amp1 = pow_ratio_1
+                                key = lambda i: abs(amp_scaling_list[i] - pow_ratio_1))]
                     
                  pow_ratio_2 = best_beam_pairs[2].ch_power_gain / best_beam_pairs[0].ch_power_gain
                  amp2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
                                     key = lambda i: abs(amp_scaling_list[i] - pow_ratio_2))]
-                    # if not amp2:
-                    #     amp2 = pow_ratio_2
                     
                  pow_ratio_3 = best_beam_pairs[3].ch_power_gain / best_beam_pairs[0].ch_power_gain
                  amp3 = amp_scaling_list[min(range(len(amp_scaling_list)), 
@@ -1592,43 +1700,159 @@ def update_precoders(bs, ue, curr_beam_pairs, precoders_dict, curr_coeffs,
                  best_beam_pairs[1].RPI = amp1
                  best_beam_pairs[2].RPI = amp2
                  best_beam_pairs[3].RPI = amp3
-                    # best_beam_pairs[1].RPI = pow_ratio_1
-                    # best_beam_pairs[2].RPI = pow_ratio_2
-                    # best_beam_pairs[3].RPI = pow_ratio_3
                     
-                    # Linear combination of 4 best beams using RPI.
-                 Fin_w1 = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), 
+                    
+                    
+                   # Linear combination of 4 best beams using RPI.
+                 Fin_w1_op1_temp = np.add((codebook_subset[:, best_beam_relative_idxs[0]]), 
                       (amp1 * codebook_subset[:, best_beam_relative_idxs[1]]))
                        
-                 Fin_w2 = np.add((amp2 * codebook_subset[:, best_beam_relative_idxs[2]]),
+                 Fin_w2_op1_temp = np.add((amp2 * codebook_subset[:, best_beam_relative_idxs[2]]),
                       (amp3 * codebook_subset[:, best_beam_relative_idxs[3]]))
                     
-                 Fin_w = np.add(Fin_w1, Fin_w2)
+                 Fin_w_op1_temp = np.add(Fin_w1_op1_temp, Fin_w2_op1_temp)
                     
-                 Fin_w = (1/ np.sqrt(1 + (amp1 * amp1)+(amp2 * amp2)+(amp3 * amp3)))* \
-                                                                            (Fin_w)
-                    # Normalising the precoder
-                    # Fin_w = (1/sum(abs(Fin_w))) * Fin_w  
-                                                              
-                 created_beam_pair = Beam_pair()
-                    # Save the selected precoder colm index and relative power index
-                    # for future orthogonality checks for co-scheduling.
-                 created_beam_pair.beam_idx = [best_beam_pairs[0].beam_idx,
-                                                     best_beam_pairs[1].beam_idx, 
-                                                     best_beam_pairs[2].beam_idx,
-                                                     best_beam_pairs[3].beam_idx]
+                 Fin_w_op1 = (1/ np.sqrt(1 + (amp1 * amp1)+(amp2 * amp2)+(amp3 * amp3)))* \
+                                                                            (Fin_w_op1_temp)
+                
+                 
+                    # Fin_w = (1/sum(abs(Fin_w))) * Fin_w
                     
-                 created_beam_pair.RPI = [best_beam_pairs[0].RPI,
-                                                     best_beam_pairs[1].RPI, 
+                 created_beam_pair_op1 = Beam_pair()
+                 created_beam_pair_op1.beam_idx = [best_beam_pairs[0].beam_idx,
+                                                   best_beam_pairs[1].beam_idx,
+                                                   best_beam_pairs[2].beam_idx,
+                                                   best_beam_pairs[3].beam_idx]
+                    
+                 created_beam_pair_op1.RPI = [best_beam_pairs[0].RPI,
+                                                     best_beam_pairs[1].RPI,
                                                      best_beam_pairs[2].RPI,
                                                      best_beam_pairs[3].RPI]
-                    # Sandra- print(ue)                                
-                    # print(created_beam_pair.beam_idx)
-                    # print(created_beam_pair.RPI)
+                # Sandra- print(ue)                                
+                # print(created_beam_pair.beam_idx)
+                # print(created_beam_pair.RPI)
                 
-                # This is to perform the MRT for the L = 2, 3, 4 beams.  
-            else:
-                pass
+            
+            codebook_subset = precoders_dict[(bs, 'matrix')][:, q_idxs_temp]
+            
+            distribute_var_beam_idx[l,0] = int(best_beam_pairs[0].beam_idx)
+            distribute_var_beam_idx[l,1] = int(best_beam_pairs[1].beam_idx)
+            distribute_var_beam_idx[l,2] = int(best_beam_pairs[2].beam_idx)
+            distribute_var_beam_idx[l,3] = int(best_beam_pairs[3].beam_idx)
+            
+            distribute_var_relative_beam_idx[l,0] = int((np.where(q_idxs_temp == \
+                                        best_beam_pairs[0].beam_idx))[0][0])
+                
+            distribute_var_relative_beam_idx[l,1] = int((np.where(q_idxs_temp == \
+                                        best_beam_pairs[1].beam_idx))[0][0])
+                
+            distribute_var_relative_beam_idx[l,2] = int((np.where(q_idxs_temp == \
+                                        best_beam_pairs[2].beam_idx))[0][0])
+            
+            distribute_var_relative_beam_idx[l,3] = int((np.where(q_idxs_temp == \
+                                        best_beam_pairs[3].beam_idx))[0][0])
+                
+            distribute_var_ch_power_gain[l, 0] = best_beam_pairs[0].ch_power_gain
+            distribute_var_ch_power_gain[l, 1] = best_beam_pairs[1].ch_power_gain
+            distribute_var_ch_power_gain[l, 2] = best_beam_pairs[2].ch_power_gain
+            distribute_var_ch_power_gain[l, 3] = best_beam_pairs[3].ch_power_gain
+            
+            # created_beam_pair[l] = Beam_pair()
+            created_beam_pair_rank1_op2 = Beam_pair()
+            created_beam_pair_rank2_op2 = Beam_pair()
+                
+            if l:
+                #First we need to create the LC precoder, for that we need to
+                #find the RPI of the second beams of respective ranks.
+                
+                # We need to perform the RPI check here and then alott the
+                # 3rd beam to the next set and then 4th beam to the other set.
+               
+                # RPI of beam 3 when compared to rank 1 set
+                pow_ratio_beam3_setrank1 = distribute_var_ch_power_gain[1, 0] / \
+                                        distribute_var_ch_power_gain[0, 0]
+                amp1_beam3_rank1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - \
+                                                    pow_ratio_beam3_setrank1))]
+                
+                # RPI of beam 3 when compared to rank 2 set
+                pow_ratio_beam3_setrank2 = distribute_var_ch_power_gain[1, 0] / \
+                                        distribute_var_ch_power_gain[0,1]
+                amp1_beam3_rank2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - \
+                                                    pow_ratio_beam3_setrank2))]
+                
+                
+                # RPI of beam 4 when compared to rank 1 set    
+                pow_ratio_beam4_setrank1 = distribute_var_ch_power_gain[1, 1] / \
+                                        distribute_var_ch_power_gain[0, 0]
+                amp1_beam4_rank1 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - \
+                                                    pow_ratio_beam4_setrank1))]
+                    
+                # RPI of beam 4 when compared to rank 2 set
+                pow_ratio_beam4_setrank2 = distribute_var_ch_power_gain[1, 0] / \
+                                        distribute_var_ch_power_gain[0, 1]
+                amp1_beam4_rank2 = amp_scaling_list[min(range(len(amp_scaling_list)), 
+                            key = lambda i: abs(amp_scaling_list[i] - \
+                                                    pow_ratio_beam4_setrank2))]
+                
+                    
+                    
+                if pow_ratio_beam3_setrank1 > pow_ratio_beam3_setrank2:
+                    
+                    #LC precoder for Rank1
+                    Fin_w_rank1_op2 = np.add((codebook_subset[:, \
+                                    distribute_var_relative_beam_idx[0,0]]), \
+                                    (amp1_beam3_rank1 * \
+                        (codebook_subset[:, distribute_var_relative_beam_idx[1,0]])))
+                    
+                    Fin_w_rank1_op2 = (1/np.sqrt(1+(amp1_beam3_rank1 * \
+                                    amp1_beam3_rank1))) * (Fin_w_rank1_op2)
+                    
+                    #LC precoder for Rank2
+                    Fin_w_rank2_op2 = np.add((codebook_subset[:, \
+                                            distribute_var_relative_beam_idx[0,1]]), \
+                       (amp1_beam4_rank2 * (codebook_subset[:, distribute_var_relative_beam_idx[1,1]])))
+                    
+                    Fin_w_rank2_op2 = (1/np.sqrt(1+(amp1_beam4_rank2 * amp1_beam4_rank2))) * \
+                                                                (Fin_w_rank2_op2)
+                    
+                    
+                    created_beam_pair_rank1_op2.beam_idx = [distribute_var_beam_idx[0,0],
+                                                     distribute_var_beam_idx[1,0]]
+                    created_beam_pair_rank2_op2.beam_idx = [distribute_var_beam_idx[0,1],
+                                                     distribute_var_beam_idx[1,1]]
+                        
+                    created_beam_pair_rank1_op2.RPI = [1, amp1_beam3_rank1]      
+                    created_beam_pair_rank2_op2.RPI = [1, amp1_beam4_rank2]                                  
+                else:
+                    Fin_w_rank1_op2 = np.add((codebook_subset[:, \
+                                    int(distribute_var_relative_beam_idx[0,0])]), \
+                                    (amp1_beam4_rank1 * (codebook_subset[:, \
+                                    int(distribute_var_relative_beam_idx[1,1])])))
+                    
+                    Fin_w_rank1_op2 = (1/np.sqrt(1+(amp1_beam4_rank1 * amp1_beam4_rank1))) * \
+                                                                (Fin_w_rank1_op2)
+                    
+                    #LC precoder for Rank2
+                    Fin_w_rank2_op2 = np.add((codebook_subset[:, \
+                                  int(distribute_var_relative_beam_idx[0,1])]), \
+                                 (amp1_beam3_rank2 * \
+                                 (codebook_subset[:, int(distribute_var_relative_beam_idx[1,0])])))
+                    
+                    Fin_w_rank2_op2 = (1/np.sqrt(1+(amp1_beam3_rank2 * \
+                                        amp1_beam3_rank2))) * (Fin_w_rank2_op2)
+                        
+                    
+                    created_beam_pair_rank1_op2.beam_idx = [distribute_var_beam_idx[0,0],
+                                                     distribute_var_beam_idx[1,1]]
+                    created_beam_pair_rank2_op2.beam_idx = [distribute_var_beam_idx[0,1],
+                                                     distribute_var_beam_idx[1,0]]
+                        
+                    created_beam_pair_rank1_op2.RPI = [1, amp1_beam4_rank1]      
+                    created_beam_pair_rank2_op2.RPI = [1, amp1_beam3_rank2] 
+     
             
         if not n_csi_beams == 1:
             if not l:
@@ -2052,6 +2276,8 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim, n_csi_beams):
     
         
     if check_orth_beams <= beam_dist_lim:
+        # print('precoder1: ', bp1.beam_idx, bp1.RPI, 'precoder2: ', bp2.beam_idx,bp2.RPI, \
+        #                           'dot product', check_orth_beams)
         return True
     else:
         # print('precoder1: ', bp1.beam_idx, bp1.RPI, 'precoder2: ', bp2.beam_idx,bp2.RPI, \
@@ -2785,7 +3011,8 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
             print(f'Estimated SINR: {entry.est_sinr:6.1f} dB')
             print(f'Experienced SINR: {experienced_sinr:4} dB')
         
-        # Sandra-print(f'Experienced sig power: {experienced_signal_power[tti][entry.ue][entry.layer_idx]}')
+        # Sandra-
+        # print(f'Experienced sig power: {experienced_signal_power[tti][entry.ue][entry.layer_idx]}')
         # print(f'Interference: {real_dl_interference[tti][entry.ue][entry.layer_idx]}')
         # print(f'Estimated SINR: {entry.est_sinr:6.1f} dB')
         # print(f'Experienced SINR: {experienced_sinr:4} dB')
@@ -2860,8 +3087,8 @@ def tti_simulation(curr_schedule, slot_type, n_prb, debug, coeffs,
             realised_bits / TTI_dur_in_secs / 1e6
             
         if debug:
-            print('Realised bitrate in tti {tti}, ue {entry.ue}, '
-                  'layer {entry.layer_idx} is: '
+            print('Realised bitrate in tti ', tti, 'ue', entry.ue, 
+                  'layer', entry.layer_idx ,'is:' 
                   f'{realised_bitrate[tti][entry.ue][entry.layer_idx]} '
                   'Mbits/s') 
         # Sandra -print(f'Realised bitrate in tti {tti}, ue {entry.ue}, '

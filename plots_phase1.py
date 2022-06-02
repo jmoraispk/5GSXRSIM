@@ -49,8 +49,8 @@ always_compute = True
 
 
 #-------------------------
-stats_folder = r'C:\Users\Srijan\Documents\SXRSIMv3\Stats' + '\\'
-seeds_list = [1]
+stats_folder = r'C:\Users\Srijan\Documents\SXRSIMv3\Stats\Adaptive RF-3.5GHz' + '\\'
+seeds_list = [4]
 speeds = [3]
 csi_periodicities = [5]
 app_bitrates= [100]
@@ -59,14 +59,14 @@ bandwidths = [400] #50 MHz
 latencies = [10]
 freq_idxs = [0]
 results_folder = r'Results\Batch X - testing' + '\\'
-rot_factors_list = [10]
-# rot_factors_list = [14]
-
+rot_factors_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+rot_factors_list = [None]
+gamma = [0.2, 0.4, 0.6, 0.8]
+# gamma = [0.2, 0.4]
 for seeds in seeds_list:
     for rot_factor in rot_factors_list:
         layer = 0
-        trim_ttis = [20, int(4000 * 8)]#[301, 370]
-        
+        trim_ttis = [20, int(4000 * 16)]#[301, 370]        
         TTI_dur_in_secs = 0.25e-3
         
         ttis = np.arange(trim_ttis[0], trim_ttis[1])
@@ -85,7 +85,7 @@ for seeds in seeds_list:
         combinations = list(itertools.product(speeds, freq_idxs, 
                                               csi_periodicities, app_bitrates,
                                               users, bandwidths, latencies, 
-                                              {rot_factor}, {seeds}))
+                                              {rot_factor}, {seeds}, gamma))
         
         
         # the variables to be loaded at each position of sim_data_(loaded/trimmed)
@@ -176,13 +176,13 @@ for seeds in seeds_list:
             #                 f'CSIPER-{comb[2]}_APPBIT-{comb[3]}_'+ \
             #                 f'USERS-{comb[4]}_BW-{comb[5]}_LATBUDGET-{comb[6]}' + '\\'
                             
-            # stats_dir_end = f'SU_SEED{comb[-1]}_FREQ-{comb[1]}_' + \
-            #                 f'CSIPER-{comb[2]}_'+ \
-            #                 f'USERS-{comb[4]}_ROTFACTOR-{comb[7]}_LAYERS-1_COPH-1_L-1' + '\\'
+            stats_dir_end = f'Scenario2_MU_SEED-{comb[-2]}_FREQ-{comb[1]}_' + \
+                            f'CSIPER-{comb[2]}_'+ \
+                            f'USERS-{comb[4]}_ROTFACTOR-{comb[7]}_LAYERS-1_COPH-1_L-1_Gamma-{comb[-1]}_BW-400' + '\\'
             
             # stats_dir_end = r'Scenario1_MU_SEED3_FREQ-0_CSIPER-5_USERS-None_ROTFACTOR-None_LAYERS-1_COPH-1_L-1_Adaptive' + '\\'
-            stats_dir_end = r'Scenario2_MU_SEED-1_FREQ-0_CSIPER-5_USERS-16_ROTFACTOR-10_LAYERS-1_COPH-1_L-2_2022-05-20_00h24m23s' + '\\'
-            print(f'\nDoing for: {stats_dir_end}')
+            # stats_dir_end = r'Scenario2_MU_SEED-1_FREQ-0_CSIPER-5_USERS-16_ROTFACTOR-None_LAYERS-1_COPH-1_L-1_Gamma-0.6_BW-400' + '\\'
+            # print(f'\nDoing for: {stats_dir_end}')
             
             stats_dir = stats_folder + stats_dir_end
             
@@ -442,7 +442,7 @@ for seeds in seeds_list:
             idxs_to_plot = all_plots_available
             # idxs_to_plot = [0.1, 1, 2, 3.45, 4.2, 5.4, 7.4, 10.45, 18.1]
             idxs_to_plot = [2.4, 1, 1.1, 10.65, 7.1, 2.3, 2, 11.1]
-            # idxs_to_plot = [2]
+            idxs_to_plot = [10.65]
             # Test save_plot
             save_plots = False
             saveformat = 'pdf' # supported: 'png', 'svg', 'pdf'
