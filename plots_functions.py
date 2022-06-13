@@ -589,7 +589,7 @@ def get_vars_to_load(idx, vars_to_load_names):
                  9.1: [2,5,6,8], 9.2: [2,5,6,8], 9.3: [8,9], 9.4: [5,6,8],
                  10.1: [1], 10.15: [1], 10.2: [1], 10.25: [1], 
                  10.3: [1], 10.31: [1], 10.4: [1], 10.45: [1], 
-                 10.5: [1], 10.55: [1], 10.6: [1], 10.65: [1], 
+                 10.5: [1], 10.55: [1], 10.6: [1], 10.65: [1, 4], 
                  10.7: [1], 10.8: [1], 10.9: [1], 10.11: [1],
                  11: [15], 11.1: [15], 11.2: [15], 11.3: [4], 11.4: [10,15],
                  13: [14],
@@ -2059,7 +2059,16 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             # Also write the folder order
             with open(results_filename + '_folders.csv', "a") as myfile:
                 myfile.write(stats_folder + '\n')   
-                    
+            bitrate_rank2 =[]
+            bitrate_sum = []
+            plr = []
+            for ue in range(n_ues):
+                bitrate_sum = sim_data_trimmed[f][4][:,ue,0] + \
+                             sim_data_trimmed[f][4][:,ue,1]
+                             # for tti in range(0, 63980):
+                bitrate_rank2.append(np.mean(bitrate_sum, axis=0)) 
+                plr.append(100-bitrate_rank2[ue])
+            print(plr)        
         # prints all detailed measurements on frame information
         if plot_idx == 10.7:
             
