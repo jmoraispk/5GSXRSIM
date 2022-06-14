@@ -2059,16 +2059,16 @@ def plot_sim_data(plot_idx, file_set, l, ues, ttis, x_vals,
             # Also write the folder order
             with open(results_filename + '_folders.csv', "a") as myfile:
                 myfile.write(stats_folder + '\n')   
-            bitrate_rank2 =[]
-            bitrate_sum = []
-            plr = []
-            for ue in range(n_ues):
-                bitrate_sum = sim_data_trimmed[f][4][:,ue,0] + \
-                             sim_data_trimmed[f][4][:,ue,1]
-                             # for tti in range(0, 63980):
-                bitrate_rank2.append(np.mean(bitrate_sum, axis=0)) 
-                plr.append(100-bitrate_rank2[ue])
-            print(plr)        
+            # bitrate_rank2 =[]
+            # bitrate_sum = []
+            # plr = []
+            # for ue in range(n_ues):
+            #     bitrate_sum = sim_data_trimmed[f][4][:,ue,0] + \
+            #                   sim_data_trimmed[f][4][:,ue,1]
+            #                   # for tti in range(0, 63980):
+            #     bitrate_rank2.append((round(np.mean(bitrate_sum, axis=0),2))) 
+            #     plr.append(round((100-bitrate_rank2[ue]),2))
+            # print(plr)        
         # prints all detailed measurements on frame information
         if plot_idx == 10.7:
             
