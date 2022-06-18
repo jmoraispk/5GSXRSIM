@@ -2276,12 +2276,12 @@ def are_beam_pairs_compatible(bp1, bp2, beam_dist_lim, n_csi_beams):
     
         
     if check_orth_beams <= beam_dist_lim:
-        # print('precoder1: ', bp1.beam_idx, bp1.RPI, 'precoder2: ', bp2.beam_idx,bp2.RPI, \
-        #                           'dot product', check_orth_beams)
+        print('precoder1: ', bp1.beam_idx, bp1.RPI, 'precoder2: ', bp2.beam_idx,bp2.RPI, \
+                                  'dot product', check_orth_beams)
         return True
     else:
-        # print('precoder1: ', bp1.beam_idx, bp1.RPI, 'precoder2: ', bp2.beam_idx,bp2.RPI, \
-        #                           'dot product', check_orth_beams)
+        print('precoder1: ', bp1.beam_idx, bp1.RPI, 'precoder2: ', bp2.beam_idx,bp2.RPI, \
+                                  'dot product', check_orth_beams)
         return False
     
        
@@ -2468,6 +2468,8 @@ def interference_measurements_final_update(ues, n_layers, tti, last_csi_tti,
     
     
     if book_keeping_interference is False:
+        if scheduling_method == 'SU':
+            
         for ue in ues:
             for p in range(n_layers):
                 # 2- Update Downlink Interference Estimation from previous 
@@ -2578,7 +2580,7 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
                    TTI_duration, freq_compression_ratio, 
                    use_olla, olla, debug_su_mimo_choice, 
                    su_mimo_bitrates, est_su_mimo_bitrate, est_scheduled_layers,
-                   dl_radio_efficiency, bandwidth_mult):
+                   dl_radio_efficiency, bandwidth_mult, scheduling_method):
     
     """
     Serves to make a first estimation of how many independent layers to
@@ -2592,7 +2594,12 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
     for ue in schedulable_UEs_dl:
         bs = serving_BS_dl[ue]
         # estimate the power of each layer
-        tx_pow_dl_per_layer = bs_max_pow / len(schedulable_UEs_dl)
+        if scheduling_method == 'SU':
+            power_division = 1
+        else:
+            power_division = 9
+                         
+        tx_pow_dl_per_layer = bs_max_pow / power_division
         
         # Option 1: single-layer
         option1_bitrate = \
@@ -2613,7 +2620,7 @@ def su_mimo_choice(tti, tti_for_scheduling, bs_max_pow,
         if n_layers > 1:
             # estimate the power of each layer
             tx_pow_dl_per_layer = (bs_max_pow / 
-                                   (len(schedulable_UEs_dl) * n_layers))
+                                   (power_division * n_layers))
             
             # Option 2: dual-layer
             option2_bitrate = \
@@ -2673,7 +2680,7 @@ def compute_priorities(tti, ue_priority, all_delays, buffers,
                       scheduler_param_delta,
                       scheduler_param_c,
                       all_delays)
-        # print(f"UE {ue} has priority {ue_priority[tti][ue]}")
+        print(f"UE {ue} has priority {ue_priority[tti][ue]}")
         
     curr_priorities = sorted([(ue, ue_priority[tti][ue])
                               for ue in schedulable_UEs_dl],

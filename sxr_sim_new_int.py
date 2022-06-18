@@ -24,7 +24,7 @@ parent_folder = \
 
 # seed = int(ut.get_input_arg(1)) # 1
 #speed = int(ut.get_input_arg(2))
-seed = 5
+seed = 1
 speed = 3
 
 # folders_to_simulate = [f"SEED{seed}_SPEED{speed}"]
@@ -39,7 +39,7 @@ freq_idxs = [0]
 csi_periodicities = [5]
 # Ls = [1, 2, 3, 4]
 # Ls = [1, 2, 3, 4]
-Ls = [2, 3, 4]
+Ls = [1]
 # Ls = [4]
 # Put to [None] when not looping users, and the user_list is manually set below
 # users = [1,2,4,6,8] 
@@ -48,9 +48,9 @@ users = [16]
 # rot_factorss = [8, 9, 10, 11, 12, 13, 14, 15]
 adap_rot_factor = False
 rot_factors = [2] # Should be kept as None if adap_rot_factor is True.
-n_layers = [1]
-gamma = [0.2, 0.4, 0.6, 0.8]
-# gamma = [0.6, 0.8]
+n_layers = [2]
+# gamma = [0.2, 0.4, 0.6, 0.8]
+gamma = [0.4]
 # If set to true. follows the new interference estimation mechanism by using a
 # book keeping dictionary of used beams and the corresponding interference.
 # If False, then the previous csi_tti intereference is used.
@@ -103,7 +103,7 @@ sim_params = list(itertools.product(folders_to_simulate, freq_idxs,
 
 # Feel free to check the parameter combinations before running the simulation
 # for param in sim_params:
-#     print(param)   
+    # print(param)   
 # ut.stop_execution()
 
 for param in sim_params:
@@ -163,7 +163,7 @@ for param in sim_params:
     print('Done setting Simulation Parameters!')
     
     # Take care of the output
-    include_timestamp = False 
+    include_timestamp = True
     seed_str = folders_to_simulate[folder_idx].split('\\')[-1].split('_')[0]
     output_stats_folder = '' #SPEED7' + '\\'
     output_str = f'Scenario2_{sp.scheduling_method}_SEED-{seed}_FREQ-{freq_idx}_CSIPER-{csi_periodicity}_' + \
@@ -435,8 +435,8 @@ for param in sim_params:
         #       given by tti_timestamp. This is done such that we don't have 
         #       to carry +-1 everywhere we go.
         
-        # if tti == 2591:
-        #     print('reached')
+        if tti == 51:
+            print('reached')
         
         if sp.debug:
             if tti % sp.csi_period == 0:
@@ -653,7 +653,8 @@ for param in sim_params:
                                sp.freq_compression_ratio, sp.use_olla, olla, 
                                sp.debug_su_mimo_choice, su_mimo_bitrates, 
                                est_su_mimo_bitrate, est_scheduled_layers, 
-                               sp.DL_radio_efficiency, sp.bandwidth_multiplier)
+                               sp.DL_radio_efficiency, sp.bandwidth_multiplier,
+                               sp.scheduling_method)
             
             if sp.debug:
                 print(f"SU-MIMO bitrates: {su_mimo_bitrates[tti][1:sp.n_phy]}")
